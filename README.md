@@ -16,6 +16,13 @@ React + Vite 기반으로 개발되며, 지도, 실시간 채팅, 소상공인 �
 
 ## 📦 시작하기
 
+### 프로젝트 클론
+
+```bash
+git clone <repository-url>
+cd localhub-frontend
+```
+
 ### 설치
 
 ```bash
