@@ -1,8 +1,11 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import HomePage from '@/pages/HomePage';
-import StoreListPage from '@/pages/StoreListPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
+import ChatPage from '@/pages/ChatPage';
+import FavoritePage from '@/pages/FavoritePage';
 import OwnerDashboardPage from '@/pages/owner/OwnerDashboardPage';
+import LoginPage from '@/pages/LoginPage';
+import SignupPage from '@/pages/SignupPage';
 
 export const router = createBrowserRouter([
   {
@@ -10,15 +13,31 @@ export const router = createBrowserRouter([
     element: <HomePage />,
   },
   {
-    path: '/stores',
-    element: <StoreListPage />,
+    path: '/login',
+    element: <LoginPage />,
   },
   {
-    path: '/stores/:storeId',
+    path: '/signup',
+    element: <SignupPage />,
+  },
+  {
+    path: '/store/:id',
     element: <StoreDetailPage />,
   },
   {
-    path: '/owner/*',
+    path: '/chat',
+    element: <ChatPage />,
+  },
+  {
+    path: '/favorites',
+    element: <FavoritePage />,
+  },
+  {
+    path: '/dashboard',
     element: <OwnerDashboardPage />,
+  },
+  {
+    path: '*',
+    element: <Navigate to="/" replace />,
   },
 ]);
