@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { login } from '../shared/api/auth';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    navigate('/');
+    try {
+      await login({
+        email,
+        password,
+      });
+      navigate('/');
+    } catch (err) {
+      alert('로그인 실패');
+    }
   };
 
   return (

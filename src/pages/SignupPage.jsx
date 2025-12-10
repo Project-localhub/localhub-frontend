@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { signUp } from '../shared/api/auth';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -13,9 +14,45 @@ const SignupPage = () => {
     userType: 'customer',
   });
 
-  const handleSignup = (e) => {
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+
+  const handlePasswordBlur = () => {
+    if (formData.password === '') return;
+    if (formData.password.length < 8) {
+      setPasswordError('비밀번호는 8글자 이상입니다');
+      return;
+    }
+    setPasswordError('');
+  };
+
+  const handleConfirmPasswordBlur = () => {
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError('비밀번호가 일치하지 않습니다');
+      return;
+    }
+    setConfirmPasswordError('');
+  };
+
+  const handleSignup = async (e) => {
     e.preventDefault();
-    navigate('/login');
+    if (formData.password !== formData.confirmPassword) {
+      alert('비밀번호가 일치하지 않습니다');
+      return;
+    }
+    try {
+      await signUp({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        phone: formData.phone,
+        userType: formData.userType,
+      });
+      alert('회원가입 완료');
+      navigate('/login');
+    } catch (err) {
+      alert('회원가입 실패');
+    }
   };
 
   return (
@@ -97,10 +134,12 @@ const SignupPage = () => {
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onBlur={handlePasswordBlur}
                 placeholder="비밀번호를 입력하세요"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"
                 required
               />
+              {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
             </div>
 
             <div>
@@ -112,10 +151,14 @@ const SignupPage = () => {
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onBlur={handleConfirmPasswordBlur}
                 placeholder="비밀번호를 다시 입력하세요"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"
                 required
               />
+              {confirmPasswordError && (
+                <p className="text-red-500 text-sm mt-1">{confirmPasswordError}</p>
+              )}
             </div>
 
             <div>
