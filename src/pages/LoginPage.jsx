@@ -5,19 +5,26 @@ import { login } from '../shared/api/auth';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await login({
-        email,
-        password,
-      });
+      const data = {
+        userName: formData.email,
+        password: formData.password,
+      };
+      const res = await login(data);
+      alert('로그인 성공');
       navigate('/');
     } catch (err) {
-      alert('로그인 실패');
+      consol.log(err);
+      alert('로그인 실패: 아이디/비밀번호 확인');
     }
   };
 
@@ -50,7 +57,7 @@ const LoginPage = () => {
               <input
                 id="email"
                 type="email"
-                value={email}
+                value={formData.email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="이메일을 입력하세요"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"
@@ -65,7 +72,7 @@ const LoginPage = () => {
               <input
                 id="password"
                 type="password"
-                value={password}
+                value={formData.password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="비밀번호를 입력하세요"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"

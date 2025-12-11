@@ -11,7 +11,7 @@ const SignupPage = () => {
     confirmPassword: '',
     name: '',
     phone: '',
-    userType: 'customer',
+    userType: 'CUSTOMER',
   });
 
   const [passwordError, setPasswordError] = useState('');
@@ -42,16 +42,21 @@ const SignupPage = () => {
     }
     try {
       await signUp({
-        email: formData.email,
+        username: formData.email,
         password: formData.password,
-        name: formData.name,
         phone: formData.phone,
-        userType: formData.userType,
+        userType: formData.userType.toUpperCase(),
       });
       alert('회원가입 완료');
       navigate('/login');
     } catch (err) {
-      alert('회원가입 실패');
+      console.error('회원가입 에러 전체:', err); // err 객체 전체 확인
+      if (err.response) {
+        console.error('백엔드 응답 데이터:', err.response.data);
+        alert('회원가입 실패: ' + JSON.stringify(err.response.data));
+      } else {
+        alert('회원가입 실패: 서버 연결 문제 또는 네트워크 오류');
+      }
     }
   };
 
