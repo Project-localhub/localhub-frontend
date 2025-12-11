@@ -42,6 +42,7 @@ const SignupPage = () => {
     }
     try {
       await signUp({
+        name: formData.name,
         username: formData.email,
         password: formData.password,
         phone: formData.phone,
@@ -77,9 +78,9 @@ const SignupPage = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, userType: 'customer' })}
+                  onClick={() => setFormData({ ...formData, userType: 'CUSTOMER' })}
                   className={`py-3 rounded-lg border ${
-                    formData.userType === 'customer'
+                    formData.userType === 'CUSTOMER'
                       ? 'border-blue-600 bg-blue-50 text-blue-600'
                       : 'border-gray-300 text-gray-700'
                   }`}
@@ -88,9 +89,9 @@ const SignupPage = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, userType: 'owner' })}
+                  onClick={() => setFormData({ ...formData, userType: 'OWNER' })}
                   className={`py-3 rounded-lg border ${
-                    formData.userType === 'owner'
+                    formData.userType === 'OWNER'
                       ? 'border-blue-600 bg-blue-50 text-blue-600'
                       : 'border-gray-300 text-gray-700'
                   }`}

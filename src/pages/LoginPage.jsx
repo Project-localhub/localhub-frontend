@@ -10,8 +10,6 @@ const LoginPage = () => {
     password: '',
   });
 
-  const [error, setError] = useState('');
-
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -20,10 +18,14 @@ const LoginPage = () => {
         password: formData.password,
       };
       const res = await login(data);
+      const accessToken = res.headers['access'];
+      if (accessToken) {
+        localStorage.setItem('accessToken', accessToken);
+      }
       alert('로그인 성공');
       navigate('/');
     } catch (err) {
-      consol.log(err);
+      console.log(err);
       alert('로그인 실패: 아이디/비밀번호 확인');
     }
   };
@@ -58,7 +60,7 @@ const LoginPage = () => {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="이메일을 입력하세요"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"
                 required
@@ -73,7 +75,7 @@ const LoginPage = () => {
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="비밀번호를 입력하세요"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"
                 required
