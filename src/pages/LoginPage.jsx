@@ -14,7 +14,7 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       const data = {
-        userName: formData.email,
+        username: formData.email,
         password: formData.password,
       };
       const res = await login(data);
