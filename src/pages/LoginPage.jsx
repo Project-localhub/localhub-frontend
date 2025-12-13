@@ -15,35 +15,38 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    const data = {
+      username: formData.username,
+      password: formData.password,
+    };
+    console.log('LoginPage: 보내는 로그인 데이터:', data);
+
     try {
-      const data = {
-        username: formData.username,
-        password: formData.password,
-      };
+      const resData = await login(data);
+      console.log('LoginPage: 로그인 응답 데이터(resData):', resData);
 
-      const res = await login(data);
-
-      console.log('로그인 전체 응답:', res);
-      console.log('응답 타입:', typeof res);
-      console.log('응답 키들:', Object.keys(res));
-
-      // 🔥 핵심: 헤더에서 access 읽기
-      const accessToken = res.accessToken;
-
+      const accessToken = resData?.accessToken;
       if (!accessToken) {
-        throw new Error('accessToken 없음 (header)');
+        console.warn('⚠ 서버에서 accessToken을 주지 않음');
+        alert('로그인 실패: 서버에서 accessToken을 주지 않음');
+        return;
       }
 
-      localStorage.setItem('accessToken', accessToken);
+      authLogin(accessToken);
+      console.log('LoginPage: accessToken 저장 완료:', accessToken);
 
       alert('로그인 성공');
       navigate('/');
     } catch (err) {
-      console.error(err);
-      alert('로그인 실패');
+      console.error('LoginPage: 로그인 요청 에러 전체(err):', err);
+      console.error('LoginPage: err.response?.data:', err.response?.data);
+      console.error('LoginPage: err.response?.status:', err.response?.status);
+      console.error('LoginPage: err.response?.headers:', err.response?.headers);
+      console.error('LoginPage: err.request:', err.request);
+      console.error('LoginPage: err.message:', err.message);
+      alert('로그인 실패: 콘솔 확인');
     }
   };
-
   return (
     <div className="flex flex-col h-screen bg-white w-full max-w-md mx-auto shadow-lg">
       <div className="p-4 border-b border-gray-200 flex items-center gap-3">
