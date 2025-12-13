@@ -6,10 +6,11 @@ import { signUp } from '../shared/api/auth';
 const SignupPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
+    username: '',
     password: '',
     confirmPassword: '',
-    name: '',
     phone: '',
     userType: 'CUSTOMER',
   });
@@ -43,7 +44,8 @@ const SignupPage = () => {
     try {
       await signUp({
         name: formData.name,
-        username: formData.email,
+        email: formData.email,
+        username: formData.username,
         password: formData.password,
         phone: formData.phone,
         userType: formData.userType.toUpperCase(),
@@ -126,6 +128,20 @@ const SignupPage = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="이메일을 입력하세요"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="username" className="block text-gray-700 mb-2">
+                아이디
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                placeholder="아이디를 입력하세요"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"
                 required
               />

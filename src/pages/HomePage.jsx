@@ -60,74 +60,68 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <Layout>
-      <div className="flex flex-col h-full">
-        <div className="bg-white px-4 py-3 border-b border-gray-200">
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-            <Search size={20} className="text-gray-500" />
-            <input
-              type="text"
-              placeholder="가게 이름, 카테고리 검색"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent outline-none"
-            />
-            <button className="text-gray-600">
-              <Filter size={20} />
-            </button>
-          </div>
-          <div className="flex items-center gap-2 mt-3">
-            <button className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm">
-              <MapPin size={14} />
-              강남구
-            </button>
-            <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-              한식
-            </button>
-            <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-              카페
-            </button>
-            <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-              베이커리
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white px-4 py-2 border-b border-gray-200 flex gap-2">
-          <button
-            onClick={() => setViewMode('list')}
-            className={`flex-1 py-2 rounded-lg ${
-              viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-            }`}
-          >
-            리스트
-          </button>
-          <button
-            onClick={() => setViewMode('map')}
-            className={`flex-1 py-2 rounded-lg ${
-              viewMode === 'map' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-            }`}
-          >
-            지도
+    <div className="flex flex-col h-full">
+      <div className="bg-white px-4 py-3 border-b border-gray-200">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
+          <Search size={20} className="text-gray-500" />
+          <input
+            type="text"
+            placeholder="가게 이름, 카테고리 검색"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-transparent outline-none"
+          />
+          <button className="text-gray-600">
+            <Filter size={20} />
           </button>
         </div>
-
-        {viewMode === 'list' ? (
-          <div className="flex-1 overflow-auto p-4">
-            <div className="mb-3 text-gray-600">
-              주변 가게 <span className="text-blue-600">{mockStores.length}</span>개
-            </div>
-            <div className="space-y-3">
-              {mockStores.map((store) => (
-                <StoreCard key={store.id} store={store} />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <MapView stores={mockStores} />
-        )}
+        <div className="flex items-center gap-2 mt-3">
+          <button className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm">
+            <MapPin size={14} />
+            강남구
+          </button>
+          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">한식</button>
+          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">카페</button>
+          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+            베이커리
+          </button>
+        </div>
       </div>
-    </Layout>
+
+      <div className="bg-white px-4 py-2 border-b border-gray-200 flex gap-2">
+        <button
+          onClick={() => setViewMode('list')}
+          className={`flex-1 py-2 rounded-lg ${
+            viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+          }`}
+        >
+          리스트
+        </button>
+        <button
+          onClick={() => setViewMode('map')}
+          className={`flex-1 py-2 rounded-lg ${
+            viewMode === 'map' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+          }`}
+        >
+          지도
+        </button>
+      </div>
+
+      {viewMode === 'list' ? (
+        <div className="flex-1 overflow-auto p-4">
+          <div className="mb-3 text-gray-600">
+            주변 가게 <span className="text-blue-600">{mockStores.length}</span>개
+          </div>
+          <div className="space-y-3">
+            {mockStores.map((store) => (
+              <StoreCard key={store.id} store={store} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <MapView stores={mockStores} />
+      )}
+    </div>
   );
 };
 

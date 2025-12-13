@@ -2,31 +2,45 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { login } from '../shared/api/auth';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
+  const { login: authLogin } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     try {
       const data = {
-        username: formData.email,
+        username: formData.username,
         password: formData.password,
       };
+
       const res = await login(data);
-      const accessToken = res.headers['access'];
-      if (accessToken) {
-        localStorage.setItem('accessToken', accessToken);
+
+      console.log('로그인 전체 응답:', res);
+      console.log('응답 타입:', typeof res);
+      console.log('응답 키들:', Object.keys(res));
+
+      // 🔥 핵심: 헤더에서 access 읽기
+      const accessToken = res.accessToken;
+
+      if (!accessToken) {
+        throw new Error('accessToken 없음 (header)');
       }
+
+      localStorage.setItem('accessToken', accessToken);
+
       alert('로그인 성공');
       navigate('/');
     } catch (err) {
-      console.log(err);
-      alert('로그인 실패: 아이디/비밀번호 확인');
+      console.error(err);
+      alert('로그인 실패');
     }
   };
 
@@ -53,15 +67,15 @@ const LoginPage = () => {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-gray-700 mb-2">
-                이메일
+              <label htmlFor="username" className="block text-gray-700 mb-2">
+                아이디
               </label>
               <input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="이메일을 입력하세요"
+                id="username"
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                placeholder="아이디를 입력하세요"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-blue-600"
                 required
               />
