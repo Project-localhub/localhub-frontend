@@ -9,8 +9,11 @@ const client = axios.create({
 });
 
 client.interceptors.request.use((config) => {
-  // 로그인 / 회원가입 요청에는 토큰 안 붙임
-  if (config.url.includes('/auth/login') || config.url.includes('/auth/join')) {
+  const isAuthRequest =
+    config.method === 'post' &&
+    (config.url === '/api/auth/login' || config.url === '/api/auth/join');
+
+  if (isAuthRequest) {
     return config;
   }
 
@@ -18,6 +21,7 @@ client.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 

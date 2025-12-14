@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { login } from '../shared/api/auth';
-import { useAuth } from '../context/AuthContext';
+import { login as loginAPI } from '../shared/api/auth';
+import { AuthContext, useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
-  const { login: authLogin } = useAuth();
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -22,17 +22,17 @@ const LoginPage = () => {
     console.log('LoginPage: 보내는 로그인 데이터:', data);
 
     try {
-      const resData = await login(data);
-      console.log('LoginPage: 로그인 응답 데이터(resData):', resData);
+      const res = await loginAPI(data);
+      console.log('LoginPage: 로그인 응답 데이터(res):', res);
 
-      const accessToken = resData?.accessToken;
+      const accessToken = res.accessToken;
       if (!accessToken) {
         console.warn('⚠ 서버에서 accessToken을 주지 않음');
         alert('로그인 실패: 서버에서 accessToken을 주지 않음');
         return;
       }
 
-      authLogin(accessToken);
+      await login(accessToken);
       console.log('LoginPage: accessToken 저장 완료:', accessToken);
 
       alert('로그인 성공');
@@ -47,6 +47,11 @@ const LoginPage = () => {
       alert('로그인 실패: 콘솔 확인');
     }
   };
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white w-full max-w-md mx-auto shadow-lg">
       <div className="p-4 border-b border-gray-200 flex items-center gap-3">
@@ -125,7 +130,10 @@ const LoginPage = () => {
             <button className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
               <span className="text-gray-900">카카오로 시작하기</span>
             </button>
-            <button className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
+            <button
+              onClick={handleGoogleLogin}
+              className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
+            >
               <span className="text-gray-900">구글로 시작하기</span>
             </button>
           </div>

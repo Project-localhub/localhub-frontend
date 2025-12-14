@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { Home, MessageCircle, Heart, LayoutDashboard, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,7 @@ const Layout = () => {
   const { user, isLogin, logout } = useAuth();
 
   const handleLogout = () => {
-    logout(); // AuthContext의 logout 호출
+    logout();
     navigate('/login');
   };
 
