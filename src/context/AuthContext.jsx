@@ -1,3 +1,12 @@
+// src/context/AuthContext.jsx
+import React, { createContext, useState, useContext } from 'react';
+import { getUserInfo } from '../shared/api/auth';
+
+export const AuthContext = createContext();
+
+// ✅ 이게 있어야 함
+export const useAuth = () => useContext(AuthContext);
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
@@ -11,7 +20,6 @@ export const AuthProvider = ({ children }) => {
       username: res.data.username,
       name: res.data.name,
       email: res.data.email,
-      userType: res.data.userType, // ⭐ 중요
     });
   };
 
@@ -20,9 +28,5 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, isLogin: !!user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
 };

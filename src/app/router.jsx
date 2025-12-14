@@ -9,6 +9,7 @@ import OwnerDashboardPage from '@/pages/owner/OwnerDashboardPage';
 import SelectUserTypePage from '@/pages/SelectUserTypePage';
 
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import OAuthRedirectPage from '../pages/0AuthRedirectPage';
 // 나머지 페이지 import
 
 export const router = createBrowserRouter([
