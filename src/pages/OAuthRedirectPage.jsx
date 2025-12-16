@@ -18,7 +18,7 @@ const OAuthRedirectPage = () => {
     login(accessToken).then(() => {
       navigate('/select-user-type');
     });
-  }, []);
+  }, [navigate, login]);
 
   return <div>로그인 처리 중...</div>;
 };

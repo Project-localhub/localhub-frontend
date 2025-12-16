@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, MessageCircle } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
 import ReviewCard from '@/components/ReviewCard';
+import { incrementStoreView } from '@/shared/api/storeApi';
 
 const mockStore = {
   id: '1',
@@ -62,10 +63,26 @@ const TAB_TYPES = {
 };
 
 const StoreDetailPage = () => {
-  // eslint-disable-next-line no-unused-vars
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(TAB_TYPES.INFO);
+
+  // 조회수 증가 (페이지 로드 시 한 번만 실행)
+  useEffect(() => {
+    if (!id) return;
+
+    // 같은 날 같은 가게를 이미 조회했는지 확인 (중복 방지)
+    const today = new Date().toDateString();
+    const viewKey = `store_view_${id}_${today}`;
+    const hasViewedToday = localStorage.getItem(viewKey);
+
+    if (!hasViewedToday) {
+      // 조회수 증가 API 호출
+      incrementStoreView(id);
+      // 오늘 조회했음을 localStorage에 저장
+      localStorage.setItem(viewKey, 'true');
+    }
+  }, [id]);
 
   return (
     <div className="flex flex-col h-screen bg-white w-full max-w-md mx-auto shadow-lg">
