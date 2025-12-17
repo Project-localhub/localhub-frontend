@@ -2,8 +2,14 @@
 import { Link } from 'react-router-dom';
 import { Star, Heart, MapPin } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
+import { useState } from 'react';
 
 const StoreCard = ({ store }) => {
+  const [isFavorite, setIsFavorite] = useState(store.isFavorite);
+  const favoritebuttonHandler = (e) => {
+    e.preventDefault();
+    setIsFavorite((prev) => !prev);
+  };
   return (
     <Link
       to={`/store/${store.id}`}
@@ -16,16 +22,10 @@ const StoreCard = ({ store }) => {
           className="w-full h-48 object-cover"
         />
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            // Toggle favorite
-          }}
+          onClick={favoritebuttonHandler}
           className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md"
         >
-          <Heart
-            size={20}
-            className={store.isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}
-          />
+          <Heart size={20} className={isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'} />
         </button>
         <div className="absolute bottom-2 left-2 px-2 py-1 bg-white rounded-full text-xs flex items-center gap-1">
           <MapPin size={12} className="text-blue-600" />

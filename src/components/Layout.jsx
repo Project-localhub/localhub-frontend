@@ -26,9 +26,10 @@ const Layout = () => {
           <span className="text-blue-600">LocalHub</span>
         </Link>
 
-        {user ? (
+        {/* 🔥 여기만 수정 */}
+        {isLogin && user ? (
           <div className="flex items-center gap-2">
-            <span>{user.name}님</span>
+            <span>{user?.name ?? ''}님</span>
             <button
               onClick={handleLogout}
               className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"

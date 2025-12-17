@@ -51,6 +51,9 @@ const LoginPage = () => {
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
   };
+  const handleKakaoLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/kakao`;
+  };
 
   return (
     <div className="flex flex-col h-screen bg-white w-full max-w-md mx-auto shadow-lg">
@@ -127,7 +130,10 @@ const LoginPage = () => {
           </div>
 
           <div className="space-y-3">
-            <button className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
+            <button
+              onClick={handleKakaoLogin}
+              className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
+            >
               <span className="text-gray-900">카카오로 시작하기</span>
             </button>
             <button
