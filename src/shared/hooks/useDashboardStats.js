@@ -40,7 +40,7 @@ export const useDashboardStats = (storeStats, isLoading) => {
         label: '채팅 문의',
         value: currentStats.chatInquiries || 0,
         icon: MessageCircle,
-        change: '0%', // 채팅 문의는 이번 달 기준만 표시
+        change: '0%',
         trend: 'neutral',
       },
     ],

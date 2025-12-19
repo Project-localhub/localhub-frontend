@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Layout from '@/components/Layout';
 import { Search, Send } from 'lucide-react';
 
 const mockChats = [
@@ -73,7 +72,7 @@ const ChatPage = () => {
 
   if (!selectedChat) {
     return (
-      <Layout>
+      <>
         <div className="flex flex-col h-full bg-white">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
@@ -120,74 +119,72 @@ const ChatPage = () => {
             ))}
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   const currentChat = mockChats.find((chat) => chat.id === selectedChat);
 
   return (
-    <Layout>
-      <div className="flex flex-col h-full bg-white">
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-          <button onClick={() => setSelectedChat(null)} className="text-gray-600">
-            ←
-          </button>
-          <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
-            <img
-              src={currentChat?.storeImage}
-              alt={currentChat?.storeName}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <span className="text-gray-900">{currentChat?.storeName}</span>
+    <div className="flex flex-col h-full bg-white">
+      <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+        <button onClick={() => setSelectedChat(null)} className="text-gray-600">
+          ←
+        </button>
+        <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
+          <img
+            src={currentChat?.storeImage}
+            alt={currentChat?.storeName}
+            className="w-full h-full object-cover"
+          />
         </div>
+        <span className="text-gray-900">{currentChat?.storeName}</span>
+      </div>
 
-        <div className="flex-1 overflow-auto p-4 space-y-3">
-          {mockMessages.map((msg) => (
+      <div className="flex-1 overflow-auto p-4 space-y-3">
+        {mockMessages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             <div
-              key={msg.id}
-              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`max-w-[70%] ${
+                msg.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-900'
+              } rounded-lg px-4 py-2`}
             >
-              <div
-                className={`max-w-[70%] ${
-                  msg.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-900'
-                } rounded-lg px-4 py-2`}
+              <p>{msg.content}</p>
+              <span
+                className={`text-xs ${
+                  msg.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+                } block mt-1`}
               >
-                <p>{msg.content}</p>
-                <span
-                  className={`text-xs ${
-                    msg.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
-                  } block mt-1`}
-                >
-                  {msg.time}
-                </span>
-              </div>
+                {msg.time}
+              </span>
             </div>
-          ))}
-        </div>
-
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-            <input
-              type="text"
-              placeholder="메시지를 입력하세요"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-              className="flex-1 bg-transparent outline-none"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!message.trim()}
-              className="text-blue-600 disabled:text-gray-400"
-            >
-              <Send size={20} />
-            </button>
           </div>
+        ))}
+      </div>
+
+      <div className="p-4 border-t border-gray-200">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
+          <input
+            type="text"
+            placeholder="메시지를 입력하세요"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            className="flex-1 bg-transparent outline-none"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!message.trim()}
+            className="text-blue-600 disabled:text-gray-400"
+          >
+            <Send size={20} />
+          </button>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
