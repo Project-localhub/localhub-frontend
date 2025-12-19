@@ -1,4 +1,5 @@
-import { Children, createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
+import PropTypes from 'prop-types';
 
 const FavoritesContext = createContext();
 
@@ -23,4 +24,9 @@ export const FavoritesProvider = ({ children }) => {
     </FavoritesContext.Provider>
   );
 };
+
+FavoritesProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 export const useFavorites = () => useContext(FavoritesContext);

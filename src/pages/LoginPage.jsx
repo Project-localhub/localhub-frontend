@@ -3,8 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { login as loginAPI } from '../shared/api/auth';
 import { AuthContext } from '../context/AuthContext';
-import { findUsername, login as loginAPI } from '../shared/api/auth';
-import { AuthContext, useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const { login } = useContext(AuthContext);

@@ -11,7 +11,6 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import OAuthRedirectPage from '../pages/OAuthRedirectPage';
 import FindUserPage from '../pages/FindUserPage';
 
-
 export const router = createBrowserRouter([
   {
     path: '/',

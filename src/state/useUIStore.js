@@ -15,7 +15,6 @@ export const useUIStore = create((set) => ({
       },
     })),
 
-
   dropdowns: {},
   setDropdown: (dropdownName, isOpen) =>
     set((state) => ({
@@ -24,7 +23,6 @@ export const useUIStore = create((set) => ({
         [dropdownName]: isOpen,
       },
     })),
-
 
   activeTabs: {},
   setActiveTab: (tabGroup, tabName) =>
