@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { login as loginAPI } from '../shared/api/auth';
 import { AuthContext } from '../context/AuthContext';
+import { findUsername, login as loginAPI } from '../shared/api/auth';
+import { AuthContext, useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const { login } = useContext(AuthContext);
@@ -42,6 +44,10 @@ const LoginPage = () => {
 
   const handleKakaoLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/kakao`;
+  };
+
+  const findButtonHandler = () => {
+    navigate('/findUser');
   };
 
   return (
@@ -105,7 +111,9 @@ const LoginPage = () => {
           </form>
 
           <div className="flex items-center justify-center gap-4 mt-6 text-sm">
-            <button className="text-gray-600">비밀번호 찾기</button>
+            <button onClick={findButtonHandler} className="text-gray-600">
+              비밀번호/아이디 찾기
+            </button>
             <span className="text-gray-300">|</span>
             <Link to="/signup" className="text-blue-600">
               회원가입

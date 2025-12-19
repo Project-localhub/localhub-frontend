@@ -73,6 +73,7 @@ const ChatPage = () => {
   if (!selectedChat) {
     return (
       <>
+      <div>
         <div className="flex flex-col h-full bg-white">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
@@ -120,6 +121,7 @@ const ChatPage = () => {
           </div>
         </div>
       </>
+      </div>
     );
   }
 
@@ -137,6 +139,20 @@ const ChatPage = () => {
             alt={currentChat?.storeName}
             className="w-full h-full object-cover"
           />
+    <div>
+      <div className="flex flex-col h-full bg-white">
+        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+          <button onClick={() => setSelectedChat(null)} className="text-gray-600">
+            ←
+          </button>
+          <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
+            <img
+              src={currentChat?.storeImage}
+              alt={currentChat?.storeName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <span className="text-gray-900">{currentChat?.storeName}</span>
         </div>
         <span className="text-gray-900">{currentChat?.storeName}</span>
       </div>

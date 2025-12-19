@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { getUserInfo, logout as logoutAPI, changeUserType } from '../shared/api/auth';
 import { queryClient } from '../app/queryClient';
 import { kakaoLogout } from '../shared/lib/kakao';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { getUserInfo } from '../shared/api/auth';
 
 export const AuthContext = createContext();
 
@@ -94,6 +96,7 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
   }, [setUserFromApi, isLoggingOut]);
+  const [loading, setLoading] = useState(true);
 
   const login = async (accessToken) => {
     // 로그인 시 로그아웃 플래그 해제
@@ -171,6 +174,25 @@ export const AuthProvider = ({ children }) => {
     await setUserFromApi(currentIsSocialLogin);
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    const restoreLogin = async () => {
+      try {
+        const res = await getUserInfo();
+        setUser(res.data);
+        setIsLogin(true);
+      } catch (e) {
+        localStorage.removeItem('accessToken');
+        setUser(null);
+        setIsLogin(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    restoreLogin();
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -184,6 +206,7 @@ export const AuthProvider = ({ children }) => {
         updateUserType,
       }}
     >
+    <AuthContext.Provider value={{ user, isLogin, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -10,11 +10,17 @@ const client = axios.create({
 });
 
 client.interceptors.request.use((config) => {
-  const isAuthRequest =
-    config.method === 'post' &&
-    (config.url === '/api/auth/login' || config.url === '/api/auth/join');
+  const noAuthRequiredUrls = [
+    '/api/auth/login',
+    '/api/auth/join',
+    '/api/auth/findUsername',
+    '/mail/send/verify',
+    '/mail/email/verify',
+  ];
 
-  if (isAuthRequest) {
+  const isNoAuthRequest = config.method === 'post' && noAuthRequiredUrls.includes(config.url);
+
+  if (isNoAuthRequest) {
     return config;
   }
 

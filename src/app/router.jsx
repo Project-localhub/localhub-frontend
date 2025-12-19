@@ -7,9 +7,10 @@ import ChatPage from '@/pages/ChatPage';
 import FavoritePage from '@/pages/FavoritePage';
 import OwnerDashboardPage from '@/pages/owner/OwnerDashboardPage';
 import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
-
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import OAuthRedirectPage from '../pages/OAuthRedirectPage';
+import FindUserPage from '../pages/FindUserPage';
+
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
+      { path: 'findUser', element: <FindUserPage /> },
       { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
       { path: 'store/:id', element: <StoreDetailPage /> },
       { path: 'chat', element: <ChatPage /> },
