@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Layout from '@/components/Layout';
 import StoreCard from '@/components/StoreCard';
 import MapView from '@/components/MapView';
 import { Search, Filter, MapPin } from 'lucide-react';

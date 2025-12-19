@@ -1,4 +1,3 @@
-import Layout from '@/components/Layout';
 import StoreCard from '@/components/StoreCard';
 import { useFavorites } from '../context/FavoritesContext';
 

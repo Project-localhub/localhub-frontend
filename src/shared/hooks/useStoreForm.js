@@ -53,33 +53,122 @@ export const useStoreForm = () => {
     setFormData({ ...formData, keywords: newKeywords });
   };
 
-  // 카카오맵 주소 검색
+  // 다음 우편번호 서비스를 이용한 주소 검색
   const handleAddressSearch = () => {
-    if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
-      alert('카카오맵을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+    if (!window.daum || !window.daum.Postcode) {
+      alert('주소 검색 서비스를 불러올 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요.');
       return;
     }
 
-    new window.kakao.maps.services.Places().keywordSearch(
-      formData.address || '서울',
-      (data, status) => {
-        if (status === window.kakao.maps.services.Status.OK) {
-          if (data && data.length > 0) {
-            const place = data[0];
-            setFormData({
-              ...formData,
-              address: place.address_name || place.place_name,
-              latitude: place.y,
-              longitude: place.x,
-            });
-          } else {
-            alert('검색 결과가 없습니다.');
-          }
+    // 주소 검색 레이어를 표시하기 위한 컨테이너 생성
+    const layer = document.createElement('div');
+    layer.id = 'address-search-layer';
+    layer.style.cssText =
+      'position:fixed;width:100%;height:100%;top:0;left:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+    // 기존 레이어가 있으면 제거
+    const existingLayer = document.getElementById('address-search-layer');
+    if (existingLayer) {
+      existingLayer.remove();
+    }
+
+    // 레이어 내부 컨테이너
+    const container = document.createElement('div');
+    container.style.cssText =
+      'position:relative;width:100%;max-width:500px;height:500px;max-height:90vh;background:white;border-radius:12px;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,0.2);display:flex;flex-direction:column;';
+
+    // 헤더 영역 (닫기 버튼 포함)
+    const header = document.createElement('div');
+    header.style.cssText =
+      'position:relative;width:100%;height:50px;background:white;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;z-index:10001;';
+
+    const title = document.createElement('span');
+    title.textContent = '주소 검색';
+    title.style.cssText = 'font-size:16px;font-weight:600;color:#111827;';
+
+    // 닫기 버튼
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.type = 'button';
+    closeBtn.style.cssText =
+      'cursor:pointer;font-size:28px;color:#6b7280;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:6px;transition:all 0.2s;line-height:1;padding:0;';
+    closeBtn.onmouseover = () => {
+      closeBtn.style.backgroundColor = '#f3f4f6';
+      closeBtn.style.color = '#111827';
+    };
+    closeBtn.onmouseout = () => {
+      closeBtn.style.backgroundColor = 'transparent';
+      closeBtn.style.color = '#6b7280';
+    };
+    closeBtn.onclick = () => layer.remove();
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+
+    // Postcode를 embed할 div
+    const postcodeDiv = document.createElement('div');
+    postcodeDiv.id = 'postcode-embed';
+    postcodeDiv.style.cssText = 'width:100%;flex:1;overflow:auto;';
+
+    container.appendChild(header);
+    container.appendChild(postcodeDiv);
+    layer.appendChild(container);
+    document.body.appendChild(layer);
+
+    // 배경 클릭 시 닫기
+    layer.onclick = (e) => {
+      if (e.target === layer) {
+        layer.remove();
+      }
+    };
+
+    // 다음 우편번호 서비스 실행
+    new window.daum.Postcode({
+      oncomplete: function (data) {
+        let address = '';
+        let extraAddress = '';
+
+        // 사용자가 선택한 주소 타입에 따라 해당 주소 값을 가져온다.
+        if (data.userSelectedType === 'R') {
+          // 사용자가 도로명 주소를 선택했을 경우
+          address = data.roadAddress;
         } else {
-          alert('주소 검색에 실패했습니다.');
+          // 사용자가 지번 주소를 선택했을 경우(J)
+          address = data.jibunAddress;
         }
+
+        // 사용자가 선택한 주소가 도로명 타입일때 참고항목을 조합한다.
+        if (data.userSelectedType === 'R') {
+          // 법정동명이 있을 경우 추가한다. (법정리는 제외)
+          // 법정동의 경우 마지막 문자가 "동/로/가"로 끝난다.
+          if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
+            extraAddress += data.bname;
+          }
+          // 건물명이 있고, 공동주택일 경우 추가한다.
+          if (data.buildingName !== '' && data.apartment === 'Y') {
+            extraAddress += extraAddress !== '' ? ', ' + data.buildingName : data.buildingName;
+          }
+          // 표시할 참고항목이 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
+          if (extraAddress !== '') {
+            extraAddress = ' (' + extraAddress + ')';
+          }
+        }
+
+        // 주소를 설정한다.
+        setFormData({
+          ...formData,
+          address: address + extraAddress,
+          latitude: '', // 다음 우편번호 서비스는 좌표를 제공하지 않으므로 빈 값
+          longitude: '', // 다음 우편번호 서비스는 좌표를 제공하지 않으므로 빈 값
+        });
+
+        // 레이어 제거
+        layer.remove();
       },
-    );
+      width: '100%',
+      height: '100%',
+      maxSuggestItems: 5,
+    }).embed(postcodeDiv);
   };
 
   // 폼 검증

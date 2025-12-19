@@ -1,6 +1,8 @@
 import { useContext, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { login as loginAPI } from '../shared/api/auth';
+import { AuthContext } from '../context/AuthContext';
 import { findUsername, login as loginAPI } from '../shared/api/auth';
 import { AuthContext, useAuth } from '../context/AuthContext';
 
@@ -19,38 +21,27 @@ const LoginPage = () => {
       username: formData.username,
       password: formData.password,
     };
-    console.log('LoginPage: 보내는 로그인 데이터:', data);
 
     try {
       const res = await loginAPI(data);
-      console.log('LoginPage: 로그인 응답 데이터(res):', res);
-
       const accessToken = res.accessToken;
+
       if (!accessToken) {
-        console.warn('⚠ 서버에서 accessToken을 주지 않음');
         alert('로그인 실패: 서버에서 accessToken을 주지 않음');
         return;
       }
 
       await login(accessToken);
-      console.log('LoginPage: accessToken 저장 완료:', accessToken);
-
-      alert('로그인 성공');
       navigate('/');
-    } catch (err) {
-      console.error('LoginPage: 로그인 요청 에러 전체(err):', err);
-      console.error('LoginPage: err.response?.data:', err.response?.data);
-      console.error('LoginPage: err.response?.status:', err.response?.status);
-      console.error('LoginPage: err.response?.headers:', err.response?.headers);
-      console.error('LoginPage: err.request:', err.request);
-      console.error('LoginPage: err.message:', err.message);
-      alert('로그인 실패: 콘솔 확인');
+    } catch {
+      alert('로그인 실패');
     }
   };
 
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
   };
+
   const handleKakaoLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/kakao`;
   };

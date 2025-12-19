@@ -22,8 +22,8 @@ export const useOwnerChatRooms = (storeId, options = {}) => {
     queryKey: chatKeys.ownerRooms(storeId),
     queryFn: () => getOwnerChatRooms(storeId),
     enabled: !!storeId && options.enabled !== false,
-    staleTime: 30 * 1000, // 30초 (채팅은 자주 갱신)
-    refetchInterval: 30 * 1000, // 30초마다 자동 갱신
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000, 
     ...options,
   });
 };
@@ -34,7 +34,7 @@ export const useMonthlyChatInquiryCount = (storeId, year, month, options = {}) =
     queryKey: chatKeys.monthlyCount(storeId, year, month),
     queryFn: () => getMonthlyChatInquiryCount(storeId, year, month),
     enabled: !!storeId && !!year && !!month && options.enabled !== false,
-    staleTime: 1 * 60 * 1000, // 1분
+    staleTime: 1 * 60 * 1000,
     ...options,
   });
 };
@@ -45,8 +45,8 @@ export const useChatMessages = (roomId, params = {}, options = {}) => {
     queryKey: chatKeys.roomMessages(roomId),
     queryFn: () => getChatMessages(roomId, params),
     enabled: !!roomId && options.enabled !== false,
-    staleTime: 10 * 1000, // 10초
-    refetchInterval: 10 * 1000, // 10초마다 자동 갱신
+    staleTime: 10 * 1000, 
+    refetchInterval: 10 * 1000, 
     ...options,
   });
 };
