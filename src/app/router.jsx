@@ -6,6 +6,7 @@ import StoreDetailPage from '@/pages/StoreDetailPage';
 import ChatPage from '@/pages/ChatPage';
 import FavoritePage from '@/pages/FavoritePage';
 import OwnerDashboardPage from '@/pages/owner/OwnerDashboardPage';
+import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
 import SelectUserTypePage from '@/pages/SelectUserTypePage';
 
 import { createBrowserRouter, Navigate } from 'react-router-dom';
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { path: 'chat', element: <ChatPage /> },
       { path: 'favorites', element: <FavoritePage /> },
       { path: 'dashboard', element: <OwnerDashboardPage /> },
+      { path: 'dashboard/store/register', element: <StoreRegisterPage /> },
     ],
   },
   {

@@ -1,51 +1,63 @@
-import { useState } from 'react';
-import Layout from '@/components/Layout';
-import { TrendingUp, Users, Star, MessageCircle, Eye, ChevronRight, Calendar } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const statsData = [
-  { label: '오늘 조회수', value: '234', icon: Eye, change: '+12%', trend: 'up' },
-  { label: '이번 달 리뷰', value: '45', icon: Star, change: '+8%', trend: 'up' },
-  { label: '찜한 고객', value: '178', icon: Users, change: '+5%', trend: 'up' },
-  { label: '채팅 문의', value: '23', icon: MessageCircle, change: '-3%', trend: 'down' },
-];
-
-const chartData = [
-  { day: '월', views: 120 },
-  { day: '화', views: 180 },
-  { day: '수', views: 150 },
-  { day: '목', views: 200 },
-  { day: '금', views: 280 },
-  { day: '토', views: 320 },
-  { day: '일', views: 250 },
-];
-
-const recentReviews = [
-  {
-    id: '1',
-    userName: '김철수',
-    rating: 5,
-    content: '정말 맛있어요! 김치찌개가 특히 일품입니다.',
-    date: '1시간 전',
-  },
-  {
-    id: '2',
-    userName: '이영희',
-    rating: 4,
-    content: '가성비가 좋아요. 반찬도 계속 리필해주시고 맛도 괜찮습니다.',
-    date: '3시간 전',
-  },
-  {
-    id: '3',
-    userName: '박민수',
-    rating: 5,
-    content: '동네 맛집이에요. 자주 가는데 항상 만족스럽습니다.',
-    date: '5시간 전',
-  },
-];
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMyStores, useStoreStats } from '@/shared/hooks/useStoreQueries';
+import { useDashboardStore } from '@/state/useDashboardStore';
+import { useDashboardStats } from '@/shared/hooks/useDashboardStats';
+import StoreSelector from '@/components/dashboard/StoreSelector';
+import StatsCards from '@/components/dashboard/StatsCards';
+import ViewsChart from '@/components/dashboard/ViewsChart';
+import RecentReviews from '@/components/dashboard/RecentReviews';
+import QuickActions from '@/components/dashboard/QuickActions';
 
 const OwnerDashboardPage = () => {
-  const [selectedPeriod, setSelectedPeriod] = (useState < 'week') | 'month' | ('year' > 'week');
+  const navigate = useNavigate();
+  const {
+    selectedStoreId,
+    setSelectedStoreId,
+    selectedPeriod,
+    setSelectedPeriod,
+    isStoreDropdownOpen,
+    setStoreDropdownOpen,
+  } = useDashboardStore();
+
+  // 가게 목록 조회 (React Query)
+  const { data: stores = [], isLoading: isStoresLoading } = useMyStores();
+
+  // 선택된 가게의 통계 조회 (React Query)
+  const { data: storeStats, isLoading: isStatsLoading } = useStoreStats(selectedStoreId, {
+    enabled: !!selectedStoreId,
+  });
+
+  // 첫 번째 가게 자동 선택
+  useEffect(() => {
+    if (stores.length > 0 && !selectedStoreId) {
+      setSelectedStoreId(stores[0].id);
+    }
+  }, [stores, selectedStoreId, setSelectedStoreId]);
+
+  // 통계 데이터 생성
+  const { statsData, chartData, recentReviews } = useDashboardStats(storeStats, isStatsLoading);
+
+  const selectedStore = stores.find((store) => store.id === selectedStoreId);
+
+  const handleStoreSelect = (storeId) => {
+    setSelectedStoreId(storeId);
+    setStoreDropdownOpen(false);
+  };
+
+  const handleAddStore = () => {
+    setStoreDropdownOpen(false);
+    navigate('/dashboard/store/register');
+  };
+
+  // 로딩 상태
+  if (isStoresLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
