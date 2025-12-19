@@ -23,7 +23,7 @@ export const useOwnerChatRooms = (storeId, options = {}) => {
     queryFn: () => getOwnerChatRooms(storeId),
     enabled: !!storeId && options.enabled !== false,
     staleTime: 30 * 1000,
-    refetchInterval: 30 * 1000, 
+    refetchInterval: 30 * 1000,
     ...options,
   });
 };
@@ -45,8 +45,8 @@ export const useChatMessages = (roomId, params = {}, options = {}) => {
     queryKey: chatKeys.roomMessages(roomId),
     queryFn: () => getChatMessages(roomId, params),
     enabled: !!roomId && options.enabled !== false,
-    staleTime: 10 * 1000, 
-    refetchInterval: 10 * 1000, 
+    staleTime: 10 * 1000,
+    refetchInterval: 10 * 1000,
     ...options,
   });
 };
