@@ -48,7 +48,7 @@ const OwnerDashboardPage = () => {
   const [selectedPeriod, setSelectedPeriod] = (useState < 'week') | 'month' | ('year' > 'week');
 
   return (
-    <Layout>
+    <div>
       <div className="flex flex-col h-full bg-gray-50 overflow-auto">
         <div className="bg-white p-4 border-b border-gray-200">
           <div className="mb-1">사장님 대시보드</div>
@@ -154,7 +154,7 @@ const OwnerDashboardPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

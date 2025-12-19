@@ -73,7 +73,7 @@ const ChatPage = () => {
 
   if (!selectedChat) {
     return (
-      <Layout>
+      <div>
         <div className="flex flex-col h-full bg-white">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
@@ -120,14 +120,14 @@ const ChatPage = () => {
             ))}
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   const currentChat = mockChats.find((chat) => chat.id === selectedChat);
 
   return (
-    <Layout>
+    <div>
       <div className="flex flex-col h-full bg-white">
         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
           <button onClick={() => setSelectedChat(null)} className="text-gray-600">
@@ -187,7 +187,7 @@ const ChatPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

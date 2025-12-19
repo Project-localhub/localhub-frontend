@@ -1,4 +1,6 @@
+import axios from 'axios';
 import client from './client';
+import { CalendarIcon } from 'lucide-react';
 
 export const signUp = async (data) => {
   try {
@@ -40,4 +42,16 @@ export const changeUserType = async (userType) => {
 export const getUserInfo = async () => {
   const res = await client.get('/api/user/getUserInfo');
   return res;
+};
+
+export const findUsername = (email) => {
+  return client.post(`/api/auth/findUsername`, { email });
+};
+
+export const sendEmailCode = (email) => {
+  return client.post('/mail/send/verify', { email });
+};
+
+export const verifyEmailCode = (email, code) => {
+  return client.post('/mail/email/verify', { email, code });
 };

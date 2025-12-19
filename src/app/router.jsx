@@ -10,6 +10,7 @@ import SelectUserTypePage from '@/pages/SelectUserTypePage';
 
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import OAuthRedirectPage from '../pages/OAuthRedirectPage';
+import FindUserPage from '../pages/FindUserPage';
 // 나머지 페이지 import
 
 export const router = createBrowserRouter([
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
+      { path: 'findUser', element: <FindUserPage /> },
       { path: 'select-user-type', element: <SelectUserTypePage /> },
       { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
       { path: 'store/:id', element: <StoreDetailPage /> },

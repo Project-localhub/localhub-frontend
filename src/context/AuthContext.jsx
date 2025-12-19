@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { getUserInfo } from '../shared/api/auth';
 
 export const AuthContext = createContext();
@@ -6,6 +6,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const login = async (accessToken) => {
     localStorage.setItem('accessToken', accessToken);
@@ -29,8 +30,29 @@ export const AuthProvider = ({ children }) => {
     setIsLogin(false);
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    const restoreLogin = async () => {
+      try {
+        const res = await getUserInfo();
+        setUser(res.data);
+        setIsLogin(true);
+      } catch (e) {
+        localStorage.removeItem('accessToken');
+        setUser(null);
+        setIsLogin(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    restoreLogin();
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isLogin, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, isLogin, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
