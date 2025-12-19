@@ -2,9 +2,9 @@ import Layout from '@/components/Layout';
 import StoreCard from '@/components/StoreCard';
 import { useFavorites } from '../context/FavoritesContext';
 
-const { favorites } = useFavorites();
-
 const FavoritesPage = () => {
+  const { favorites } = useFavorites(); // ✅ 컴포넌트 안으로 이동!
+
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="p-4 border-b border-gray-200">
