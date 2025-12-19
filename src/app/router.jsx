@@ -1,33 +1,67 @@
-import Layout from '@/components/Layout';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import Layout from '../components/Layout';
 import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
-import SignupPage from '@/pages/SignupPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
 import ChatPage from '@/pages/ChatPage';
 import FavoritePage from '@/pages/FavoritePage';
 import OwnerDashboardPage from '@/pages/owner/OwnerDashboardPage';
 import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
-import OAuthRedirectPage from '../pages/OAuthRedirectPage';
-import FindUserPage from '../pages/FindUserPage';
+import OAuthRedirectPage from '@/pages/OAuthRedirectPage';
+import FindUserPage from '@/pages/FindUserPage';
+import ProtectedRoute from './protectedRoute';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />, // 최상위 Layout
+    element: <Layout />,
     children: [
+      // 메인 페이지
       { index: true, element: <HomePage /> },
+
+      // 공용 페이지
       { path: 'login', element: <LoginPage /> },
-      { path: 'signup', element: <SignupPage /> },
       { path: 'findUser', element: <FindUserPage /> },
       { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
       { path: 'store/:id', element: <StoreDetailPage /> },
-      { path: 'chat', element: <ChatPage /> },
-      { path: 'favorites', element: <FavoritePage /> },
-      { path: 'dashboard', element: <OwnerDashboardPage /> },
-      { path: 'dashboard/store/register', element: <StoreRegisterPage /> },
+
+      // 🔒 로그인 필수 페이지 (ProtectedRoute로 감싸기)
+      {
+        path: 'chat',
+        element: (
+          <ProtectedRoute>
+            <ChatPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'favorites',
+        element: (
+          <ProtectedRoute>
+            <FavoritePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'dashboard',
+        element: (
+          <ProtectedRoute>
+            <OwnerDashboardPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'dashboard/store/register',
+        element: (
+          <ProtectedRoute>
+            <StoreRegisterPage />
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
+
+  // 404 → 홈으로 이동
   {
     path: '*',
     element: <Navigate to="/" replace />,

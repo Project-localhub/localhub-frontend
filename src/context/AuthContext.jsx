@@ -12,27 +12,16 @@ export const AuthProvider = ({ children }) => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  /** 사용자 정보 API 호출 후 user 업데이트 */
   const setUserFromApi = useCallback(
     async (forceSocialLogin = null) => {
-      if (isLoggingOut) {
-        return;
-      }
+      if (isLoggingOut) return;
 
       const res = await getUserInfo();
       const userData = res.data;
 
-      if (!userData) {
-        throw new Error('사용자 정보를 가져올 수 없습니다.');
-      }
+      if (!userData) throw new Error('사용자 정보를 가져올 수 없습니다.');
 
-      if (isLoggingOut) {
-        return;
-      }
-
-      // 소셜 로그인 여부 확인
-      // forceSocialLogin이 명시적으로 전달된 경우 그 값을 사용
-      // 그렇지 않으면 API 응답의 provider/isSocialLogin 필드를 우선 확인
-      // API 응답에 없으면 localStorage 확인
       let isSocialLogin;
       if (forceSocialLogin !== null) {
         isSocialLogin = forceSocialLogin;
@@ -51,11 +40,13 @@ export const AuthProvider = ({ children }) => {
         userType: userData.userType || 'CUSTOMER',
         isSocialLogin,
       });
+
       setIsLogin(true);
     },
     [isLoggingOut],
   );
 
+  /** 앱 시작 시 자동 로그인 복구 */
   useEffect(() => {
     const initializeAuth = async () => {
       if (isLoggingOut) {
@@ -80,13 +71,6 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('isSocialLogin');
         }
-      } else {
-        try {
-          await setUserFromApi(isSocialLogin);
-        } catch {
-          // 쿠키도 없으면 로그인 안 된 상태
-          localStorage.removeItem('isSocialLogin');
-        }
       }
 
       setIsInitializing(false);
@@ -95,43 +79,45 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, [setUserFromApi, isLoggingOut]);
 
+  /** 일반 로그인 */
   const login = async (accessToken) => {
-    // 로그인 시 로그아웃 플래그 해제
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
 
-    // 일반 로그인은 소셜 로그인 플래그 제거
-    localStorage.removeItem('isSocialLogin');
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.removeItem('isSocialLogin'); // 일반 로그인
 
-    if (accessToken) {
-      localStorage.setItem('accessToken', accessToken);
-    }
-
-    // 일반 로그인으로 명시적으로 설정
     await setUserFromApi(false);
+    setIsLogin(true);
   };
 
+  /** 소셜 로그인 (redirect 페이지에서 사용) */
+  const loginWithToken = async (accessToken) => {
+    if (!accessToken) throw new Error('accessToken이 필요합니다.');
+
+    setIsLoggingOut(false);
+    sessionStorage.removeItem('wasLoggedOut');
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('isSocialLogin', 'true');
+
+    await setUserFromApi(true);
+  };
+
+  /** 쿠키 기반 로그인 */
   const loginWithCookie = async () => {
-    // 쿠키 로그인은 localStorage의 isSocialLogin 값을 확인
-    // 없으면 일반 로그인으로 간주
     const isSocialLogin = localStorage.getItem('isSocialLogin') === 'true';
     await setUserFromApi(isSocialLogin);
   };
 
+  /** 로그아웃 */
   const logout = async () => {
     setIsLoggingOut(true);
     sessionStorage.setItem('wasLoggedOut', 'true');
 
     try {
-      try {
-        await kakaoLogout();
-      } catch {
-        // 카카오 로그아웃 실패해도 계속 진행
-      }
-
-      await logoutAPI();
-    } catch {
-      // 백엔드 로그아웃 실패해도 프론트엔드에서는 로그아웃 처리
+      await kakaoLogout().catch(() => {});
+      await logoutAPI().catch(() => {});
     } finally {
       setUser(null);
       setIsLogin(false);
@@ -141,32 +127,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithToken = async (accessToken) => {
-    if (!accessToken) {
-      throw new Error('accessToken이 필요합니다.');
-    }
-
-    // 로그인 시 로그아웃 플래그 해제
-    setIsLoggingOut(false);
-    sessionStorage.removeItem('wasLoggedOut');
-
-    // 소셜 로그인 플래그 설정 (OAuthRedirectPage에서 호출)
-    localStorage.setItem('isSocialLogin', 'true');
-    localStorage.setItem('accessToken', accessToken);
-
-    try {
-      // 소셜 로그인으로 명시적으로 설정
-      await setUserFromApi(true);
-    } catch (error) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('isSocialLogin');
-      throw error;
-    }
-  };
-
+  /** userType 변경 */
   const updateUserType = async (newUserType) => {
     await changeUserType(newUserType);
-    // user 객체의 isSocialLogin 값을 유지
+
     const currentIsSocialLogin = user?.isSocialLogin ?? false;
     await setUserFromApi(currentIsSocialLogin);
   };
@@ -176,11 +140,11 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         isLogin,
+        isInitializing,
         login,
-        logout,
         loginWithToken,
         loginWithCookie,
-        isInitializing,
+        logout,
         updateUserType,
       }}
     >
@@ -189,14 +153,8 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
 AuthProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
+
+export const useAuth = () => useContext(AuthContext);
