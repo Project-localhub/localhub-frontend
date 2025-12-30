@@ -1,0 +1,18 @@
+feat: 가게 등록/수정 기능 및 홈페이지 API 연동
+
+주요 변경사항:
+- 가게 등록 기능 구현 (주소 검색, 좌표 변환, 이미지 presign 업로드)
+- 가게 수정 기능 구현 (기존 데이터 로드, 이미지 관리)
+- 홈페이지 가게 목록 API 연동 (/api/restaurant/get-all-restaurants)
+- 찜하기 기능 React Query로 전환 (자동 갱신)
+- Layout 컴포넌트에서 사용자 타입 표시 제거 (xxx님만 표시)
+- 401 에러 조용히 처리 (getMyStores, logout)
+- 디버깅 로그 정리
+- Daum Postcode API 스크립트 로드 대기 로직 추가
+
+API 변경:
+- 가게 등록: POST /api/restaurant/save
+- 가게 수정: PUT /api/restaurant/update
+- 내 가게 조회: GET /api/restaurant/findByOwnerID
+- 전체 가게 조회: GET /api/restaurant/get-all-restaurants
+
