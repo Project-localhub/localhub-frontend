@@ -3,15 +3,27 @@ import { Link } from 'react-router-dom';
 import { Star, Heart, MapPin } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
 import { useFavorites } from '../context/FavoritesContext';
+import { toggleLike } from '../shared/api/auth';
 
-const StoreCard = ({ store }) => {
-  const { toggleFavorite, isFavorite } = useFavorites();
-  const favorite = isFavorite(store.id);
+const StoreCard = ({ store, onDelete, onRefresh }) => {
+  const favorite = store.isLiked;
 
-  const favoriteButtonHandler = (e) => {
-    e.preventDefault(); // Link 이동 막기
-    e.stopPropagation(); // 이벤트 전파 차단
-    toggleFavorite(store);
+  const favoriteButtonHandler = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      if (favorite) {
+        await deleteFavorite(store.id);
+      } else {
+        await toggleLike(store.id);
+      }
+
+      // 부모 컴포넌트에서 새로 불러오게
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

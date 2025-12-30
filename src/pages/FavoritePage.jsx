@@ -1,27 +1,18 @@
 import { useEffect, useState } from 'react';
-import { deleteFavorite, getLikeList } from '../shared/api/auth';
+import { getLikeList } from '../shared/api/auth';
+import StoreCard from '@/components/StoreCard';
 
 const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
 
+  const loadFavorites = async () => {
+    const res = await getLikeList();
+    setFavorites(res.data); // 서버 목록으로 싱크
+  };
+
   useEffect(() => {
     loadFavorites();
   }, []);
-
-  const loadFavorites = async () => {
-    const res = await getLikeList();
-    setFavorites(res.data);
-  };
-
-  // ⭐ 삭제 처리
-  const handleDelete = async (id) => {
-    try {
-      await deleteFavorite(id);
-      setFavorites((prev) => prev.filter((item) => item.id !== id)); // UI 즉시 반영
-    } catch (err) {
-      console.error('삭제 실패:', err);
-    }
-  };
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -39,7 +30,7 @@ const FavoritesPage = () => {
               <StoreCard
                 key={store.id}
                 store={store}
-                onDelete={handleDelete} // ⭐ 여기에서 삭제 함수 전달
+                onRefresh={loadFavorites} // ← 하트 클릭 후 sync
               />
             ))}
           </div>

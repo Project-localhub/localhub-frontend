@@ -1,27 +1,49 @@
 /* eslint-disable react/prop-types */
-import React from 'react';
-import { MapPin } from 'lucide-react';
+import { useEffect } from 'react';
 
-const MapView = ({ stores = [] }) => {
-  return (
-    <div className="flex-1 relative bg-gray-100">
-      {/* 지도 영역 - 실제 지도 라이브러리 연동 필요 */}
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center text-gray-500">
-          <MapPin size={48} className="mx-auto mb-2 text-gray-400" />
-          <p className="text-sm">지도 기능은 추후 구현 예정입니다</p>
-          <p className="text-xs text-gray-400 mt-1">주변 가게 {stores.length}개</p>
-        </div>
-      </div>
+const MapView = ({ stores }) => {
+  useEffect(() => {
+    // 스크립트 로드
+    const script = document.createElement('script');
+    script.src =
+      '//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_API_KEY&autoload=false';
+    script.async = true;
 
-      {/* 지도 마커 영역 (추후 구현) */}
-      {stores.map((store) => (
-        <div key={store.id} className="absolute" style={{ display: 'none' }}>
-          {/* 마커 위치는 실제 지도 라이브러리로 구현 */}
-        </div>
-      ))}
-    </div>
-  );
+    script.onload = () => {
+      window.kakao.maps.load(() => {
+        const container = document.getElementById('map');
+        const options = {
+          center: new window.kakao.maps.LatLng(37.4979, 127.0276), // 기본 중심 (강남역)
+          level: 4,
+        };
+
+        const map = new window.kakao.maps.Map(container, options);
+
+        // ⭐ 가게 데이터 마커로 표시
+        stores.forEach((store) => {
+          const marker = new window.kakao.maps.Marker({
+            map,
+            position: new window.kakao.maps.LatLng(
+              store.lat,
+              store.lng
+            ),
+          });
+
+          const info = new window.kakao.maps.InfoWindow({
+            content: `<div style="padding:6px 10px;font-size:14px">${store.name}</div>`,
+          });
+
+          window.kakao.maps.event.addListener(marker, 'click', () => {
+            info.open(map, marker);
+          });
+        });
+      });
+    };
+
+    document.head.appendChild(script);
+  }, [stores]);
+
+  return <div id="map" className="w-full h-full" />;
 };
 
 export default MapView;
