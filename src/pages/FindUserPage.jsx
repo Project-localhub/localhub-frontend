@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { findUsername, verifyEmailCode } from '../shared/api/auth';
+import { findUsername, sendEmailCode, verifyEmailCode } from '../shared/api/auth';
 
 const FindUserPage = () => {
   const [email, setEmail] = useState('');
@@ -10,22 +10,32 @@ const FindUserPage = () => {
 
   //인증코드 전송
   const handleSendCode = async () => {
-    await sendEMailCode(email);
-    alert('인증코드를 발송했습니다');
-    setStep(2);
+    try {
+      await sendEmailCode(email);
+      alert('인증코드를 발송했습니다');
+      setStep(2);
+    } catch (e) {
+      alert('이메일 전송 실패: ' + (e.response?.data?.message ?? ''));
+    }
   };
+
   //인증코드 검증
   const handleVerifyCode = async () => {
-    await verifyEmailCode(email, code);
-    alert('이메일 전송 완료');
-    setStep(3);
+    try {
+      await verifyEmailCode(email, code);
+      alert('인증 성공');
+      setStep(3);
+    } catch (e) {
+      alert('인증 실패: ' + e.response?.data?.message ?? '');
+    }
   };
+
   //아이디 찾기
   const handleFind = async (e) => {
     e.preventDefault();
     try {
       const res = await findUsername(email);
-      alert(`아이디는 ${res.data.username}`);
+      alert(`아이디는 ${res.data}`);
       navigate('/login');
     } catch (err) {
       alert('아이디 찾기에 실패했습니다');
@@ -83,7 +93,7 @@ const FindUserPage = () => {
         {/* 3️⃣ 아이디 찾기 */}
         {step === 3 && (
           <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg">
-            아이디 찾기
+            아이디 전송
           </button>
         )}
       </form>

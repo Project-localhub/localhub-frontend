@@ -119,9 +119,13 @@ const LoginPage = () => {
           </form>
 
           <div className="flex items-center justify-center gap-4 mt-6 text-sm">
-            <button onClick={findButtonHandler} className="text-gray-600">
-              비밀번호/아이디 찾기
-            </button>
+            <div className="flex flex-row gap-2">
+              <button onClick={findButtonHandler} className="text-gray-600">
+                아이디 찾기
+              </button>
+              <span>/</span>
+              <button className="text-gray-600">비밀번호 찾기</button>
+            </div>
             <span className="text-gray-300">|</span>
             <Link to="/signup" className="text-blue-600">
               회원가입

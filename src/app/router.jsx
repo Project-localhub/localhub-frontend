@@ -11,6 +11,7 @@ import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
 import StoreEditPage from '@/pages/owner/StoreEditPage';
 import OAuthRedirectPage from '@/pages/OAuthRedirectPage';
 import FindUserPage from '@/pages/FindUserPage';
+import ReviewPage from '@/pages/ReviewPage';
 import ProtectedRoute from './protectedRoute';
 
 export const router = createBrowserRouter([
@@ -66,6 +67,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <StoreEditPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'review/:id',
+        element: (
+          <ProtectedRoute>
+            <ReviewPage />
           </ProtectedRoute>
         ),
       },

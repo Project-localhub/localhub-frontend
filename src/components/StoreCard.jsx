@@ -3,59 +3,26 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Star, Heart, MapPin, MessageCircle } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
 import { useFavorites } from '../context/FavoritesContext';
-import { useCreateInquiryChat } from '@/shared/hooks/useChatQueries';
-import { useAuth } from '@/context/AuthContext';
-import { useState } from 'react';
+import { toggleLike } from '../shared/api/auth';
 
-const StoreCard = ({ store }) => {
-  const { toggleFavorite, isFavorite } = useFavorites();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const createInquiryChat = useCreateInquiryChat();
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
-  const favorite = isFavorite(store.id);
+const StoreCard = ({ store, onDelete, onRefresh }) => {
+  const favorite = store.isLiked;
 
-  const favoriteButtonHandler = (e) => {
-    e.preventDefault(); // Link 이동 막기
-    e.stopPropagation(); // 이벤트 전파 차단
-    toggleFavorite(store);
-  };
+  const favoriteButtonHandler = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const handleStartChat = async (e) => {
-    e.preventDefault(); // Link 이동 막기
-    e.stopPropagation(); // 이벤트 전파 차단
-
-    if (!user) {
-      alert('로그인이 필요합니다.');
-      navigate('/login');
-      return;
-    }
-
-    if (user.userType === 'OWNER') {
-      alert('사업자는 채팅을 시작할 수 없습니다. 일반 사용자로 로그인해주세요.');
-      return;
-    }
-
-    setIsCreatingChat(true);
     try {
-      // 채팅방 생성
-      const response = await createInquiryChat.mutateAsync({
-        storeId: store.id,
-        userId: user.id,
-      });
+      if (favorite) {
+        await deleteFavorite(store.id);
+      } else {
+        await toggleLike(store.id);
+      }
 
-      // 채팅방 생성 성공 시 ChatPage로 이동
-      const chatRoomId = response.id || response.inquiryChatId || response.chatRoomId;
-      navigate('/chat', { state: { chatRoomId } });
-    } catch (error) {
-      console.error('채팅방 생성 오류:', error);
-      const errorMessage =
-        error.response?.status === 401
-          ? '인증이 필요합니다. 다시 로그인해주세요.'
-          : error.message || '채팅방 생성에 실패했습니다.';
-      alert(errorMessage);
-    } finally {
-      setIsCreatingChat(false);
+      // 부모 컴포넌트에서 새로 불러오게
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -101,24 +68,13 @@ const StoreCard = ({ store }) => {
 
         <div className="mb-2 text-gray-900">{store.name}</div>
 
-        <div className="flex flex-wrap gap-1 mb-3">
+        <div className="flex flex-wrap gap-1">
           {store.tags.map((tag, index) => (
             <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
               #{tag}
             </span>
           ))}
         </div>
-
-        {user && user.userType !== 'OWNER' && (
-          <button
-            onClick={handleStartChat}
-            disabled={isCreatingChat}
-            className="w-full py-2 px-3 bg-blue-600 text-white rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <MessageCircle size={16} />
-            {isCreatingChat ? '채팅방 생성 중...' : '채팅하기'}
-          </button>
-        )}
       </div>
     </Link>
   );

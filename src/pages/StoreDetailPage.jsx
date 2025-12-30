@@ -67,43 +67,8 @@ const StoreDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(TAB_TYPES.INFO);
-  const { user } = useAuth();
-  const createInquiryChat = useCreateInquiryChat();
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
-
-  const handleStartChat = async () => {
-    if (!user) {
-      alert('로그인이 필요합니다.');
-      navigate('/login');
-      return;
-    }
-
-    if (user.userType === 'OWNER') {
-      alert('사업자는 채팅을 시작할 수 없습니다. 일반 사용자로 로그인해주세요.');
-      return;
-    }
-
-    setIsCreatingChat(true);
-    try {
-      // 채팅방 생성 (storeId는 가게 ID, userId는 현재 로그인한 사용자 ID)
-      const response = await createInquiryChat.mutateAsync({
-        storeId: id, // 가게 ID
-        userId: user.id, // 현재 사용자 ID
-      });
-
-      // 채팅방 생성 성공 시 ChatPage로 이동 (채팅방 ID를 state로 전달)
-      const chatRoomId = response.id || response.inquiryChatId || response.chatRoomId;
-      navigate('/chat', { state: { chatRoomId } });
-    } catch (error) {
-      console.error('채팅방 생성 오류:', error);
-      const errorMessage =
-        error.response?.status === 401
-          ? '인증이 필요합니다. 다시 로그인해주세요.'
-          : error.message || '채팅방 생성에 실패했습니다.';
-      alert(errorMessage);
-    } finally {
-      setIsCreatingChat(false);
-    }
+  const reviewButton = () => {
+    navigate(`/review/${mockStore.id}`);
   };
 
   return (
@@ -237,7 +202,10 @@ const StoreDetailPage = () => {
 
         {activeTab === TAB_TYPES.REVIEW && (
           <div className="p-4">
-            <button className="w-full py-3 bg-blue-600 text-white rounded-lg mb-4">
+            <button
+              onClick={reviewButton}
+              className="w-full py-3 bg-blue-600 text-white rounded-lg mb-4"
+            >
               리뷰 작성하기
             </button>
             <div className="space-y-4">

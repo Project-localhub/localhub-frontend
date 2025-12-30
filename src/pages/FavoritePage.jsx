@@ -1,8 +1,18 @@
+import { useEffect, useState } from 'react';
+import { getLikeList } from '../shared/api/auth';
 import StoreCard from '@/components/StoreCard';
-import { useFavorites } from '../context/FavoritesContext';
 
 const FavoritesPage = () => {
-  const { favorites } = useFavorites(); // ✅ 컴포넌트 안으로 이동!
+  const [favorites, setFavorites] = useState([]);
+
+  const loadFavorites = async () => {
+    const res = await getLikeList();
+    setFavorites(res.data); // 서버 목록으로 싱크
+  };
+
+  useEffect(() => {
+    loadFavorites();
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -17,7 +27,11 @@ const FavoritesPage = () => {
         {favorites.length > 0 ? (
           <div className="space-y-3">
             {favorites.map((store) => (
-              <StoreCard key={store.id} store={store} />
+              <StoreCard
+                key={store.id}
+                store={store}
+                onRefresh={loadFavorites} // ← 하트 클릭 후 sync
+              />
             ))}
           </div>
         ) : (

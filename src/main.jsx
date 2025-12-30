@@ -8,7 +8,13 @@ import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { initKakao } from './shared/lib/kakao';
 import { FavoritesProvider } from './context/FavoritesContext';
+import client from './shared/api/client';
 
+const token = localStorage.getItem('accessToken');
+
+if (token) {
+  client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 const KAKAO_JAVASCRIPT_KEY =
   import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY || '276aa066755d990c6678fa24c9076e24';
 

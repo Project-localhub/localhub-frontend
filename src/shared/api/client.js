@@ -9,66 +9,44 @@ const client = axios.create({
   maxRedirects: 0,
 });
 
-client.interceptors.request.use((config) => {
-  const noAuthRequiredUrls = [
-    '/api/auth/login',
-    '/api/auth/join',
-    '/api/auth/findUsername',
-    '/mail/send/verify',
-    '/mail/email/verify',
-  ];
+// 인증 제외 URL
+const noAuthRequiredUrls = [
+  '/api/auth/login',
+  '/api/auth/join',
+  '/api/auth/findUsername',
+  '/mail/send/verify',
+  '/mail/email/verify',
+];
 
   const isNoAuthRequest = config.method === 'post' && noAuthRequiredUrls.includes(config.url);
 
-  if (isNoAuthRequest) {
-    return config;
-  }
+  const isNoAuthRequest = noAuthRequiredUrls.some((url) => config.url.startsWith(url));
+  console.log('📌 인증 제외 여부:', isNoAuthRequest);
 
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-
-    // 디버깅: 토큰 전송 확인
-    if (import.meta.env.DEV) {
-      console.log('🔑 API 요청:', {
-        url: config.url,
-        method: config.method,
-        hasToken: !!token,
-        tokenPreview: token.substring(0, 20) + '...',
-        headers: {
-          Authorization: config.headers.Authorization?.substring(0, 30) + '...',
-        },
-      });
-    }
-  } else {
-    // 디버깅: 토큰이 없을 때
-    if (import.meta.env.DEV) {
-      console.warn('⚠️ 토큰 없음:', {
-        url: config.url,
-        method: config.method,
-      });
+  if (!isNoAuthRequest) {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log('📌 토큰 추가됨:', token);
+    } else {
+      console.log('⛔ 토큰 없음');
     }
   }
 
   return config;
 });
 
+// 🔥 응답 인터셉터
 client.interceptors.response.use(
   (response) => {
-    // 302 리다이렉트 응답 처리
     if (response.status === 302) {
-      const error = new Error('인증이 필요합니다. 다시 로그인해주세요.');
-      error.response = response;
-      return Promise.reject(error);
+      return Promise.reject(new Error('인증이 필요합니다. 다시 로그인해주세요.'));
     }
     return response;
   },
   (error) => {
-    // 리다이렉트 무한 루프 에러 처리
     if (error.code === 'ERR_TOO_MANY_REDIRECTS') {
-      const redirectError = new Error('인증이 필요합니다. 다시 로그인해주세요.');
-      redirectError.response = error.response;
-      return Promise.reject(redirectError);
+      return Promise.reject(new Error('인증이 필요합니다. 다시 로그인해주세요.'));
     }
 
     // 401 Unauthorized 에러 처리

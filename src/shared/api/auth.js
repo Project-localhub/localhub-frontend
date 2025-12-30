@@ -7,6 +7,7 @@ export const signUp = async (data) => {
 
 export const login = async (data) => {
   const response = await client.post('/api/auth/login', data);
+
   return response.data;
 };
 export const changeUserType = async (userType) => {
@@ -18,7 +19,7 @@ export const changeUserType = async (userType) => {
 
 export const getUserInfo = async () => {
   const res = await client.get('/api/user/getUserInfo');
-  return res;
+  return res; // data만 넘기기 (응답 통일)
 };
 
 export const logout = async () => {
@@ -45,4 +46,23 @@ export const sendEmailCode = (email) => {
 
 export const verifyEmailCode = (email, code) => {
   return client.post('/mail/email/verify', { email, code });
+};
+
+export const toggleLike = async (restaurantId) => {
+  const res = await client.post(`/api/restaurant/like/${restaurantId}`);
+  return res.data;
+};
+
+export const saveReview = async (restaurantId, content) => {
+  const res = await client.post('/api/restaurant/save-review', { restaurantId, content });
+  return res.data;
+};
+
+export const getLikeList = async () => {
+  const res = await client.get('/api/restaurant/get/likeList');
+  return res;
+};
+
+export const deleteFavorite = async (restaurantId) => {
+  return client.delete(`/api/restaurant/deleteBy/${restaurantId}`);
 };
