@@ -28,8 +28,8 @@ export const useMyStores = () => {
         const response = await getMyStores();
         return Array.isArray(response) ? response : response.data || [];
       } catch (error) {
-        // 백엔드가 없을 때 빈 배열 반환
-        console.warn('가게 목록 조회 실패 (백엔드 미연동):', error);
+        // 네트워크 에러나 기타 에러는 조용히 빈 배열 반환
+        // 401 에러는 이미 getMyStores에서 처리됨
         return [];
       }
     },

@@ -39,7 +39,9 @@ export const kakaoLogout = async () => {
   try {
     await window.Kakao.Auth.logout();
     return Promise.resolve();
-  } catch {
+  } catch (error) {
+    // 401 에러는 이미 로그아웃된 상태이므로 조용히 처리
+    // 다른 에러도 조용히 처리 (카카오 로그아웃 실패는 치명적이지 않음)
     return Promise.resolve();
   }
 };

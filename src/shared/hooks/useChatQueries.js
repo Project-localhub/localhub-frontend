@@ -1,19 +1,45 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  createInquiryChat,
+  getInquiryChats,
+  getChatMessages,
   getOwnerChatRooms,
   getMonthlyChatInquiryCount,
-  getChatMessages,
 } from '@/shared/api/chatApi';
 
 // Query Keys
 export const chatKeys = {
   all: ['chats'],
   rooms: () => [...chatKeys.all, 'rooms'],
+  inquiryChats: (params) => [...chatKeys.rooms(), 'inquiry', params],
   ownerRooms: (storeId) => [...chatKeys.rooms(), 'owner', storeId],
   messages: () => [...chatKeys.all, 'messages'],
-  roomMessages: (roomId) => [...chatKeys.messages(), roomId],
+  roomMessages: (inquiryChatId) => [...chatKeys.messages(), inquiryChatId],
   counts: () => [...chatKeys.all, 'count'],
   monthlyCount: (storeId, year, month) => [...chatKeys.counts(), storeId, year, month],
+};
+
+// 채팅방 생성
+export const useCreateInquiryChat = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data) => createInquiryChat(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.rooms() });
+    },
+  });
+};
+
+// 채팅방 조회
+export const useInquiryChats = (params = {}, options = {}) => {
+  return useQuery({
+    queryKey: chatKeys.inquiryChats(params),
+    queryFn: () => getInquiryChats(params),
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
+    ...options,
+  });
 };
 
 // 사장님의 채팅방 목록 조회
@@ -40,30 +66,16 @@ export const useMonthlyChatInquiryCount = (storeId, year, month, options = {}) =
 };
 
 // 채팅방 메시지 조회
-export const useChatMessages = (roomId, params = {}, options = {}) => {
+export const useChatMessages = (inquiryChatId, params = {}, options = {}) => {
   return useQuery({
-    queryKey: chatKeys.roomMessages(roomId),
-    queryFn: () => getChatMessages(roomId, params),
-    enabled: !!roomId && options.enabled !== false,
+    queryKey: chatKeys.roomMessages(inquiryChatId),
+    queryFn: () => getChatMessages(inquiryChatId, params),
+    enabled: !!inquiryChatId && options.enabled !== false,
     staleTime: 10 * 1000,
     refetchInterval: 10 * 1000,
     ...options,
   });
 };
 
-// 메시지 전송 Mutation (추후 구현)
-export const useSendMessage = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ roomId, message }) => {
-      // TODO: sendMessage API 함수 구현 필요
-      // return sendMessage(roomId, message);
-    },
-    onSuccess: (data, variables) => {
-      // 메시지 목록 갱신
-      queryClient.invalidateQueries({ queryKey: chatKeys.roomMessages(variables.roomId) });
-      queryClient.invalidateQueries({ queryKey: chatKeys.rooms() });
-    },
-  });
-};
+// 메시지 전송 Mutation (웹소켓으로 전송하므로 React Query 사용 안 함)
+// useSendMessage는 웹소켓 클라이언트를 직접 사용

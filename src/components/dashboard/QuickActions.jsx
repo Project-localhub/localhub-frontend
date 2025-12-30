@@ -1,9 +1,15 @@
-import { Plus, ChevronRight, Calendar, MessageCircle } from 'lucide-react';
+import { Plus, ChevronRight, Calendar, MessageCircle, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 const QuickActions = ({ selectedStoreId }) => {
   const navigate = useNavigate();
+
+  const handleEditStore = () => {
+    if (selectedStoreId) {
+      navigate(`/dashboard/store/edit/${selectedStoreId}`);
+    }
+  };
 
   return (
     <div className="mx-4 mb-4 bg-white rounded-lg p-4 border border-gray-200">
@@ -21,6 +27,16 @@ const QuickActions = ({ selectedStoreId }) => {
         </button>
         {selectedStoreId && (
           <>
+            <button
+              onClick={handleEditStore}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+            >
+              <div className="flex items-center gap-3">
+                <Edit size={20} className="text-blue-600" />
+                <span className="text-gray-900">가게 정보 수정</span>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </button>
             <button className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
               <div className="flex items-center gap-3">
                 <Calendar size={20} className="text-blue-600" />

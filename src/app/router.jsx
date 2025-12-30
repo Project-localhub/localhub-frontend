@@ -2,11 +2,13 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
+import SignupPage from '@/pages/SignupPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
 import ChatPage from '@/pages/ChatPage';
 import FavoritePage from '@/pages/FavoritePage';
 import OwnerDashboardPage from '@/pages/owner/OwnerDashboardPage';
 import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
+import StoreEditPage from '@/pages/owner/StoreEditPage';
 import OAuthRedirectPage from '@/pages/OAuthRedirectPage';
 import FindUserPage from '@/pages/FindUserPage';
 import ProtectedRoute from './protectedRoute';
@@ -21,6 +23,7 @@ export const router = createBrowserRouter([
 
       // 공용 페이지
       { path: 'login', element: <LoginPage /> },
+      { path: 'signup', element: <SignupPage /> },
       { path: 'findUser', element: <FindUserPage /> },
       { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
       { path: 'store/:id', element: <StoreDetailPage /> },
@@ -55,6 +58,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <StoreRegisterPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'dashboard/store/edit/:id',
+        element: (
+          <ProtectedRoute>
+            <StoreEditPage />
           </ProtectedRoute>
         ),
       },

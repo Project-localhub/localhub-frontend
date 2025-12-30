@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X, Plus } from 'lucide-react';
 import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/shared/lib/storeConstants';
-import { useStoreForm } from '@/shared/hooks/useStoreForm';
-import ImageUpload from '@/components/dashboard/ImageUpload';
+import { useStoreEditForm } from '@/shared/hooks/useStoreEditForm';
 import AddressSearch from '@/components/dashboard/AddressSearch';
 import OperatingHours from '@/components/dashboard/OperatingHours';
 
-const StoreRegisterPage = () => {
+const StoreEditPage = () => {
   const navigate = useNavigate();
   const {
     formData,
@@ -14,12 +13,33 @@ const StoreRegisterPage = () => {
     errors,
     isSubmitting,
     isUploadingImages,
+    isLoading,
     handleImageAdd,
     handleImageRemove,
     handleKeywordToggle,
     handleAddressSearch,
     handleSubmit,
-  } = useStoreForm();
+  } = useStoreEditForm();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-gray-500">가게 정보를 불러오는 중...</div>
+      </div>
+    );
+  }
+
+  // 기존 이미지와 새로 추가한 이미지를 합쳐서 표시
+  const allImages = [
+    ...formData.existingImages.map((img) => ({
+      url: img.url || img.imageUrl || '',
+      isExisting: true,
+    })),
+    ...formData.images.map((file) => ({
+      file,
+      isExisting: false,
+    })),
+  ];
 
   return (
     <div className="flex flex-col h-full bg-gray-50 overflow-auto">
@@ -28,7 +48,7 @@ const StoreRegisterPage = () => {
         <button onClick={() => navigate(-1)}>
           <ArrowLeft size={24} />
         </button>
-        <span className="text-gray-900 font-medium">가게 등록</span>
+        <span className="text-gray-900 font-medium">가게 정보 수정</span>
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 p-4 space-y-6">
@@ -53,7 +73,7 @@ const StoreRegisterPage = () => {
         {/* 사업자등록번호 */}
         <div>
           <label htmlFor="business-number" className="block text-gray-900 font-medium mb-2">
-            사업자등록번호 <span className="text-red-500">*</span>
+            사업자등록번호
           </label>
           <input
             id="business-number"
@@ -81,13 +101,63 @@ const StoreRegisterPage = () => {
           )}
         </div>
 
-        <ImageUpload
-          images={formData.images}
-          onAdd={handleImageAdd}
-          onRemove={handleImageRemove}
-          error={errors.images}
-          isUploading={isUploadingImages}
-        />
+        {/* 이미지 업로드 (기존 + 새로 추가) */}
+        <div>
+          <div className="block text-gray-900 font-medium mb-2">
+            가게 사진 <span className="text-red-500">*</span> (최대 3개)
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {allImages.map((img, index) => (
+              <div key={index} className="relative aspect-square">
+                {img.isExisting ? (
+                  <img
+                    src={img.url}
+                    alt={`가게 사진 ${index + 1}`}
+                    className="w-full h-full object-cover rounded-lg border border-gray-300"
+                  />
+                ) : (
+                  <img
+                    src={URL.createObjectURL(img.file)}
+                    alt={`가게 사진 ${index + 1}`}
+                    className="w-full h-full object-cover rounded-lg border border-gray-300"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleImageRemove(index)}
+                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            {allImages.length < 3 && (
+              <label
+                className={`aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center ${
+                  isUploadingImages ? 'cursor-wait opacity-50' : 'cursor-pointer hover:border-blue-500'
+                }`}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageAdd}
+                  className="hidden"
+                  multiple
+                  disabled={isUploadingImages}
+                />
+                {isUploadingImages ? (
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <span className="text-xs text-gray-500">업로드 중...</span>
+                  </div>
+                ) : (
+                  <Plus size={24} className="text-gray-400" />
+                )}
+              </label>
+            )}
+          </div>
+          {errors.images && <p className="text-red-500 text-sm mt-1">{errors.images}</p>}
+        </div>
 
         {/* 음식 카테고리 */}
         <div>
@@ -196,7 +266,7 @@ const StoreRegisterPage = () => {
             disabled={isSubmitting}
             className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? '등록 중...' : '가게 등록하기'}
+            {isSubmitting ? '수정 중...' : '가게 정보 수정하기'}
           </button>
         </div>
       </form>
@@ -204,4 +274,5 @@ const StoreRegisterPage = () => {
   );
 };
 
-export default StoreRegisterPage;
+export default StoreEditPage;
+

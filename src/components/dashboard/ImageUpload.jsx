@@ -1,7 +1,7 @@
 import { X, Plus } from 'lucide-react';
 import PropTypes from 'prop-types';
 
-const ImageUpload = ({ images, onAdd, onRemove, error }) => {
+const ImageUpload = ({ images, onAdd, onRemove, error, isUploading = false }) => {
   return (
     <div>
       <div className="block text-gray-900 font-medium mb-2">
@@ -25,9 +25,27 @@ const ImageUpload = ({ images, onAdd, onRemove, error }) => {
           </div>
         ))}
         {images.length < 3 && (
-          <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-500">
-            <input type="file" accept="image/*" onChange={onAdd} className="hidden" multiple />
-            <Plus size={24} className="text-gray-400" />
+          <label
+            className={`aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center ${
+              isUploading ? 'cursor-wait opacity-50' : 'cursor-pointer hover:border-blue-500'
+            }`}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={onAdd}
+              className="hidden"
+              multiple
+              disabled={isUploading}
+            />
+            {isUploading ? (
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <span className="text-xs text-gray-500">업로드 중...</span>
+              </div>
+            ) : (
+              <Plus size={24} className="text-gray-400" />
+            )}
           </label>
         )}
       </div>
@@ -41,6 +59,7 @@ ImageUpload.propTypes = {
   onAdd: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
   error: PropTypes.string,
+  isUploading: PropTypes.bool,
 };
 
 export default ImageUpload;
