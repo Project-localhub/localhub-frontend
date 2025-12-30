@@ -9,59 +9,52 @@ const client = axios.create({
   maxRedirects: 0,
 });
 
+// 인증 제외 URL
+const noAuthRequiredUrls = [
+  '/api/auth/login',
+  '/api/auth/join',
+  '/api/auth/findUsername',
+  '/mail/send/verify',
+  '/mail/email/verify',
+];
+
+// 🔥 요청 인터셉터 (1개만!)
 client.interceptors.request.use((config) => {
-  const noAuthRequiredUrls = [
-    '/api/auth/login',
-    '/api/auth/join',
-    '/api/auth/findUsername',
-    '/mail/send/verify',
-    '/mail/email/verify',
-  ];
+  console.log('📌 요청 URL:', config.url);
+  console.log('📌 전체 요청 객체:', config);
 
-  const isNoAuthRequest = config.method === 'post' && noAuthRequiredUrls.includes(config.url);
+  const isNoAuthRequest = noAuthRequiredUrls.some((url) => config.url.startsWith(url));
+  console.log('📌 인증 제외 여부:', isNoAuthRequest);
 
-  if (isNoAuthRequest) {
-    return config;
-  }
-
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (!isNoAuthRequest) {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log('📌 토큰 추가됨:', token);
+    } else {
+      console.log('⛔ 토큰 없음');
+    }
   }
 
   return config;
 });
 
+// 🔥 응답 인터셉터
 client.interceptors.response.use(
   (response) => {
-    // 302 리다이렉트 응답 처리
     if (response.status === 302) {
-      const error = new Error('인증이 필요합니다. 다시 로그인해주세요.');
-      error.response = response;
-      return Promise.reject(error);
+      return Promise.reject(new Error('인증이 필요합니다. 다시 로그인해주세요.'));
     }
     return response;
   },
   (error) => {
-    // 리다이렉트 무한 루프 에러 처리
     if (error.code === 'ERR_TOO_MANY_REDIRECTS') {
-      const redirectError = new Error('인증이 필요합니다. 다시 로그인해주세요.');
-      redirectError.response = error.response;
-      return Promise.reject(redirectError);
+      return Promise.reject(new Error('인증이 필요합니다. 다시 로그인해주세요.'));
     }
 
-    // 401 Unauthorized 에러 처리
     if (error.response?.status === 401) {
-      const authError = new Error('인증이 필요합니다. 다시 로그인해주세요.');
-      authError.response = error.response;
-      return Promise.reject(authError);
-    }
-
-    // 302 리다이렉트 에러 처리
-    if (error.response?.status === 302) {
-      const redirectError = new Error('인증이 필요합니다. 다시 로그인해주세요.');
-      redirectError.response = error.response;
-      return Promise.reject(redirectError);
+      console.log('⛔ 401 에러 발생');
+      return Promise.reject(new Error('인증이 필요합니다. 다시 로그인해주세요.'));
     }
 
     return Promise.reject(error);

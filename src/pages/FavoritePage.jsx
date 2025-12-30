@@ -1,8 +1,27 @@
-import StoreCard from '@/components/StoreCard';
-import { useFavorites } from '../context/FavoritesContext';
+import { useEffect, useState } from 'react';
+import { deleteFavorite, getLikeList } from '../shared/api/auth';
 
 const FavoritesPage = () => {
-  const { favorites } = useFavorites(); // ✅ 컴포넌트 안으로 이동!
+  const [favorites, setFavorites] = useState([]);
+
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
+  const loadFavorites = async () => {
+    const res = await getLikeList();
+    setFavorites(res.data);
+  };
+
+  // ⭐ 삭제 처리
+  const handleDelete = async (id) => {
+    try {
+      await deleteFavorite(id);
+      setFavorites((prev) => prev.filter((item) => item.id !== id)); // UI 즉시 반영
+    } catch (err) {
+      console.error('삭제 실패:', err);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -17,7 +36,11 @@ const FavoritesPage = () => {
         {favorites.length > 0 ? (
           <div className="space-y-3">
             {favorites.map((store) => (
-              <StoreCard key={store.id} store={store} />
+              <StoreCard
+                key={store.id}
+                store={store}
+                onDelete={handleDelete} // ⭐ 여기에서 삭제 함수 전달
+              />
             ))}
           </div>
         ) : (
