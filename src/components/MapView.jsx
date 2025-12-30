@@ -5,8 +5,7 @@ const MapView = ({ stores }) => {
   useEffect(() => {
     // 스크립트 로드
     const script = document.createElement('script');
-    script.src =
-      '//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_API_KEY&autoload=false';
+    script.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_API_KEY&autoload=false';
     script.async = true;
 
     script.onload = () => {
@@ -23,10 +22,7 @@ const MapView = ({ stores }) => {
         stores.forEach((store) => {
           const marker = new window.kakao.maps.Marker({
             map,
-            position: new window.kakao.maps.LatLng(
-              store.lat,
-              store.lng
-            ),
+            position: new window.kakao.maps.LatLng(store.lat, store.lng),
           });
 
           const info = new window.kakao.maps.InfoWindow({

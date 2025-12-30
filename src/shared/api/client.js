@@ -18,10 +18,12 @@ const noAuthRequiredUrls = [
   '/mail/email/verify',
 ];
 
-  const isNoAuthRequest = config.method === 'post' && noAuthRequiredUrls.includes(config.url);
-
+client.interceptors.request.use((config) => {
   const isNoAuthRequest = noAuthRequiredUrls.some((url) => config.url.startsWith(url));
-  console.log('📌 인증 제외 여부:', isNoAuthRequest);
+
+  if (isNoAuthRequest) {
+    return config;
+  }
 
   if (!isNoAuthRequest) {
     const token = localStorage.getItem('accessToken');
@@ -40,42 +42,29 @@ const noAuthRequiredUrls = [
 client.interceptors.response.use(
   (response) => {
     if (response.status === 302) {
-      return Promise.reject(new Error('인증이 필요합니다. 다시 로그인해주세요.'));
+      const error = new Error('인증이 필요합니다. 다시 로그인해주세요.');
+      error.response = response;
+      return Promise.reject(error);
     }
     return response;
   },
   (error) => {
+    // 리다이렉트 무한 루프 에러 처리
     if (error.code === 'ERR_TOO_MANY_REDIRECTS') {
-      return Promise.reject(new Error('인증이 필요합니다. 다시 로그인해주세요.'));
+      const redirectError = new Error('인증이 필요합니다. 다시 로그인해주세요.');
+      redirectError.response = error.response;
+      return Promise.reject(redirectError);
     }
 
     // 401 Unauthorized 에러 처리
     // 단, 특정 엔드포인트는 조용히 처리 (로그아웃, 가게 목록 조회 등)
     if (error.response?.status === 401) {
-      const silent401Urls = ['/logout', '/api/stores/my'];
+      const silent401Urls = ['/logout', '/api/restaurant/findByOwnerID'];
       const shouldSilent = silent401Urls.some((url) => error.config?.url?.includes(url));
 
       if (shouldSilent) {
         // 조용히 처리 (에러를 reject하지 않고 빈 응답 반환)
         return Promise.resolve({ data: null, status: 401 });
-      }
-
-      // 디버깅: 401 에러 상세 정보
-      if (import.meta.env.DEV) {
-        const token = localStorage.getItem('accessToken');
-        console.error('❌ 401 에러 발생:', {
-          url: error.config?.url,
-          method: error.config?.method,
-          hasToken: !!token,
-          tokenPreview: token ? token.substring(0, 30) + '...' : '없음',
-          authorizationHeader: error.config?.headers?.Authorization
-            ? error.config.headers.Authorization.substring(0, 40) + '...'
-            : '없음',
-          requestHeaders: error.config?.headers,
-          responseData: error.response?.data,
-          responseStatus: error.response?.status,
-          fullError: error,
-        });
       }
 
       const authError = new Error('인증이 필요합니다. 다시 로그인해주세요.');

@@ -41,6 +41,7 @@ const SignupPage = () => {
       alert('비밀번호가 일치하지 않습니다');
       return;
     }
+
     try {
       await signUp({
         name: formData.name,
@@ -53,9 +54,7 @@ const SignupPage = () => {
       alert('회원가입 완료');
       navigate('/login');
     } catch (err) {
-      console.error('회원가입 에러 전체:', err); // err 객체 전체 확인
       if (err.response) {
-        console.error('백엔드 응답 데이터:', err.response.data);
         alert('회원가입 실패: ' + JSON.stringify(err.response.data));
       } else {
         alert('회원가입 실패: 서버 연결 문제 또는 네트워크 오류');

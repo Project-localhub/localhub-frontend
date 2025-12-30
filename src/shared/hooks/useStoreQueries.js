@@ -6,6 +6,7 @@ import {
   createStore,
   updateStore,
   incrementStoreView,
+  getAllRestaurants,
 } from '@/shared/api/storeApi';
 
 // Query Keys
@@ -19,6 +20,30 @@ export const storeKeys = {
   stats: (id) => [...storeKeys.all, 'stats', id],
 };
 
+// 모든 가게 목록 조회 (홈페이지용)
+export const useAllRestaurants = (options = {}) => {
+  return useQuery({
+    queryKey: storeKeys.lists(),
+    queryFn: async () => {
+      try {
+        const response = await getAllRestaurants();
+        return response;
+      } catch (err) {
+        console.error('가게 목록 조회 실패:', err);
+        // 에러 발생 시 빈 데이터 반환
+        return {
+          content: [],
+          totalElements: 0,
+        };
+      }
+    },
+    staleTime: 2 * 60 * 1000, // 2분
+    retry: false,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
 // 사장님의 가게 목록 조회
 export const useMyStores = () => {
   return useQuery({
@@ -27,7 +52,7 @@ export const useMyStores = () => {
       try {
         const response = await getMyStores();
         return Array.isArray(response) ? response : response.data || [];
-      } catch (error) {
+      } catch {
         // 네트워크 에러나 기타 에러는 조용히 빈 배열 반환
         // 401 에러는 이미 getMyStores에서 처리됨
         return [];

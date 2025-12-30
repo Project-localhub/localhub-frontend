@@ -1,28 +1,25 @@
 /* eslint-disable react/prop-types */
-import { Link, useNavigate } from 'react-router-dom';
-import { Star, Heart, MapPin, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Star, Heart, MapPin } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
-import { useFavorites } from '../context/FavoritesContext';
-import { toggleLike } from '../shared/api/auth';
+import { useToggleFavorite } from '@/shared/hooks/useFavoriteQueries';
 
-const StoreCard = ({ store, onDelete, onRefresh }) => {
+const StoreCard = ({ store }) => {
   const favorite = store.isLiked;
+  const toggleFavoriteMutation = useToggleFavorite();
 
   const favoriteButtonHandler = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     try {
-      if (favorite) {
-        await deleteFavorite(store.id);
-      } else {
-        await toggleLike(store.id);
-      }
-
-      // 부모 컴포넌트에서 새로 불러오게
-      if (onRefresh) onRefresh();
+      await toggleFavoriteMutation.mutateAsync({
+        storeId: store.id,
+        isFavorite: favorite,
+      });
     } catch (err) {
-      console.error(err);
+      console.error('찜하기 오류:', err);
+      alert('찜하기 처리에 실패했습니다. 다시 시도해주세요.');
     }
   };
 

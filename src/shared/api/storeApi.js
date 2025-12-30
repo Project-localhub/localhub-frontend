@@ -23,28 +23,21 @@ export const createStore = async (storeData) => {
     })),
   };
 
-  // 디버깅: 전송할 데이터 확인
-  console.log('📤 가게 등록 요청 데이터:', {
-    ...requestData,
-    images: requestData.images.map((img) => ({
-      imageKey: img.imageKey ? `${img.imageKey.substring(0, 20)}...` : '없음',
-      sortOrder: img.sortOrder,
-    })),
-  });
+  console.log('📤 [가게 등록] Request 데이터:', JSON.stringify(requestData, null, 2));
 
   const response = await client.post('/api/restaurant/save', requestData);
 
   return response.data;
 };
 
-// 사장님의 가게 목록 조회
+// 사장님의 가게 목록 조회 (OWNER 권한 필요)
 export const getMyStores = async () => {
   try {
-    const response = await client.get('/api/stores/my');
+    const response = await client.get('/api/restaurant/findByOwnerID');
     return response.data;
   } catch (error) {
-    // 401 Unauthorized 에러는 조용히 처리 (로그인하지 않은 상태)
-    if (error.response?.status === 401) {
+    // 401 Unauthorized 에러는 조용히 처리 (로그인하지 않은 상태 또는 OWNER가 아닌 경우)
+    if (error.response?.status === 401 || error.response?.status === 403) {
       return [];
     }
     // 다른 에러는 그대로 throw
@@ -64,9 +57,8 @@ export const incrementStoreView = async (storeId) => {
   try {
     const response = await client.post(`/api/stores/${storeId}/views`);
     return response.data;
-  } catch (error) {
+  } catch {
     // 조회수 증가 실패는 조용히 처리 (사용자 경험에 영향 없음)
-    console.error('조회수 증가 실패:', error);
     return null;
   }
 };
@@ -85,6 +77,15 @@ export const incrementStoreView = async (storeId) => {
 // }
 export const getStoreStats = async (storeId) => {
   const response = await client.get(`/api/stores/${storeId}/stats`);
+  return response.data;
+};
+
+// 모든 가게 목록 조회
+export const getAllRestaurants = async () => {
+  const response = await client.get('/api/restaurant/get-all-restaurants');
+
+  console.log('📥 [get-all-restaurants] Response 데이터:', JSON.stringify(response.data, null, 2));
+
   return response.data;
 };
 
@@ -118,17 +119,6 @@ export const updateStore = async (storeId, storeData) => {
         })),
       }),
   };
-
-  // 디버깅: 전송할 데이터 확인
-  console.log('📤 가게 수정 요청 데이터:', {
-    ...requestData,
-    images: requestData.images
-      ? requestData.images.map((img) => ({
-          imageKey: img.imageKey ? `${img.imageKey.substring(0, 20)}...` : '없음',
-          sortOrder: img.sortOrder,
-        }))
-      : undefined,
-  });
 
   const response = await client.put('/api/restaurant/update', requestData);
 

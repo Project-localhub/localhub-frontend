@@ -77,8 +77,7 @@ export const useStoreEditForm = () => {
           imageKeys: existingImageKeys, // 기존 이미지 key 유지
           existingImages: existingImageUrls, // 기존 이미지 URL (표시용)
         });
-      } catch (error) {
-        console.error('가게 정보 로드 오류:', error);
+      } catch {
         alert('가게 정보를 불러오는데 실패했습니다.');
         navigate('/dashboard');
       } finally {
@@ -154,8 +153,7 @@ export const useStoreEditForm = () => {
         ...prev,
         imageKeys: [...prev.imageKeys, ...uploadedKeys],
       }));
-    } catch (error) {
-      console.error('이미지 업로드 오류:', error);
+    } catch {
       alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
       // 업로드 실패한 파일 제거
       setFormData((prev) => ({
@@ -175,8 +173,64 @@ export const useStoreEditForm = () => {
     setFormData({ ...formData, keywords: newKeywords });
   };
 
+  // Daum Postcode API 스크립트 로드 대기
+  const waitForDaumPostcode = () => {
+    return new Promise((resolve, reject) => {
+      // 이미 로드되어 있으면 즉시 반환
+      if (window.daum && window.daum.Postcode) {
+        resolve();
+        return;
+      }
+
+      // 스크립트가 이미 로드 중인지 확인
+      const existingScript = document.querySelector('script[src*="postcode"]');
+      if (existingScript) {
+        // 스크립트 로드 완료를 기다림
+        let attempts = 0;
+        const maxAttempts = 50; // 5초 대기 (100ms * 50)
+        const checkInterval = setInterval(() => {
+          attempts++;
+          if (window.daum && window.daum.Postcode) {
+            clearInterval(checkInterval);
+            resolve();
+          } else if (attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            reject(new Error('주소 검색 서비스 로드 시간 초과'));
+          }
+        }, 100);
+      } else {
+        // 스크립트가 없으면 동적으로 로드
+        const script = document.createElement('script');
+        script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+        script.async = true;
+        script.onload = () => {
+          // 스크립트 로드 후 약간의 지연을 두고 확인
+          setTimeout(() => {
+            if (window.daum && window.daum.Postcode) {
+              resolve();
+            } else {
+              reject(new Error('주소 검색 서비스 초기화 실패'));
+            }
+          }, 100);
+        };
+        script.onerror = () => {
+          reject(new Error('주소 검색 서비스 스크립트 로드 실패'));
+        };
+        document.head.appendChild(script);
+      }
+    });
+  };
+
   // 다음 우편번호 서비스를 이용한 주소 검색
-  const handleAddressSearch = () => {
+  const handleAddressSearch = async () => {
+    try {
+      // 스크립트 로드 대기
+      await waitForDaumPostcode();
+    } catch {
+      alert('주소 검색 서비스를 불러올 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요.');
+      return;
+    }
+
     if (!window.daum || !window.daum.Postcode) {
       alert('주소 검색 서비스를 불러올 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요.');
       return;
@@ -292,7 +346,7 @@ export const useStoreEditForm = () => {
 
         // 카카오맵 Geocoding API로 주소를 좌표로 변환 (Promise로 감싸기)
         const convertAddressToCoordinates = () => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
               // 카카오맵 API가 없으면 기본값으로 설정
               resolve({ latitude: 0, longitude: 0 });
@@ -311,7 +365,6 @@ export const useStoreEditForm = () => {
                 });
               } else {
                 // 좌표 변환 실패 시 기본값 사용
-                console.warn('주소를 좌표로 변환하는데 실패했습니다:', status);
                 resolve({ latitude: 0, longitude: 0 });
               }
             });
@@ -327,8 +380,7 @@ export const useStoreEditForm = () => {
               longitude: longitude.toString(),
             }));
           })
-          .catch((error) => {
-            console.error('좌표 변환 오류:', error);
+          .catch(() => {
             // 에러 발생 시에도 기본값으로 설정
             setFormData((prev) => ({
               ...prev,
@@ -393,8 +445,7 @@ export const useStoreEditForm = () => {
       await updateStore(id, formData);
       alert('가게 정보가 수정되었습니다!');
       navigate('/dashboard');
-    } catch (error) {
-      console.error('가게 수정 오류:', error);
+    } catch {
       alert('가게 수정에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);
