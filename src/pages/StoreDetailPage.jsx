@@ -66,6 +66,9 @@ const StoreDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(TAB_TYPES.INFO);
+  const reviewButton = () => {
+    navigate(`/review/${mockStore.id}`);
+  };
 
   return (
     <div className="flex flex-col h-screen bg-white w-full max-w-md mx-auto shadow-lg">
@@ -198,7 +201,10 @@ const StoreDetailPage = () => {
 
         {activeTab === TAB_TYPES.REVIEW && (
           <div className="p-4">
-            <button className="w-full py-3 bg-blue-600 text-white rounded-lg mb-4">
+            <button
+              onClick={reviewButton}
+              className="w-full py-3 bg-blue-600 text-white rounded-lg mb-4"
+            >
               리뷰 작성하기
             </button>
             <div className="space-y-4">

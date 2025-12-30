@@ -10,6 +10,8 @@ import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
 import OAuthRedirectPage from '@/pages/OAuthRedirectPage';
 import FindUserPage from '@/pages/FindUserPage';
 import ProtectedRoute from './protectedRoute';
+import SignupPage from '../pages/SignupPage';
+import ReviewPage from '../pages/ReviewPage';
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +26,7 @@ export const router = createBrowserRouter([
       { path: 'findUser', element: <FindUserPage /> },
       { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
       { path: 'store/:id', element: <StoreDetailPage /> },
+      { path: 'signup', element: <SignupPage /> },
 
       // 🔒 로그인 필수 페이지 (ProtectedRoute로 감싸기)
       {
@@ -55,6 +58,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <StoreRegisterPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'review/:id',
+        element: (
+          <ProtectedRoute>
+            <ReviewPage />
           </ProtectedRoute>
         ),
       },
