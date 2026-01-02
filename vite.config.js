@@ -18,7 +18,8 @@ export default defineConfig({
     global: 'globalThis',
   },
   server: {
-    open: true,
+    port: 5173,
+    open: 'chrome',
   },
   test: {
     globals: true,

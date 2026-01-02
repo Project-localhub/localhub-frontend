@@ -14,7 +14,7 @@ const StoreCard = ({ store }) => {
 
     try {
       await toggleFavoriteMutation.mutateAsync({
-        storeId: store.id,
+        restaurantId: store.id,
         isFavorite: favorite,
       });
     } catch (err) {

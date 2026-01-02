@@ -3,12 +3,17 @@ import StoreCard from '@/components/StoreCard';
 import MapView from '@/components/MapView';
 import { Search, Filter, MapPin } from 'lucide-react';
 import { useAllRestaurants } from '@/shared/hooks/useStoreQueries';
+import { useMyFavorites } from '@/shared/hooks/useFavoriteQueries';
 
 const HomePage = () => {
   const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: restaurantsData, isLoading } = useAllRestaurants();
+  const { data: myFavorites = [] } = useMyFavorites();
+
+  // 찜한 가게 ID Set 생성 (빠른 조회를 위해)
+  const favoriteIds = new Set(myFavorites.map((fav) => fav.id || fav.restaurantId));
 
   const stores =
     restaurantsData?.content?.map((restaurant) => ({
@@ -20,7 +25,7 @@ const HomePage = () => {
       distance: '0.0km',
       image: restaurant.imageUrl || '',
       tags: restaurant.keyword || [],
-      isLiked: false,
+      isLiked: favoriteIds.has(restaurant.restaurantId),
     })) || [];
 
   return (

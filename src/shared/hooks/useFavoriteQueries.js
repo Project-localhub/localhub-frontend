@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getStoreFavoriteCount, getStoreFavorites } from '@/shared/api/favoriteApi';
-import { getLikeList, toggleLike, deleteFavorite } from '@/shared/api/auth';
+import {
+  getMyFavoriteList,
+  addFavorite,
+  removeFavorite,
+  getStoreFavoriteCount,
+  getStoreFavorites,
+} from '@/shared/api/favoriteApi';
 
 // Query Keys
 export const favoriteKeys = {
@@ -40,8 +45,20 @@ export const useMyFavorites = (options = {}) => {
     queryKey: favoriteKeys.myFavorites(),
     queryFn: async () => {
       try {
-        const res = await getLikeList();
-        return res.data || [];
+        const data = await getMyFavoriteList();
+        // Spring Boot Page 응답 형태 처리: { content: [...] }
+        const favorites = data?.content || (Array.isArray(data) ? data : []);
+        
+        // StoreCard가 기대하는 형태로 변환
+        return favorites.map((item) => ({
+          ...item,
+          id: item.restaurantId || item.id,
+          image: item.imageUrl || item.image,
+          rating: item.score !== undefined ? item.score : item.rating || 0,
+          isLiked: true, // 찜한 가게 목록이므로 항상 true
+          distance: item.distance || '0m', // distance가 없으면 기본값
+          tags: item.keyword || item.tags || [], // keyword 또는 tags
+        }));
       } catch (error) {
         console.warn('찜한 가게 목록 조회 실패:', error);
         return [];
@@ -59,22 +76,26 @@ export const useToggleFavorite = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ storeId, isFavorite }) => {
+    mutationFn: async ({ restaurantId, isFavorite }) => {
       if (isFavorite) {
-        return await deleteFavorite(storeId);
+        // 이미 찜한 상태면 삭제
+        return await removeFavorite(restaurantId);
       } else {
-        return await toggleLike(storeId);
+        // 찜하지 않은 상태면 추가
+        return await addFavorite(restaurantId);
       }
     },
     onSuccess: (data, variables) => {
       // 찜한 가게 목록 갱신
       queryClient.invalidateQueries({ queryKey: favoriteKeys.myFavorites() });
       // 찜 수 갱신
-      queryClient.invalidateQueries({ queryKey: favoriteKeys.count(variables.storeId) });
-      queryClient.invalidateQueries({ queryKey: favoriteKeys.list(variables.storeId) });
+      queryClient.invalidateQueries({ queryKey: favoriteKeys.count(variables.restaurantId) });
+      queryClient.invalidateQueries({ queryKey: favoriteKeys.list(variables.restaurantId) });
       // 가게 정보 갱신 (찜 상태 포함)
-      queryClient.invalidateQueries({ queryKey: ['stores', 'detail', variables.storeId] });
+      queryClient.invalidateQueries({ queryKey: ['stores', 'detail', variables.restaurantId] });
+      // 가게 목록 쿼리 무효화 (HomePage에서 사용하는 쿼리)
       queryClient.invalidateQueries({ queryKey: ['stores', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['stores'] });
     },
   });
 };
