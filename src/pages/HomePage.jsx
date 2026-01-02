@@ -11,10 +11,10 @@ const mockStores = [
     rating: 4.8,
     reviewCount: 234,
     distance: '0.3km',
-    image:
-      'https://images.unsplash.com/photo-1629642621587-9947ce328799?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxrb3JlYW4lMjByZXN0YXVyYW50JTIwZm9vZHxlbnwxfHx8fDE3NjUxNTg3MTV8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    lat: 37.4979,
+    lng: 127.0276,
+    image: 'https://images.unsplash.com/photo-1629642621587-9947ce328799?auto=format&q=80&w=1080',
     tags: ['깨끗함', '맛있음', '친절함'],
-    isFavorite: true,
   },
   {
     id: '2',
@@ -23,10 +23,10 @@ const mockStores = [
     rating: 4.6,
     reviewCount: 156,
     distance: '0.5km',
-    image:
-      'https://images.unsplash.com/photo-1642647916334-82e513d9cc48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWZlJTIwY29mZmVlJTIwaW50ZXJpb3J8ZW58MXx8fHwxNzY1MjAwMjY5fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    lat: 37.4985,
+    lng: 127.0301,
+    image: 'https://images.unsplash.com/photo-1642647916334-82e513d9cc48?auto=format&q=80&w=1080',
     tags: ['조용함', '커피 맛있음'],
-    isFavorite: false,
   },
   {
     id: '3',
@@ -35,10 +35,10 @@ const mockStores = [
     rating: 4.9,
     reviewCount: 412,
     distance: '0.7km',
-    image:
-      'https://images.unsplash.com/photo-1658740877393-7d001187d867?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYWtlcnklMjBicmVhZCUyMHBhc3RyeXxlbnwxfHx8fDE3NjUxNjQzODJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    lat: 37.4995,
+    lng: 127.025,
+    image: 'https://images.unsplash.com/photo-1658740877393-7d001187d867?auto=format&q=80&w=1080',
     tags: ['신선함', '친절함', '재방문'],
-    isFavorite: true,
   },
   {
     id: '4',
@@ -47,10 +47,10 @@ const mockStores = [
     rating: 4.5,
     reviewCount: 89,
     distance: '1.2km',
-    image:
-      'https://images.unsplash.com/photo-1707858127144-69b147b28b94?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHJlZXQlMjBtYXJrZXQlMjBzaG9wfGVufDF8fHx8MTc2NTIwMDI2OXww&ixlib=rb-4.1.0&q=80&w=1080',
+    lat: 37.4955,
+    lng: 127.0295,
+    image: 'https://images.unsplash.com/photo-1707858127144-69b147b28b94?auto=format&q=80&w=1080',
     tags: ['가성비', '맛있음'],
-    isFavorite: false,
   },
 ];
 
@@ -60,6 +60,7 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-col h-full">
+      {/* 검색창 */}
       <div className="bg-white px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
           <Search size={20} className="text-gray-500" />
@@ -74,6 +75,8 @@ const HomePage = () => {
             <Filter size={20} />
           </button>
         </div>
+
+        {/* 지역 + 카테고리 */}
         <div className="flex items-center gap-2 mt-3">
           <button className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm">
             <MapPin size={14} />
@@ -87,6 +90,7 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* 리스트/지도 스위치 */}
       <div className="bg-white px-4 py-2 border-b border-gray-200 flex gap-2">
         <button
           onClick={() => setViewMode('list')}
@@ -106,6 +110,7 @@ const HomePage = () => {
         </button>
       </div>
 
+      {/* 리스트 or 지도 */}
       {viewMode === 'list' ? (
         <div className="flex-1 overflow-auto p-4">
           <div className="mb-3 text-gray-600">
