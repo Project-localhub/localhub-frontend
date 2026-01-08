@@ -11,7 +11,7 @@ export const createStore = async (storeData) => {
     address: storeData.address, // String
     latitude: parseFloat(storeData.latitude) || 0, // BigDecimal (Number로 전송)
     longitude: parseFloat(storeData.longitude) || 0, // BigDecimal (Number로 전송)
-    keywords: storeData.keywords || [], // List<String>
+    keyword: storeData.keywords || [], // List<String>
     openTime: storeData.openTime, // LocalTime (HH:mm 형식)
     closeTime: storeData.closeTime, // LocalTime (HH:mm 형식)
     hasBreakTime: storeData.hasBreakTime || false, // Boolean
@@ -30,14 +30,25 @@ export const createStore = async (storeData) => {
   return response.data;
 };
 
-// 사장님의 가게 목록 조회 (OWNER 권한 필요)
+// 사장님의 가게 목록 조회 (OWNER 권한 필요, 배열 반환)
 export const getMyStores = async () => {
   try {
-    const response = await client.get('/api/restaurant/findByOwnerID');
-    return response.data;
+    const response = await client.get('/api/restaurant/findByOwnerId');
+    // 배열이면 그대로 반환, 단일 객체면 배열로 변환
+    const data = response.data;
+    if (Array.isArray(data)) {
+      return data;
+    }
+    // 단일 객체인 경우 배열로 변환
+    return data ? [data] : [];
   } catch (error) {
-    // 401 Unauthorized 에러는 조용히 처리 (로그인하지 않은 상태 또는 OWNER가 아닌 경우)
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    // 400, 401, 403, 404 에러는 조용히 처리
+    if (
+      error.response?.status === 400 ||
+      error.response?.status === 401 ||
+      error.response?.status === 403 ||
+      error.response?.status === 404
+    ) {
       return [];
     }
     // 다른 에러는 그대로 throw
@@ -45,7 +56,13 @@ export const getMyStores = async () => {
   }
 };
 
-// 가게 정보 조회
+// 가게 상세 정보 조회 (상세 페이지용)
+export const getRestaurantDetail = async (restaurantId) => {
+  const response = await client.get(`/api/restaurant/${restaurantId}`);
+  return response.data;
+};
+
+// 가게 정보 조회 (기존)
 export const getStore = async (storeId) => {
   const response = await client.get(`/api/stores/${storeId}`);
   return response.data;
@@ -103,7 +120,7 @@ export const updateStore = async (storeId, storeData) => {
     ...(storeData.address && { address: storeData.address }),
     ...(storeData.latitude && { latitude: parseFloat(storeData.latitude) }),
     ...(storeData.longitude && { longitude: parseFloat(storeData.longitude) }),
-    ...(storeData.keywords && storeData.keywords.length > 0 && { keywords: storeData.keywords }),
+    ...(storeData.keywords && storeData.keywords.length > 0 && { keyword: storeData.keywords }),
     ...(storeData.openTime && { openTime: storeData.openTime }),
     ...(storeData.closeTime && { closeTime: storeData.closeTime }),
     ...(storeData.hasBreakTime !== undefined && { hasBreakTime: storeData.hasBreakTime }),

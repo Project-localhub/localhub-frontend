@@ -1,67 +1,15 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, MessageCircle } from 'lucide-react';
-import ImageWithFallback from '@/components/figma/imageWithFallback';
-import ReviewCard from '@/components/ReviewCard';
 import { useCreateInquiryChat } from '@/shared/hooks/useChatQueries';
 import { useAuth } from '@/context/AuthContext';
-
-const mockStore = {
-  id: '1',
-  name: '맛있는 한식당',
-  category: '한식',
-  rating: 4.8,
-  reviewCount: 234,
-  distance: '0.3km',
-  image:
-    'https://images.unsplash.com/photo-1629642621587-9947ce328799?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxrb3JlYW4lMjByZXN0YXVyYW50JTIwZm9vZHxlbnwxfHx8fDE3NjUxNTg3MTV8MA&ixlib=rb-4.1.0&q=80&w=1080',
-  address: '서울시 강남구 역삼동 123-45',
-  phone: '02-1234-5678',
-  hours: '10:00 - 22:00 (브레이크타임 15:00-17:00)',
-  description:
-    '신선한 재료로 만드는 정성스러운 한식 전문점입니다. 푸짐한 한상차림과 깔끔한 맛으로 손님들의 사랑을 받고 있습니다.',
-  tags: ['깨끗함', '맛있음', '친절함'],
-  isFavorite: true,
-  menu: [
-    { name: '김치찌개', price: '9,000원' },
-    { name: '된장찌개', price: '8,000원' },
-    { name: '제육볶음', price: '12,000원' },
-    { name: '비빔밥', price: '10,000원' },
-  ],
-};
-
-const mockReviews = [
-  {
-    id: '1',
-    userName: '김철수',
-    rating: 5,
-    date: '2024.12.05',
-    content: '정말 맛있어요! 김치찌개가 특히 일품입니다. 사장님도 친절하시고 분위기도 좋아요.',
-    images: [],
-  },
-  {
-    id: '2',
-    userName: '이영희',
-    rating: 4,
-    date: '2024.12.03',
-    content: '가성비가 좋아요. 반찬도 계속 리필해주시고 맛도 괜찮습니다.',
-    images: [],
-  },
-  {
-    id: '3',
-    userName: '박민수',
-    rating: 5,
-    date: '2024.12.01',
-    content: '동네 맛집이에요. 자주 가는데 항상 만족스럽습니다. 추천합니다!',
-    images: [],
-  },
-];
-
-const TAB_TYPES = {
-  INFO: 'info',
-  MENU: 'menu',
-  REVIEW: 'review',
-};
+import { useRestaurantDetail } from '@/shared/hooks/useStoreQueries';
+import { useToggleFavorite, useMyFavorites } from '@/shared/hooks/useFavoriteQueries';
+import { formatTime, getHoursString, getFirstImageUrl, getAllImageUrls } from '@/shared/lib/storeUtils';
+import StoreDetailHeader from '@/features/store/components/StoreDetailHeader';
+import StoreDetailInfo from '@/features/store/components/StoreDetailInfo';
+import StoreDetailTabs, { TAB_TYPES } from '@/features/store/components/StoreDetailTabs';
+import StoreDetailContent from '@/features/store/components/StoreDetailContent';
+import StoreDetailActions from '@/features/store/components/StoreDetailActions';
 
 const StoreDetailPage = () => {
   const { id } = useParams();
@@ -70,6 +18,44 @@ const StoreDetailPage = () => {
   const { user } = useAuth();
   const createInquiryChat = useCreateInquiryChat();
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+
+  // 가게 상세 정보 조회
+  const { data: restaurantData, isLoading, error } = useRestaurantDetail(id);
+  const { data: myFavorites = [] } = useMyFavorites();
+  const toggleFavoriteMutation = useToggleFavorite();
+
+  // 찜한 가게 ID Set
+  const favoriteIds = new Set(myFavorites.map((fav) => fav.id || fav.restaurantId));
+  const isFavorite = restaurantData ? favoriteIds.has(restaurantData.id) : false;
+
+  // 데이터 변환
+  const store = restaurantData
+    ? {
+        id: restaurantData.id,
+        name: restaurantData.name,
+        category: restaurantData.category,
+        rating: restaurantData.score || 0,
+        reviewCount: restaurantData.reviewCount || 0,
+        favoriteCount: restaurantData.favoriteCount || 0,
+        image: getFirstImageUrl(restaurantData.imageUrlList),
+        images: getAllImageUrls(restaurantData.imageUrlList),
+        address: restaurantData.address || '',
+        phone: restaurantData.phone || '',
+        hours: getHoursString(restaurantData.openTime, restaurantData.closeTime),
+        hasBreakTime: restaurantData.hasBreakTime || false,
+        breakStartTime: restaurantData.breakStartTime
+          ? formatTime(restaurantData.breakStartTime)
+          : '',
+        breakEndTime: restaurantData.breakEndTime
+          ? formatTime(restaurantData.breakEndTime)
+          : '',
+        description: restaurantData.description || '',
+        tags: Array.isArray(restaurantData.keywordList) ? restaurantData.keywordList : [],
+        latitude: restaurantData.latitude,
+        longitude: restaurantData.longitude,
+        isFavorite,
+      }
+    : null;
 
   const handleStartChat = async () => {
     if (!user) {
@@ -83,11 +69,16 @@ const StoreDetailPage = () => {
       return;
     }
 
+    if (!store) {
+      alert('가게 정보를 불러올 수 없습니다.');
+      return;
+    }
+
     setIsCreatingChat(true);
     try {
-      // 채팅방 생성 (storeId는 가게 ID, userId는 현재 로그인한 사용자 ID)
+      // 채팅방 생성 (storeId는 가게 ID, 쿼리 파라미터로 전달, userId는 현재 로그인한 사용자 ID)
       const response = await createInquiryChat.mutateAsync({
-        storeId: id, // 가게 ID
+        storeId: id, // 가게 ID (쿼리 파라미터로 전달)
         userId: user.id, // 현재 사용자 ID
       });
 
@@ -95,7 +86,6 @@ const StoreDetailPage = () => {
       const chatRoomId = response.id || response.inquiryChatId || response.chatRoomId;
       navigate('/chat', { state: { chatRoomId } });
     } catch (error) {
-      console.error('채팅방 생성 오류:', error);
       const errorMessage =
         error.response?.status === 401
           ? '인증이 필요합니다. 다시 로그인해주세요.'
@@ -106,168 +96,71 @@ const StoreDetailPage = () => {
     }
   };
 
-  const reviewButton = () => {
-    navigate(`/review/${mockStore.id}`);
+  const handleToggleFavorite = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!store) return;
+
+    try {
+      await toggleFavoriteMutation.mutateAsync({
+        restaurantId: store.id,
+        isFavorite: isFavorite,
+      });
+    } catch (err) {
+      alert('찜하기 처리에 실패했습니다. 다시 시도해주세요.');
+    }
   };
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error || !store) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="text-gray-400 mb-2">가게 정보를 불러올 수 없습니다</div>
+        <button
+          onClick={() => navigate(-1)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          뒤로 가기
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-white w-full max-w-md mx-auto shadow-lg">
-      <div className="relative">
-        <ImageWithFallback
-          src={mockStore.image}
-          alt={mockStore.name}
-          className="w-full h-64 object-cover"
-        />
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-md"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div className="absolute top-4 right-4 flex gap-2">
-          <button className="p-2 bg-white rounded-full shadow-md">
-            <Share2 size={20} />
-          </button>
-          <button className="p-2 bg-white rounded-full shadow-md">
-            <Heart
-              size={20}
-              className={mockStore.isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-700'}
-            />
-          </button>
-        </div>
-      </div>
+      <StoreDetailHeader
+        store={store}
+        isFavorite={isFavorite}
+        onToggleFavorite={handleToggleFavorite}
+        isPending={toggleFavoriteMutation.isPending}
+      />
 
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-sm">
-                {mockStore.category}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center gap-1">
-                <Star size={18} className="fill-yellow-400 text-yellow-400" />
-                <span>{mockStore.rating}</span>
-              </div>
-              <span className="text-gray-500 text-sm">리뷰 {mockStore.reviewCount}</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-1 mb-3">
-          {mockStore.tags.map((tag, index) => (
-            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-sm">
-              #{tag}
-            </span>
-          ))}
-        </div>
-        <p className="text-gray-700 mb-3">{mockStore.description}</p>
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2 text-gray-600">
-            <MapPin size={16} />
-            {mockStore.address}
-          </div>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Clock size={16} />
-            {mockStore.hours}
-          </div>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Phone size={16} />
-            {mockStore.phone}
-          </div>
-        </div>
-      </div>
+      <StoreDetailInfo store={store} />
 
-      <div className="flex border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab(TAB_TYPES.INFO)}
-          className={`flex-1 py-3 ${
-            activeTab === TAB_TYPES.INFO
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600'
-          }`}
-        >
-          정보
-        </button>
-        <button
-          onClick={() => setActiveTab(TAB_TYPES.MENU)}
-          className={`flex-1 py-3 ${
-            activeTab === TAB_TYPES.MENU
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600'
-          }`}
-        >
-          메뉴
-        </button>
-        <button
-          onClick={() => setActiveTab(TAB_TYPES.REVIEW)}
-          className={`flex-1 py-3 ${
-            activeTab === TAB_TYPES.REVIEW
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600'
-          }`}
-        >
-          리뷰 ({mockStore.reviewCount})
-        </button>
-      </div>
+      <StoreDetailTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        reviewCount={store.reviewCount}
+      />
 
-      <div className="flex-1 overflow-auto">
-        {activeTab === TAB_TYPES.INFO && (
-          <div className="p-4">
-            <div className="mb-4">
-              <div className="mb-2 text-gray-900">위치</div>
-              <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                <MapPin size={32} className="text-gray-400" />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === TAB_TYPES.MENU && (
-          <div className="p-4">
-            <div className="space-y-3">
-              {mockStore.menu.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between py-3 border-b border-gray-100"
-                >
-                  <span className="text-gray-900">{item.name}</span>
-                  <span className="text-gray-700">{item.price}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === TAB_TYPES.REVIEW && (
-          <div className="p-4">
-            <button
-              onClick={reviewButton}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg mb-4"
-            >
-              리뷰 작성하기
-            </button>
-            <div className="space-y-4">
-              {mockReviews.map((review) => (
-                <ReviewCard key={review.id} review={review} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <StoreDetailContent activeTab={activeTab} storeId={store.id} />
 
       {user && user.userType === 'CUSTOMER' && (
-        <div className="p-4 border-t border-gray-200 flex gap-2">
-          <button
-            onClick={handleStartChat}
-            disabled={isCreatingChat}
-            className="flex-1 py-3 border border-blue-600 text-blue-600 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <MessageCircle size={20} />
-            {isCreatingChat ? '채팅방 생성 중...' : '채팅하기'}
-          </button>
-          <button className="flex-1 py-3 bg-blue-600 text-white rounded-lg">전화하기</button>
-        </div>
+        <StoreDetailActions
+          store={store}
+          onStartChat={handleStartChat}
+          isCreatingChat={isCreatingChat}
+        />
       )}
     </div>
   );

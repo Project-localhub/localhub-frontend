@@ -1,8 +1,8 @@
 import client from '@/shared/api/client';
 
 // 채팅방 생성
-export const createInquiryChat = async (data) => {
-  const response = await client.post('/api/chat/createInquiry', data);
+export const createInquiryChat = async (storeId, data) => {
+  const response = await client.post(`/api/chat/createInquiry?storeId=${storeId}`, data);
   return response.data;
 };
 
