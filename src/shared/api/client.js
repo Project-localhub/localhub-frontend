@@ -9,30 +9,10 @@ const client = axios.create({
   maxRedirects: 0,
 });
 
-// 인증 제외 URL
-const noAuthRequiredUrls = [
-  '/api/auth/login',
-  '/api/auth/join',
-  '/api/auth/findUsername',
-  '/mail/send/verify',
-  '/mail/email/verify',
-];
-
 client.interceptors.request.use((config) => {
-  const isNoAuthRequest = noAuthRequiredUrls.some((url) => config.url.startsWith(url));
-
-  if (isNoAuthRequest) {
-    return config;
-  }
-
-  if (!isNoAuthRequest) {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('📌 토큰 추가됨:', token);
-    } else {
-      console.log('⛔ 토큰 없음');
-    }
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
   return config;

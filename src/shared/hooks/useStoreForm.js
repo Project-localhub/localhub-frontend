@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createStore } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
+import { loadKakaoMapSDK, isKakaoMapLoaded } from '@/shared/lib/kakaoMap';
 
 const initialFormData = {
   name: '',
@@ -271,43 +272,58 @@ export const useStoreForm = () => {
         }));
 
         // 카카오맵 Geocoding API로 주소를 좌표로 변환 (Promise로 감싸기)
-        const convertAddressToCoordinates = () => {
-          return new Promise((resolve) => {
-            if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
-              // 카카오맵 API가 없으면 기본값으로 설정
-              resolve({ latitude: 0, longitude: 0 });
-              return;
+        const convertAddressToCoordinates = async () => {
+          try {
+            // 카카오맵 SDK가 로드되지 않았으면 로드
+            if (!isKakaoMapLoaded()) {
+              await loadKakaoMapSDK();
             }
 
-            const geocoder = new window.kakao.maps.services.Geocoder();
+            // SDK 로드 확인
+            if (!isKakaoMapLoaded() || !window.kakao.maps.services) {
+              console.error('카카오맵 SDK가 로드되지 않았습니다.');
+              return { latitude: 0, longitude: 0 };
+            }
 
-            geocoder.addressSearch(fullAddress, (result, status) => {
-              if (status === window.kakao.maps.services.Status.OK) {
-                // 첫 번째 결과의 좌표 사용
-                const coords = result[0];
-                resolve({
-                  latitude: coords.y, // 위도
-                  longitude: coords.x, // 경도
-                });
-              } else {
-                // 좌표 변환 실패 시 기본값 사용
-                resolve({ latitude: 0, longitude: 0 });
-              }
+            return new Promise((resolve) => {
+              const geocoder = new window.kakao.maps.services.Geocoder();
+
+              geocoder.addressSearch(fullAddress, (result, status) => {
+                if (status === window.kakao.maps.services.Status.OK && result && result.length > 0) {
+                  // 첫 번째 결과의 좌표 사용
+                  const coords = result[0];
+                  resolve({
+                    latitude: parseFloat(coords.y), // 위도
+                    longitude: parseFloat(coords.x), // 경도
+                  });
+                } else {
+                  console.warn('주소를 좌표로 변환할 수 없습니다:', status);
+                  // 좌표 변환 실패 시 기본값 사용
+                  resolve({ latitude: 0, longitude: 0 });
+                }
+              });
             });
-          });
+          } catch (error) {
+            console.error('카카오맵 SDK 로드 에러:', error);
+            return { latitude: 0, longitude: 0 };
+          }
         };
 
         // 좌표 변환 완료 후 상태 업데이트
         convertAddressToCoordinates()
           .then(({ latitude, longitude }) => {
+            if (latitude === 0 && longitude === 0) {
+              alert('주소를 좌표로 변환할 수 없습니다. 주소를 다시 확인해주세요.');
+            }
             setFormData((prev) => ({
               ...prev,
               latitude: latitude.toString(),
               longitude: longitude.toString(),
             }));
           })
-          .catch(() => {
-            // 에러 발생 시에도 기본값으로 설정
+          .catch((error) => {
+            console.error('좌표 변환 에러:', error);
+            alert('주소를 좌표로 변환하는 중 오류가 발생했습니다.');
             setFormData((prev) => ({
               ...prev,
               latitude: '0',

@@ -24,7 +24,7 @@ export const useCreateInquiryChat = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data) => createInquiryChat(data),
+    mutationFn: ({ storeId, ...data }) => createInquiryChat(storeId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: chatKeys.rooms() });
     },

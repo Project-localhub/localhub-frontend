@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { updateStore } from '@/shared/api/storeApi';
-import { getStore } from '@/shared/api/storeApi';
+import { useNavigate } from 'react-router-dom';
+import { updateStore, getMyStores } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
 import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/shared/lib/storeConstants';
 
@@ -33,30 +32,53 @@ const validateBusinessNumber = (number) => {
 
 export const useStoreEditForm = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: urlStoreId } = useParams();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isConvertingCoordinates, setIsConvertingCoordinates] = useState(false);
+  const [storeId, setStoreId] = useState(null);
 
   // 기존 가게 정보 로드
   useEffect(() => {
     const loadStoreData = async () => {
-      if (!id) {
-        alert('가게 ID가 없습니다.');
-        navigate('/dashboard');
-        return;
-      }
-
       try {
         setIsLoading(true);
-        const storeData = await getStore(id);
+        const stores = await getMyStores();
 
-        // 기존 이미지 URL 추출 (표시용)
-        const existingImageUrls = storeData.images || [];
-        const existingImageKeys = existingImageUrls.map((img) => img.imageKey || img.key || '');
+        if (!stores || stores.length === 0) {
+          alert('가게 정보를 찾을 수 없습니다.');
+          navigate('/dashboard');
+          return;
+        }
+
+        // URL 파라미터로 가게 ID가 있으면 해당 가게 사용, 없으면 첫 번째 가게 사용
+        const storeData = urlStoreId
+          ? stores.find((store) => store.id === Number(urlStoreId)) || stores[0]
+          : stores[0];
+
+        if (!storeData) {
+          alert('가게 정보를 찾을 수 없습니다.');
+          navigate('/dashboard');
+          return;
+        }
+
+        // 가게 ID 저장
+        setStoreId(storeData.id);
+
+        // imageUrlList는 문자열 배열이므로 그대로 사용
+        const existingImageUrls = Array.isArray(storeData.imageUrlList)
+          ? storeData.imageUrlList.map((url, index) => ({
+              url,
+              imageKey: url, // URL을 key로 사용 (수정 시에는 새로 업로드 필요)
+              sortOrder: index + 1,
+            }))
+          : [];
+
+        // keywordList는 문자열 배열
+        const keywords = Array.isArray(storeData.keywordList) ? storeData.keywordList : [];
 
         setFormData({
           name: storeData.name || '',
@@ -67,14 +89,14 @@ export const useStoreEditForm = () => {
           address: storeData.address || '',
           latitude: storeData.latitude?.toString() || '',
           longitude: storeData.longitude?.toString() || '',
-          keywords: storeData.keywords || [],
+          keywords: keywords,
           openTime: storeData.openTime || '09:00',
           closeTime: storeData.closeTime || '22:00',
           hasBreakTime: storeData.hasBreakTime || false,
           breakStartTime: storeData.breakStartTime || '14:00',
           breakEndTime: storeData.breakEndTime || '17:00',
           images: [], // 새로 추가할 이미지
-          imageKeys: existingImageKeys, // 기존 이미지 key 유지
+          imageKeys: existingImageUrls.map((img) => img.imageKey || img.url || ''), // 기존 이미지 key 유지
           existingImages: existingImageUrls, // 기존 이미지 URL (표시용)
         });
       } catch {
@@ -86,7 +108,7 @@ export const useStoreEditForm = () => {
     };
 
     loadStoreData();
-  }, [id, navigate]);
+  }, [urlStoreId, navigate]);
 
   // 이미지 추가
   const handleImageAdd = async (e) => {
@@ -439,10 +461,15 @@ export const useStoreEditForm = () => {
       return;
     }
 
+    if (!storeId) {
+      alert('가게 정보를 불러올 수 없습니다.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await updateStore(id, formData);
+      await updateStore(storeId, formData);
       alert('가게 정보가 수정되었습니다!');
       navigate('/dashboard');
     } catch {

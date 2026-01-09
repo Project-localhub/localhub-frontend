@@ -23,6 +23,9 @@ const OwnerDashboardPage = () => {
   // 가게 목록 조회 (React Query)
   const { data: stores = [], isLoading: isStoresLoading } = useMyStores();
 
+  // 선택된 가게 정보
+  const selectedStore = stores.find((store) => store.id === selectedStoreId);
+
   // 선택된 가게의 통계 조회 (React Query)
   const { data: storeStats, isLoading: isStatsLoading } = useStoreStats(selectedStoreId, {
     enabled: !!selectedStoreId,
@@ -34,6 +37,13 @@ const OwnerDashboardPage = () => {
       setSelectedStoreId(stores[0].id);
     }
   }, [stores, selectedStoreId, setSelectedStoreId]);
+
+  // 선택된 가게가 목록에서 제거된 경우 첫 번째 가게로 변경
+  useEffect(() => {
+    if (selectedStoreId && stores.length > 0 && !selectedStore) {
+      setSelectedStoreId(stores[0].id);
+    }
+  }, [selectedStoreId, stores, selectedStore, setSelectedStoreId]);
 
   // 통계 데이터 생성
   const { statsData, chartData, recentReviews } = useDashboardStats(storeStats, isStatsLoading);
