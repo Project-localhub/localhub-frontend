@@ -20,17 +20,12 @@ const noAuthRequiredUrls = [
 
 // 🔥 요청 인터셉터 (1개만!)
 client.interceptors.request.use((config) => {
-  console.log('📌 요청 URL:', config.url);
-  console.log('📌 전체 요청 객체:', config);
-
   const isNoAuthRequest = noAuthRequiredUrls.some((url) => config.url.startsWith(url));
-  console.log('📌 인증 제외 여부:', isNoAuthRequest);
 
   if (!isNoAuthRequest) {
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('📌 토큰 추가됨:', token);
     } else {
       console.log('⛔ 토큰 없음');
     }

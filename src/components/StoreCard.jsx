@@ -2,27 +2,35 @@
 import { Link } from 'react-router-dom';
 import { Star, Heart, MapPin } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
-import { useFavorites } from '../context/FavoritesContext';
-import { toggleLike } from '../shared/api/auth';
+import { useState } from 'react';
+import { toggleLike, deleteFavorite } from '../shared/api/auth';
 
-const StoreCard = ({ store, onDelete, onRefresh }) => {
-  const favorite = store.isLiked;
+const StoreCard = ({ store, onRefresh }) => {
+  const [favorite, setFavorite] = useState(store.liked);
 
   const favoriteButtonHandler = async (e) => {
+    console.log('store.id:', store.id);
+    console.log('type:', typeof store.id);
+
     e.preventDefault();
     e.stopPropagation();
 
     try {
       if (favorite) {
-        await deleteFavorite(store.id);
+        // 찜 취소 (DELETE)
+        await deleteFavorite(Number(store.id));
+        setFavorite(false);
       } else {
-        await toggleLike(store.id);
+        // 찜 추가 (POST)
+        await toggleLike(Number(store.id));
+        setFavorite(true);
       }
 
-      // 부모 컴포넌트에서 새로 불러오게
+      // 부모 리스트 새로고침
       if (onRefresh) onRefresh();
     } catch (err) {
-      console.error(err);
+      console.error('찜 오류 발생:', err);
+      console.log('백엔드 오류 메시지:', err.response?.data);
     }
   };
 

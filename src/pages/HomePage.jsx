@@ -5,7 +5,7 @@ import { Search, Filter, MapPin } from 'lucide-react';
 
 const mockStores = [
   {
-    id: '1',
+    restaurantId: '1',
     name: '맛있는 한식당',
     category: '한식',
     rating: 4.8,
@@ -17,7 +17,7 @@ const mockStores = [
     tags: ['깨끗함', '맛있음', '친절함'],
   },
   {
-    id: '2',
+    restaurantId: '2',
     name: '아늑한 카페',
     category: '카페',
     rating: 4.6,
@@ -29,7 +29,7 @@ const mockStores = [
     tags: ['조용함', '커피 맛있음'],
   },
   {
-    id: '3',
+    restaurantId: '3',
     name: '동네 빵집',
     category: '베이커리',
     rating: 4.9,
@@ -41,7 +41,7 @@ const mockStores = [
     tags: ['신선함', '친절함', '재방문'],
   },
   {
-    id: '4',
+    restaurantId: '4',
     name: '골목 분식집',
     category: '분식',
     rating: 4.5,
@@ -57,6 +57,19 @@ const mockStores = [
 const HomePage = () => {
   const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('강남구');
+  const [stores, setStores] = useState([]);
+  const loadStores = async () => {
+    const { lat, lng } = await getCurrentLocation();
+
+    const res = await getRestaurantList({
+      region,
+      lat,
+      lng,
+    });
+
+    setStores(res.data.content);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -78,10 +91,18 @@ const HomePage = () => {
 
         {/* 지역 + 카테고리 */}
         <div className="flex items-center gap-2 mt-3">
-          <button className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm">
+          <button
+            onClick={() => setSelectedRegion('강남구')}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
+              selectedRegion === '강남구'
+                ? 'bg-blue-100 text-blue-600'
+                : 'bg-gray-100 text-gray-700'
+            }`}
+          >
             <MapPin size={14} />
             강남구
           </button>
+
           <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">한식</button>
           <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">카페</button>
           <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
@@ -118,12 +139,12 @@ const HomePage = () => {
           </div>
           <div className="space-y-3">
             {mockStores.map((store) => (
-              <StoreCard key={store.id} store={store} />
+              <StoreCard key={store.restaurantId} store={store} />
             ))}
           </div>
         </div>
       ) : (
-        <MapView stores={mockStores} />
+        <MapView stores={stores} />
       )}
     </div>
   );
