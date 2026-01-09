@@ -3,7 +3,7 @@ import {
   getMyStores,
   getStore,
   getRestaurantDetail,
-  getStoreStats,
+  // getStoreStats, // 백엔드 API 미완성으로 주석처리
   createStore,
   updateStore,
   incrementStoreView,
@@ -86,36 +86,39 @@ export const useStore = (storeId, options = {}) => {
   });
 };
 
-// 가게 통계 조회
+// 가게 통계 조회 (백엔드 API 미완성으로 기본값만 반환)
+// TODO: 백엔드 API 완성 후 getStoreStats 호출로 변경
 export const useStoreStats = (storeId, options = {}) => {
   return useQuery({
     queryKey: storeKeys.stats(storeId),
     queryFn: async () => {
-      try {
-        const response = await getStoreStats(storeId);
-        return response.data || response;
-      } catch (error) {
-        // 백엔드가 없을 때 기본값 반환
-        console.warn('통계 조회 실패 (백엔드 미연동):', error);
-        return {
-          todayViews: 0,
-          monthlyReviews: 0,
-          lastMonthReviews: 0,
-          favoriteCount: 0,
-          lastMonthFavoriteCount: 0,
-          chatInquiries: 0,
-          chartData: [
-            { day: '월', views: 0 },
-            { day: '화', views: 0 },
-            { day: '수', views: 0 },
-            { day: '목', views: 0 },
-            { day: '금', views: 0 },
-            { day: '토', views: 0 },
-            { day: '일', views: 0 },
-          ],
-          recentReviews: [],
-        };
-      }
+      // 백엔드 API 미완성으로 기본값 반환 (UI는 정상 작동)
+      return {
+        todayViews: 0,
+        monthlyReviews: 0,
+        lastMonthReviews: 0,
+        favoriteCount: 0,
+        lastMonthFavoriteCount: 0,
+        chatInquiries: 0,
+        chartData: [
+          { day: '월', views: 0 },
+          { day: '화', views: 0 },
+          { day: '수', views: 0 },
+          { day: '목', views: 0 },
+          { day: '금', views: 0 },
+          { day: '토', views: 0 },
+          { day: '일', views: 0 },
+        ],
+        recentReviews: [],
+      };
+      // TODO: 백엔드 API 완성 후 아래 코드로 교체
+      // try {
+      //   const response = await getStoreStats(storeId);
+      //   return response.data || response;
+      // } catch (error) {
+      //   console.warn('통계 조회 실패:', error);
+      //   return { ...기본값 };
+      // }
     },
     enabled: !!storeId && options.enabled !== false,
     staleTime: 1 * 60 * 1000, // 1분 (통계는 자주 갱신)

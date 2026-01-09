@@ -4,7 +4,12 @@ import { useCreateInquiryChat } from '@/shared/hooks/useChatQueries';
 import { useAuth } from '@/context/AuthContext';
 import { useRestaurantDetail } from '@/shared/hooks/useStoreQueries';
 import { useToggleFavorite, useMyFavorites } from '@/shared/hooks/useFavoriteQueries';
-import { formatTime, getHoursString, getFirstImageUrl, getAllImageUrls } from '@/shared/lib/storeUtils';
+import {
+  formatTime,
+  getHoursString,
+  getFirstImageUrl,
+  getAllImageUrls,
+} from '@/shared/lib/storeUtils';
 import StoreDetailHeader from '@/features/store/components/StoreDetailHeader';
 import StoreDetailInfo from '@/features/store/components/StoreDetailInfo';
 import StoreDetailTabs, { TAB_TYPES } from '@/features/store/components/StoreDetailTabs';
@@ -46,9 +51,7 @@ const StoreDetailPage = () => {
         breakStartTime: restaurantData.breakStartTime
           ? formatTime(restaurantData.breakStartTime)
           : '',
-        breakEndTime: restaurantData.breakEndTime
-          ? formatTime(restaurantData.breakEndTime)
-          : '',
+        breakEndTime: restaurantData.breakEndTime ? formatTime(restaurantData.breakEndTime) : '',
         description: restaurantData.description || '',
         tags: Array.isArray(restaurantData.keywordList) ? restaurantData.keywordList : [],
         latitude: restaurantData.latitude,
@@ -78,8 +81,7 @@ const StoreDetailPage = () => {
     try {
       // 채팅방 생성 (storeId는 가게 ID, 쿼리 파라미터로 전달, userId는 현재 로그인한 사용자 ID)
       const response = await createInquiryChat.mutateAsync({
-        storeId: id, // 가게 ID (쿼리 파라미터로 전달)
-        userId: user.id, // 현재 사용자 ID
+        storeId: id, // 가게 ID
       });
 
       // 채팅방 생성 성공 시 ChatPage로 이동 (채팅방 ID를 state로 전달)
@@ -107,7 +109,7 @@ const StoreDetailPage = () => {
         restaurantId: store.id,
         isFavorite: isFavorite,
       });
-    } catch (err) {
+    } catch {
       alert('찜하기 처리에 실패했습니다. 다시 시도해주세요.');
     }
   };

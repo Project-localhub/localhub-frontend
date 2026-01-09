@@ -80,7 +80,8 @@ export const incrementStoreView = async (storeId) => {
   }
 };
 
-// 가게별 통계 조회
+// 가게별 통계 조회 (백엔드 API 미완성으로 주석처리)
+// TODO: 백엔드 API 완성 후 주석 해제
 // 응답 형식:
 // {
 //   todayViews: number,           // 오늘 조회수
@@ -92,17 +93,14 @@ export const incrementStoreView = async (storeId) => {
 //   chartData: Array<{day: string, views: number}>, // 조회수 추이 데이터
 //   recentReviews: Array<{...}>   // 최근 리뷰 목록
 // }
-export const getStoreStats = async (storeId) => {
-  const response = await client.get(`/api/stores/${storeId}/stats`);
-  return response.data;
-};
+// export const getStoreStats = async (storeId) => {
+//   const response = await client.get(`/api/stores/${storeId}/stats`);
+//   return response.data;
+// };
 
 // 모든 가게 목록 조회
 export const getAllRestaurants = async () => {
   const response = await client.get('/api/restaurant/get-all-restaurants');
-
-  console.log('📥 [get-all-restaurants] Response 데이터:', JSON.stringify(response.data, null, 2));
-
   return response.data;
 };
 

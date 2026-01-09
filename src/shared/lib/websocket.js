@@ -26,10 +26,9 @@ class WebSocketClient {
     }
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
-    const wsUrl = apiBaseUrl.replace(/^http/, 'ws') + '/stomp';
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(`${apiBaseUrl}/stomp`),
+      webSocketFactory: () => new SockJS(`${apiBaseUrl}/stomp/chats`),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
