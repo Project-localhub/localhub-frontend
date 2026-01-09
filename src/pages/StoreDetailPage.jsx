@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, MessageCircle } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
 import ReviewCard from '@/components/ReviewCard';
+import { useCreateInquiryChat } from '@/shared/hooks/useChatQueries';
+import { useAuth } from '@/context/AuthContext';
 
 const mockStore = {
   id: '1',
@@ -62,10 +64,48 @@ const TAB_TYPES = {
 };
 
 const StoreDetailPage = () => {
-  // eslint-disable-next-line no-unused-vars
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(TAB_TYPES.INFO);
+  const { user } = useAuth();
+  const createInquiryChat = useCreateInquiryChat();
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+
+  const handleStartChat = async () => {
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+
+    if (user.userType === 'OWNER') {
+      alert('사업자는 채팅을 시작할 수 없습니다. 일반 사용자로 로그인해주세요.');
+      return;
+    }
+
+    setIsCreatingChat(true);
+    try {
+      // 채팅방 생성 (storeId는 가게 ID, userId는 현재 로그인한 사용자 ID)
+      const response = await createInquiryChat.mutateAsync({
+        storeId: id, // 가게 ID
+        userId: user.id, // 현재 사용자 ID
+      });
+
+      // 채팅방 생성 성공 시 ChatPage로 이동 (채팅방 ID를 state로 전달)
+      const chatRoomId = response.id || response.inquiryChatId || response.chatRoomId;
+      navigate('/chat', { state: { chatRoomId } });
+    } catch (error) {
+      console.error('채팅방 생성 오류:', error);
+      const errorMessage =
+        error.response?.status === 401
+          ? '인증이 필요합니다. 다시 로그인해주세요.'
+          : error.message || '채팅방 생성에 실패했습니다.';
+      alert(errorMessage);
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
+
   const reviewButton = () => {
     navigate(`/review/${mockStore.id}`);
   };
@@ -216,13 +256,19 @@ const StoreDetailPage = () => {
         )}
       </div>
 
-      <div className="p-4 border-t border-gray-200 flex gap-2">
-        <button className="flex-1 py-3 border border-blue-600 text-blue-600 rounded-lg flex items-center justify-center gap-2">
-          <MessageCircle size={20} />
-          채팅하기
-        </button>
-        <button className="flex-1 py-3 bg-blue-600 text-white rounded-lg">전화하기</button>
-      </div>
+      {user && user.userType === 'CUSTOMER' && (
+        <div className="p-4 border-t border-gray-200 flex gap-2">
+          <button
+            onClick={handleStartChat}
+            disabled={isCreatingChat}
+            className="flex-1 py-3 border border-blue-600 text-blue-600 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <MessageCircle size={20} />
+            {isCreatingChat ? '채팅방 생성 중...' : '채팅하기'}
+          </button>
+          <button className="flex-1 py-3 bg-blue-600 text-white rounded-lg">전화하기</button>
+        </div>
+      )}
     </div>
   );
 };

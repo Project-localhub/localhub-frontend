@@ -7,7 +7,6 @@ import { router } from './app/router';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { initKakao } from './shared/lib/kakao';
-import { FavoritesProvider } from './context/FavoritesContext';
 import client from './shared/api/client';
 
 const token = localStorage.getItem('accessToken');
@@ -36,11 +35,9 @@ if (typeof window !== 'undefined') {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
-      <FavoritesProvider>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>
-      </FavoritesProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </AuthProvider>
   </React.StrictMode>,
 );

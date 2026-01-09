@@ -2,11 +2,11 @@
 import { Link } from 'react-router-dom';
 import { Star, Heart, MapPin } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
-import { useState } from 'react';
-import { toggleLike, deleteFavorite } from '../shared/api/auth';
+import { useToggleFavorite } from '@/shared/hooks/useFavoriteQueries';
 
-const StoreCard = ({ store, onRefresh }) => {
-  const [favorite, setFavorite] = useState(store.liked);
+const StoreCard = ({ store }) => {
+  const favorite = store.isLiked;
+  const toggleFavoriteMutation = useToggleFavorite();
 
   const favoriteButtonHandler = async (e) => {
     console.log('store.id:', store.id);
@@ -16,21 +16,13 @@ const StoreCard = ({ store, onRefresh }) => {
     e.stopPropagation();
 
     try {
-      if (favorite) {
-        // 찜 취소 (DELETE)
-        await deleteFavorite(Number(store.id));
-        setFavorite(false);
-      } else {
-        // 찜 추가 (POST)
-        await toggleLike(Number(store.id));
-        setFavorite(true);
-      }
-
-      // 부모 리스트 새로고침
-      if (onRefresh) onRefresh();
+      await toggleFavoriteMutation.mutateAsync({
+        restaurantId: store.id,
+        isFavorite: favorite,
+      });
     } catch (err) {
-      console.error('찜 오류 발생:', err);
-      console.log('백엔드 오류 메시지:', err.response?.data);
+      console.error('찜하기 오류:', err);
+      alert('찜하기 처리에 실패했습니다. 다시 시도해주세요.');
     }
   };
 

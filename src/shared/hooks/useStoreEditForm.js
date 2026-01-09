@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createStore } from '@/shared/api/storeApi';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { updateStore } from '@/shared/api/storeApi';
+import { getStore } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
+import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/shared/lib/storeConstants';
 
 const initialFormData = {
   name: '',
@@ -18,8 +20,9 @@ const initialFormData = {
   hasBreakTime: false,
   breakStartTime: '14:00',
   breakEndTime: '17:00',
-  images: [], // File 객체 배열
-  imageKeys: [], // 업로드 완료된 이미지 key 배열
+  images: [], // File 객체 배열 (새로 추가된 이미지)
+  imageKeys: [], // 업로드 완료된 이미지 key 배열 (기존 + 새로 업로드)
+  existingImages: [], // 기존 이미지 URL 배열 (표시용)
 };
 
 // 사업자등록번호 형식 검증 (10자리 숫자)
@@ -28,18 +31,67 @@ const validateBusinessNumber = (number) => {
   return /^\d{10}$/.test(cleaned);
 };
 
-export const useStoreForm = () => {
+export const useStoreEditForm = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isConvertingCoordinates, setIsConvertingCoordinates] = useState(false);
+
+  // 기존 가게 정보 로드
+  useEffect(() => {
+    const loadStoreData = async () => {
+      if (!id) {
+        alert('가게 ID가 없습니다.');
+        navigate('/dashboard');
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const storeData = await getStore(id);
+
+        // 기존 이미지 URL 추출 (표시용)
+        const existingImageUrls = storeData.images || [];
+        const existingImageKeys = existingImageUrls.map((img) => img.imageKey || img.key || '');
+
+        setFormData({
+          name: storeData.name || '',
+          businessNumber: storeData.businessNumber || '',
+          description: storeData.description || '',
+          category: storeData.category || '',
+          phone: storeData.phone || '',
+          address: storeData.address || '',
+          latitude: storeData.latitude?.toString() || '',
+          longitude: storeData.longitude?.toString() || '',
+          keywords: storeData.keywords || [],
+          openTime: storeData.openTime || '09:00',
+          closeTime: storeData.closeTime || '22:00',
+          hasBreakTime: storeData.hasBreakTime || false,
+          breakStartTime: storeData.breakStartTime || '14:00',
+          breakEndTime: storeData.breakEndTime || '17:00',
+          images: [], // 새로 추가할 이미지
+          imageKeys: existingImageKeys, // 기존 이미지 key 유지
+          existingImages: existingImageUrls, // 기존 이미지 URL (표시용)
+        });
+      } catch {
+        alert('가게 정보를 불러오는데 실패했습니다.');
+        navigate('/dashboard');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStoreData();
+  }, [id, navigate]);
 
   // 이미지 추가
   const handleImageAdd = async (e) => {
     const files = Array.from(e.target.files);
-    const remainingSlots = 3 - formData.images.length;
+    const remainingSlots = 3 - (formData.imageKeys.length + formData.images.length);
     const filesToAdd = files.slice(0, remainingSlots);
     const newImages = [...formData.images, ...filesToAdd];
     setFormData({ ...formData, images: newImages });
@@ -52,9 +104,31 @@ export const useStoreForm = () => {
 
   // 이미지 제거
   const handleImageRemove = (index) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
-    const newImageKeys = formData.imageKeys.filter((_, i) => i !== index);
-    setFormData({ ...formData, images: newImages, imageKeys: newImageKeys });
+    // 기존 이미지인지 새로 추가한 이미지인지 확인
+    const totalImages = formData.existingImages.length + formData.images.length;
+
+    if (index < formData.existingImages.length) {
+      // 기존 이미지 제거
+      const newExistingImages = formData.existingImages.filter((_, i) => i !== index);
+      const newImageKeys = formData.imageKeys.filter((_, i) => i !== index);
+      setFormData({
+        ...formData,
+        existingImages: newExistingImages,
+        imageKeys: newImageKeys,
+      });
+    } else {
+      // 새로 추가한 이미지 제거
+      const newImageIndex = index - formData.existingImages.length;
+      const newImages = formData.images.filter((_, i) => i !== newImageIndex);
+      const newImageKeys = formData.imageKeys.filter(
+        (_, i) => i !== formData.existingImages.length + newImageIndex,
+      );
+      setFormData({
+        ...formData,
+        images: newImages,
+        imageKeys: newImageKeys,
+      });
+    }
   };
 
   // 이미지 업로드 (presign URL 발급 → S3/R2 업로드)
@@ -329,9 +403,7 @@ export const useStoreForm = () => {
     const newErrors = {};
 
     if (!formData.name.trim()) newErrors.name = '가게 이름을 입력해주세요';
-    if (!formData.businessNumber.trim()) {
-      newErrors.businessNumber = '사업자등록번호를 입력해주세요';
-    } else if (!validateBusinessNumber(formData.businessNumber)) {
+    if (formData.businessNumber && !validateBusinessNumber(formData.businessNumber)) {
       newErrors.businessNumber = '사업자등록번호는 10자리 숫자입니다 (예: 123-45-67890)';
     }
     if (!formData.category) newErrors.category = '음식 카테고리를 선택해주세요';
@@ -349,9 +421,9 @@ export const useStoreForm = () => {
       }));
     }
     if (!formData.phone.trim()) newErrors.phone = '전화번호를 입력해주세요';
-    if (formData.images.length === 0) {
-      newErrors.images = '최소 1개 이상의 사진을 등록해주세요';
-    } else if (formData.imageKeys.length !== formData.images.length) {
+    if (formData.imageKeys.length === 0) {
+      newErrors.images = '최소 1개 이상의 사진이 필요합니다';
+    } else if (formData.images.length > 0 && formData.imageKeys.length !== formData.existingImages.length + formData.images.length) {
       newErrors.images = '이미지 업로드가 완료될 때까지 기다려주세요';
     }
 
@@ -370,11 +442,11 @@ export const useStoreForm = () => {
     setIsSubmitting(true);
 
     try {
-      await createStore(formData);
-      alert('가게 등록이 완료되었습니다!');
+      await updateStore(id, formData);
+      alert('가게 정보가 수정되었습니다!');
       navigate('/dashboard');
     } catch {
-      alert('가게 등록에 실패했습니다. 다시 시도해주세요.');
+      alert('가게 수정에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);
     }
@@ -386,6 +458,7 @@ export const useStoreForm = () => {
     errors,
     isSubmitting,
     isUploadingImages,
+    isLoading,
     isConvertingCoordinates,
     handleImageAdd,
     handleImageRemove,
@@ -394,3 +467,4 @@ export const useStoreForm = () => {
     handleSubmit,
   };
 };
+

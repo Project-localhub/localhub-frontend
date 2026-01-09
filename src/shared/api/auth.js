@@ -23,8 +23,17 @@ export const getUserInfo = async () => {
 };
 
 export const logout = async () => {
-  const res = await client.post('/logout');
-  return res.data;
+  try {
+    const res = await client.post('/logout');
+    return res.data;
+  } catch (error) {
+    // 401 에러는 이미 로그아웃된 상태이므로 조용히 처리
+    if (error.response?.status === 401) {
+      return;
+    }
+    // 다른 에러는 그대로 throw
+    throw error;
+  }
 };
 
 export const findUsername = (email) => {

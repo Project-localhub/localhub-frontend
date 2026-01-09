@@ -1,23 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import {
-  Home,
-  MessageCircle,
-  Heart,
-  LayoutDashboard,
-  User,
-  LogOut,
-  ChevronDown,
-} from 'lucide-react';
+import { Home, MessageCircle, Heart, LayoutDashboard, User, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isLogin, logout, isInitializing, updateUserType } = useAuth();
+  const { user, isLogin, logout, isInitializing } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isUserTypeDropdownOpen, setIsUserTypeDropdownOpen] = useState(false);
-  const [isChangingUserType, setIsChangingUserType] = useState(false);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -29,8 +19,7 @@ const Layout = () => {
     try {
       await logout();
       navigate('/login', { replace: true });
-    } catch (error) {
-      console.error('로그아웃 처리 중 오류:', error);
+    } catch {
       alert('로그아웃 중 오류가 발생했습니다.');
     } finally {
       setIsLoggingOut(false);
@@ -38,41 +27,6 @@ const Layout = () => {
   };
 
   const isActive = (path) => location.pathname === path;
-
-  const handleUserTypeChange = async (newUserType) => {
-    if (isChangingUserType || user?.userType === newUserType) {
-      setIsUserTypeDropdownOpen(false);
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `${newUserType === 'OWNER' ? '사업자' : '일반 사용자'} 모드로 전환하시겠습니까?`,
-    );
-    if (!confirmed) {
-      setIsUserTypeDropdownOpen(false);
-      return;
-    }
-
-    setIsChangingUserType(true);
-    try {
-      await updateUserType(newUserType);
-      alert('회원 유형이 변경되었습니다.');
-      setIsUserTypeDropdownOpen(false);
-    } catch (error) {
-      console.error('회원 유형 변경 오류:', error);
-      const errorMessage =
-        error.response?.status === 401
-          ? '인증이 필요합니다. 다시 로그인해주세요.'
-          : error.message || '회원 유형 변경에 실패했습니다.';
-      alert(errorMessage);
-    } finally {
-      setIsChangingUserType(false);
-    }
-  };
-
-  const getUserTypeLabel = (userType) => {
-    return userType === 'OWNER' ? '사업자' : '일반';
-  };
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 w-full max-w-md mx-auto shadow-lg">
@@ -89,73 +43,7 @@ const Layout = () => {
           <div className="w-20 h-8" />
         ) : isLogin && user ? (
           <div className="flex items-center gap-2">
-            <div className="relative">
-              {!user?.isSocialLogin ? (
-                <button
-                  onClick={() => setIsUserTypeDropdownOpen(!isUserTypeDropdownOpen)}
-                  disabled={isChangingUserType}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="회원 유형 변경"
-                >
-                  <span className="text-gray-900 font-medium text-sm">
-                    {user?.name ?? ''}님 ({getUserTypeLabel(user?.userType)})
-                  </span>
-                  <ChevronDown size={16} className="text-gray-600" />
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    alert(
-                      '회원 유형 변경 기능은 로컬 로그인(아이디/비밀번호)으로 로그인한 경우에만 이용 가능합니다.\n\n로컬 로그인으로 다시 로그인해주세요.',
-                    );
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                  title="회원 유형 변경 (로컬 로그인 필요)"
-                >
-                  <span className="text-gray-900 font-medium text-sm">
-                    {user?.name ?? ''}님 ({getUserTypeLabel(user?.userType)})
-                  </span>
-                  <ChevronDown size={16} className="text-gray-400" />
-                </button>
-              )}
-
-              {isUserTypeDropdownOpen && !user?.isSocialLogin && (
-                <>
-                  <button
-                    type="button"
-                    className="fixed inset-0 z-10"
-                    onClick={() => setIsUserTypeDropdownOpen(false)}
-                    aria-label="드롭다운 닫기"
-                  />
-                  <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                    <div className="py-1">
-                      <button
-                        onClick={() => handleUserTypeChange('CUSTOMER')}
-                        disabled={isChangingUserType || user?.userType === 'CUSTOMER'}
-                        className={`w-full text-left px-4 py-2 text-sm ${
-                          user?.userType === 'CUSTOMER'
-                            ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        일반 사용자
-                      </button>
-                      <button
-                        onClick={() => handleUserTypeChange('OWNER')}
-                        disabled={isChangingUserType || user?.userType === 'OWNER'}
-                        className={`w-full text-left px-4 py-2 text-sm ${
-                          user?.userType === 'OWNER'
-                            ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        사업자
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <span className="text-gray-900 font-medium text-sm">{user?.name ?? ''}님</span>
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}

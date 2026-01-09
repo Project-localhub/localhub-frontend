@@ -11,8 +11,8 @@ const MapView = ({ stores }) => {
     }
 
     const script = document.createElement('script');
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&autoload=false`;
-    script.async = true;
+    script.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_API_KEY&autoload=false';
+    //  script.async = true;
 
     script.onload = () => {
       window.kakao.maps.load(() => {

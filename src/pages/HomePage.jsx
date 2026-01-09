@@ -2,57 +2,8 @@ import { useState } from 'react';
 import StoreCard from '@/components/StoreCard';
 import MapView from '@/components/MapView';
 import { Search, Filter, MapPin } from 'lucide-react';
-
-const mockStores = [
-  {
-    restaurantId: '1',
-    name: '맛있는 한식당',
-    category: '한식',
-    rating: 4.8,
-    reviewCount: 234,
-    distance: '0.3km',
-    lat: 37.4979,
-    lng: 127.0276,
-    image: 'https://images.unsplash.com/photo-1629642621587-9947ce328799?auto=format&q=80&w=1080',
-    tags: ['깨끗함', '맛있음', '친절함'],
-  },
-  {
-    restaurantId: '2',
-    name: '아늑한 카페',
-    category: '카페',
-    rating: 4.6,
-    reviewCount: 156,
-    distance: '0.5km',
-    lat: 37.4985,
-    lng: 127.0301,
-    image: 'https://images.unsplash.com/photo-1642647916334-82e513d9cc48?auto=format&q=80&w=1080',
-    tags: ['조용함', '커피 맛있음'],
-  },
-  {
-    restaurantId: '3',
-    name: '동네 빵집',
-    category: '베이커리',
-    rating: 4.9,
-    reviewCount: 412,
-    distance: '0.7km',
-    lat: 37.4995,
-    lng: 127.025,
-    image: 'https://images.unsplash.com/photo-1658740877393-7d001187d867?auto=format&q=80&w=1080',
-    tags: ['신선함', '친절함', '재방문'],
-  },
-  {
-    restaurantId: '4',
-    name: '골목 분식집',
-    category: '분식',
-    rating: 4.5,
-    reviewCount: 89,
-    distance: '1.2km',
-    lat: 37.4955,
-    lng: 127.0295,
-    image: 'https://images.unsplash.com/photo-1707858127144-69b147b28b94?auto=format&q=80&w=1080',
-    tags: ['가성비', '맛있음'],
-  },
-];
+import { useAllRestaurants } from '@/shared/hooks/useStoreQueries';
+import { useMyFavorites } from '@/shared/hooks/useFavoriteQueries';
 
 const HomePage = () => {
   const [viewMode, setViewMode] = useState('list');
@@ -70,6 +21,25 @@ const HomePage = () => {
 
     setStores(res.data.content);
   };
+
+  const { data: restaurantsData, isLoading } = useAllRestaurants();
+  const { data: myFavorites = [] } = useMyFavorites();
+
+  // 찜한 가게 ID Set 생성 (빠른 조회를 위해)
+  const favoriteIds = new Set(myFavorites.map((fav) => fav.id || fav.restaurantId));
+
+  const stores =
+    restaurantsData?.content?.map((restaurant) => ({
+      id: restaurant.restaurantId,
+      name: restaurant.name,
+      category: restaurant.category,
+      rating: restaurant.score || 0,
+      reviewCount: restaurant.reviewCount || 0,
+      distance: '0.0km',
+      image: restaurant.imageUrl || '',
+      tags: restaurant.keyword || [],
+      isLiked: favoriteIds.has(restaurant.restaurantId),
+    })) || [];
 
   return (
     <div className="flex flex-col h-full">
@@ -134,14 +104,33 @@ const HomePage = () => {
       {/* 리스트 or 지도 */}
       {viewMode === 'list' ? (
         <div className="flex-1 overflow-auto p-4">
-          <div className="mb-3 text-gray-600">
-            주변 가게 <span className="text-blue-600">{mockStores.length}</span>개
-          </div>
-          <div className="space-y-3">
-            {mockStores.map((store) => (
-              <StoreCard key={store.restaurantId} store={store} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-gray-500">로딩 중...</div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 text-gray-600">
+                주변 가게{' '}
+                <span className="text-blue-600">
+                  {restaurantsData?.totalElements || stores.length}
+                </span>
+                개
+              </div>
+              {stores.length > 0 ? (
+                <div className="space-y-3">
+                  {stores.map((store) => (
+                    <StoreCard key={store.id} store={store} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="text-gray-400 mb-2">등록된 가게가 없습니다</div>
+                  <p className="text-gray-500 text-sm">첫 번째 가게를 등록해보세요!</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       ) : (
         <MapView stores={stores} />
