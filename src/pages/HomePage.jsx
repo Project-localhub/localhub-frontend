@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import StoreCard from '@/components/StoreCard';
 import MapView from '@/components/MapView';
 import { Search, Filter, MapPin } from 'lucide-react';
@@ -9,23 +9,41 @@ const HomePage = () => {
   const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('강남구');
-  const [stores, setStores] = useState([]);
-  const loadStores = async () => {
-    const { lat, lng } = await getCurrentLocation();
 
-    const res = await getRestaurantList({
-      region,
-      lat,
-      lng,
-    });
+  // ✅ 딱 이거만 추가
+  const [location, setLocation] = useState(null);
 
-    setStores(res.data.content);
-  };
+  // ✅ 위치 가져오기
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+      },
 
-  const { data: restaurantsData, isLoading } = useAllRestaurants();
+      () => {
+        // 실패 시 기본 위치 (강남)
+        setLocation({
+          lat: 37.4979,
+          lng: 127.0276,
+        });
+      },
+    );
+  }, []);
+
+  const { data: restaurantsData, isLoading } = useAllRestaurants(
+    location
+      ? {
+          lat: location.lat,
+          lng: location.lng,
+        }
+      : {},
+  );
+
   const { data: myFavorites = [] } = useMyFavorites();
 
-  // 찜한 가게 ID Set 생성 (빠른 조회를 위해)
   const favoriteIds = new Set(myFavorites.map((fav) => fav.id || fav.restaurantId));
 
   const stores =
@@ -35,14 +53,16 @@ const HomePage = () => {
       category: restaurant.category,
       rating: restaurant.score || 0,
       reviewCount: restaurant.reviewCount || 0,
-      distance: '0.0km',
+      distance: restaurant.distance || '0.0km',
       image: restaurant.imageUrl || '',
       tags: restaurant.keyword || [],
       isLiked: favoriteIds.has(restaurant.restaurantId),
+      lat: restaurant.latitude,
+      lng: restaurant.longitude,
     })) || [];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-screen">
       {/* 검색창 */}
       <div className="bg-white px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
@@ -59,7 +79,6 @@ const HomePage = () => {
           </button>
         </div>
 
-        {/* 지역 + 카테고리 */}
         <div className="flex items-center gap-2 mt-3">
           <button
             onClick={() => setSelectedRegion('강남구')}
@@ -71,12 +90,6 @@ const HomePage = () => {
           >
             <MapPin size={14} />
             강남구
-          </button>
-
-          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">한식</button>
-          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">카페</button>
-          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-            베이커리
           </button>
         </div>
       </div>

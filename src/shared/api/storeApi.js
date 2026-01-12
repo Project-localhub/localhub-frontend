@@ -81,10 +81,27 @@ export const getStoreStats = async (storeId) => {
 };
 
 // 모든 가게 목록 조회
-export const getAllRestaurants = async () => {
-  const response = await client.get('/api/restaurant/get-all-restaurants');
+export const getAllRestaurants = async ({
+  page = 0,
+  size = 10,
+  lat,
+  lng,
+  radiusMeter = 3000,
+} = {}) => {
+  if (lat == null || lng == null) {
+    throw new Error('lat, lng가 없습니다');
+  }
 
-  console.log('📥 [get-all-restaurants] Response 데이터:', JSON.stringify(response.data, null, 2));
+  const response = await client.get('/api/restaurant/get-all-restaurants', {
+    params: {
+      page,
+      size,
+      sort: 'createdAt,desc',
+      lat,
+      lng,
+      radiusMeter,
+    },
+  });
 
   return response.data;
 };

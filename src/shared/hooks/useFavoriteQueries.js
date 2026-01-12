@@ -48,7 +48,7 @@ export const useMyFavorites = (options = {}) => {
         const data = await getMyFavoriteList();
         // Spring Boot Page 응답 형태 처리: { content: [...] }
         const favorites = data?.content || (Array.isArray(data) ? data : []);
-        
+
         // StoreCard가 기대하는 형태로 변환
         return favorites.map((item) => ({
           ...item,
