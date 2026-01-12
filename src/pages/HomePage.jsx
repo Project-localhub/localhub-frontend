@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import StoreCard from '@/components/StoreCard';
 import MapView from '@/components/MapView';
 import { Search, Filter, MapPin } from 'lucide-react';
@@ -8,11 +8,42 @@ import { useMyFavorites } from '@/shared/hooks/useFavoriteQueries';
 const HomePage = () => {
   const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('강남구');
 
-  const { data: restaurantsData, isLoading } = useAllRestaurants();
+  // ✅ 딱 이거만 추가
+  const [location, setLocation] = useState(null);
+
+  // ✅ 위치 가져오기
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+      },
+
+      () => {
+        // 실패 시 기본 위치 (강남)
+        setLocation({
+          lat: 37.4979,
+          lng: 127.0276,
+        });
+      },
+    );
+  }, []);
+
+  const { data: restaurantsData, isLoading } = useAllRestaurants(
+    location
+      ? {
+          lat: location.lat,
+          lng: location.lng,
+        }
+      : {},
+  );
+
   const { data: myFavorites = [] } = useMyFavorites();
 
-  // 찜한 가게 ID Set 생성 (빠른 조회를 위해)
   const favoriteIds = new Set(myFavorites.map((fav) => fav.id || fav.restaurantId));
 
   const stores =
@@ -22,14 +53,17 @@ const HomePage = () => {
       category: restaurant.category,
       rating: restaurant.score || 0,
       reviewCount: restaurant.reviewCount || 0,
-      distance: '0.0km',
+      distance: restaurant.distance || '0.0km',
       image: restaurant.imageUrl || '',
       tags: restaurant.keyword || [],
       isLiked: favoriteIds.has(restaurant.restaurantId),
+      lat: restaurant.latitude,
+      lng: restaurant.longitude,
     })) || [];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-screen">
+      {/* 검색창 */}
       <div className="bg-white px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
           <Search size={20} className="text-gray-500" />
@@ -44,19 +78,23 @@ const HomePage = () => {
             <Filter size={20} />
           </button>
         </div>
+
         <div className="flex items-center gap-2 mt-3">
-          <button className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm">
+          <button
+            onClick={() => setSelectedRegion('강남구')}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
+              selectedRegion === '강남구'
+                ? 'bg-blue-100 text-blue-600'
+                : 'bg-gray-100 text-gray-700'
+            }`}
+          >
             <MapPin size={14} />
             강남구
-          </button>
-          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">한식</button>
-          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">카페</button>
-          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-            베이커리
           </button>
         </div>
       </div>
 
+      {/* 리스트/지도 스위치 */}
       <div className="bg-white px-4 py-2 border-b border-gray-200 flex gap-2">
         <button
           onClick={() => setViewMode('list')}
@@ -76,6 +114,7 @@ const HomePage = () => {
         </button>
       </div>
 
+      {/* 리스트 or 지도 */}
       {viewMode === 'list' ? (
         <div className="flex-1 overflow-auto p-4">
           {isLoading ? (

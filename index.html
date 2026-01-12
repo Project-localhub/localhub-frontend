@@ -5,23 +5,33 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LocalHub</title>
+
     <!-- Global polyfill for SockJS/STOMP -->
     <script>
       if (typeof global === 'undefined') {
         var global = globalThis;
       }
     </script>
-    <!-- Kakao JavaScript SDK -->
+
+    <!-- Kakao Login / 공유용 SDK (필요시) -->
     <script
       src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
       crossorigin="anonymous"
     ></script>
+
     <!-- Daum Postcode API -->
     <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   </head>
   <body>
     <div id="root"></div>
-    <!-- 카카오맵 SDK는 JavaScript에서 동적으로 로드 (환경 변수 사용) -->
+
+    <!-- Kakao 지도 SDK (React에서 load 호출할 수 있도록 autoload=false) -->
+    <script
+      type="text/javascript"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f42007a2f7495d7e7768281ea4a4a7ae&autoload=false&libraries=services"
+    ></script>
+
+    <!-- React 앱 진입점 -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

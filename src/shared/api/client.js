@@ -10,9 +10,19 @@ const client = axios.create({
 });
 
 client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const isNoAuthRequest = noAuthRequiredUrls.some((url) => config.url.startsWith(url));
+
+  if (isNoAuthRequest) {
+    return config;
+  }
+
+  if (!isNoAuthRequest) {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log('⛔ 토큰 없음');
+    }
   }
 
   return config;

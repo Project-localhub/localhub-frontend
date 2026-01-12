@@ -22,23 +22,30 @@ export const storeKeys = {
 };
 
 // 모든 가게 목록 조회 (홈페이지용)
-export const useAllRestaurants = (options = {}) => {
+export const useAllRestaurants = ({ lat, lng, page = 0, size = 10 } = {}, options = {}) => {
   return useQuery({
-    queryKey: storeKeys.lists(),
+    queryKey: storeKeys.lists({ lat, lng, page, size }),
     queryFn: async () => {
       try {
-        const response = await getAllRestaurants();
+        const response = await getAllRestaurants({
+          lat,
+          lng,
+          page,
+          size,
+        });
         return response;
       } catch (err) {
         console.error('가게 목록 조회 실패:', err);
-        // 에러 발생 시 빈 데이터 반환
         return {
           content: [],
           totalElements: 0,
         };
       }
     },
-    staleTime: 2 * 60 * 1000, // 2분
+
+    enabled: typeof lat === 'number' && typeof lng === 'number',
+
+    staleTime: 2 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false,
     ...options,

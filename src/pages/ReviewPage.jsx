@@ -22,11 +22,7 @@ const ReviewWritePage = () => {
     e.preventDefault();
 
     try {
-      await saveReview(restaurantId, {
-        writer,
-        rating,
-        content,
-      });
+      await saveReview(restaurantId, content);
 
       alert('리뷰가 등록되었습니다!');
       navigate(-1); // ⭐ 이전 페이지로 이동
