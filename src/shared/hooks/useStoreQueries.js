@@ -51,12 +51,13 @@ export const useAllRestaurants = ({ lat, lng, page = 0, size = 10 } = {}, option
   });
 };
 
-//가게 정보 조회
-export const useRestaurantDetail = (restaurantId) => {
+export const useStoreDetail = (storeId, options = {}) => {
   return useQuery({
-    queryKey: ['restaurant', restaurantId],
-    queryFn: () => getRestaurantDetail(restaurantId),
-    enabled: !!restaurantId, // id 있을 때만 호출
+    queryKey: storeKeys.detail(storeId),
+    queryFn: () => getStore(storeId),
+    enabled: !!storeId && options.enabled !== false,
+    staleTime: 5 * 60 * 1000,
+    ...options,
   });
 };
 
