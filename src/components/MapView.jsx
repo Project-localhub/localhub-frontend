@@ -1,39 +1,40 @@
 import { useEffect, useRef } from 'react';
+import { loadKakaoMap } from '../utils/loadKakaoMap,js';
 
 const MapView = ({ stores }) => {
   const mapRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    if (!window.kakao || !stores?.length) return;
+    if (!stores || stores.length === 0) return;
+    if (!containerRef.current) return;
 
-    const { kakao } = window;
+    loadKakaoMap(() => {
+      const validStore = stores.find((s) => s.lat && s.lng);
+      if (!validStore) return;
 
-    const center = new kakao.maps.LatLng(stores[0].lat, stores[0].lng);
+      const center = new window.kakao.maps.LatLng(validStore.lat, validStore.lng);
 
-    const map = new kakao.maps.Map(mapRef.current, {
-      center,
-      level: 5,
-    });
-
-    stores.forEach((store) => {
-      if (!store.lat || !store.lng) return;
-
-      const marker = new kakao.maps.Marker({
-        map,
-        position: new kakao.maps.LatLng(store.lat, store.lng),
+      const map = new window.kakao.maps.Map(containerRef.current, {
+        center,
+        level: 4,
       });
 
-      const infowindow = new kakao.maps.InfoWindow({
-        content: `<div style="padding:5px;font-size:12px;">${store.name}</div>`,
-      });
+      mapRef.current = map;
 
-      kakao.maps.event.addListener(marker, 'click', () => {
-        infowindow.open(map, marker);
+      stores.forEach((store) => {
+        if (!store.lat || !store.lng) return;
+
+        const marker = new window.kakao.maps.Marker({
+          map,
+          position: new window.kakao.maps.LatLng(store.lat, store.lng),
+          title: store.name,
+        });
       });
     });
   }, [stores]);
 
-  return <div ref={mapRef} className="flex-1 w-full" />;
+  return <div ref={containerRef} className="w-full h-full" />;
 };
 
 export default MapView;
