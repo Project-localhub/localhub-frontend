@@ -53,6 +53,17 @@ export const useAllRestaurants = ({ lat, lng, page = 0, size = 10 } = {}, option
 };
 
 // 사장님의 가게 목록 조회 (배열 반환)
+export const useStoreDetail = (storeId, options = {}) => {
+  return useQuery({
+    queryKey: storeKeys.detail(storeId),
+    queryFn: () => getStore(storeId),
+    enabled: !!storeId && options.enabled !== false,
+    staleTime: 5 * 60 * 1000,
+    ...options,
+  });
+};
+
+// 사장님의 가게 목록 조회
 export const useMyStores = () => {
   return useQuery({
     queryKey: storeKeys.myStores(),
