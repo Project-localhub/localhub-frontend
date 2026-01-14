@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { MessageCircle, Phone } from 'lucide-react';
 
 const StoreDetailActions = ({ store, onStartChat, isCreatingChat }) => {
@@ -22,5 +23,12 @@ const StoreDetailActions = ({ store, onStartChat, isCreatingChat }) => {
   );
 };
 
-export default StoreDetailActions;
+StoreDetailActions.propTypes = {
+  store: PropTypes.shape({
+    phone: PropTypes.string.isRequired,
+  }).isRequired,
+  onStartChat: PropTypes.func.isRequired,
+  isCreatingChat: PropTypes.bool,
+};
 
+export default StoreDetailActions;

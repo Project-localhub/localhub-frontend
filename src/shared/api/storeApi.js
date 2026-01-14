@@ -98,29 +98,24 @@ export const incrementStoreView = async (storeId) => {
 //   return response.data;
 // };
 
-// 모든 가게 목록 조회
-export const getAllRestaurants = async ({
-  page = 0,
-  size = 10,
-  lat,
-  lng,
-  radiusMeter = 3000,
-} = {}) => {
-  if (lat == null || lng == null) {
-    throw new Error('lat, lng가 없습니다');
+// 모든 가게 목록 조회 (페이지네이션 지원)
+export const getAllRestaurants = async (params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.page !== undefined) queryParams.append('page', params.page);
+  if (params.size !== undefined) queryParams.append('size', params.size);
+  if (params.sort) queryParams.append('sort', params.sort);
+  if (params.lat !== undefined) queryParams.append('lat', params.lat);
+  if (params.lng !== undefined) queryParams.append('lng', params.lng);
+  if (params.radiusMeter !== undefined) {
+    queryParams.append('radiusMeter', params.radiusMeter);
+  } else if (params.lat !== undefined && params.lng !== undefined) {
+    // lat, lng가 있으면 기본 반경 3000m 설정
+    queryParams.append('radiusMeter', 3000);
   }
 
-  const response = await client.get('/api/restaurant/get-all-restaurants', {
-    params: {
-      page,
-      size,
-      sort: 'createdAt,desc',
-      lat,
-      lng,
-      radiusMeter,
-    },
-  });
-
+  const queryString = queryParams.toString();
+  const url = `/api/restaurant/get-all-restaurants${queryString ? `?${queryString}` : ''}`;
+  const response = await client.get(url);
   return response.data;
 };
 

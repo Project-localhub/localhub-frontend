@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import {
   getMyStores,
   getStore,
@@ -21,17 +21,16 @@ export const storeKeys = {
   stats: (id) => [...storeKeys.all, 'stats', id],
 };
 
-// 모든 가게 목록 조회 (홈페이지용)
-export const useAllRestaurants = ({ lat, lng, page = 0, size = 10 } = {}, options = {}) => {
-  return useQuery({
-    queryKey: storeKeys.lists({ lat, lng, page, size }),
-    queryFn: async () => {
+// 모든 가게 목록 조회 (홈페이지용, 무한 스크롤)
+export const useAllRestaurants = (options = {}) => {
+  return useInfiniteQuery({
+    queryKey: [...storeKeys.lists(), 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
       try {
         const response = await getAllRestaurants({
-          lat,
-          lng,
-          page,
-          size,
+          page: pageParam,
+          size: 10, // 한 번에 10개씩
+          sort: 'createdAt,desc', // 기본 정렬
         });
         return response;
       } catch (err) {
@@ -39,13 +38,21 @@ export const useAllRestaurants = ({ lat, lng, page = 0, size = 10 } = {}, option
         return {
           content: [],
           totalElements: 0,
+          last: true,
         };
       }
     },
-
-    enabled: typeof lat === 'number' && typeof lng === 'number',
-
-    staleTime: 2 * 60 * 1000,
+    getNextPageParam: (lastPage, allPages) => {
+      // Spring Boot Page 응답 형식: last 필드로 확인
+      if (lastPage.last !== undefined) {
+        return lastPage.last ? undefined : allPages.length;
+      }
+      // last 필드가 없으면 content 길이로 판단
+      const hasMore = lastPage.content?.length === 10;
+      return hasMore ? allPages.length : undefined;
+    },
+    initialPageParam: 0,
+    staleTime: 2 * 60 * 1000, // 2분
     retry: false,
     refetchOnWindowFocus: false,
     ...options,

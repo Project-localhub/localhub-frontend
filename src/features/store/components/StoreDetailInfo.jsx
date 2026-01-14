@@ -1,4 +1,5 @@
 import { Star, MapPin, Clock, Phone } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 const StoreDetailInfo = ({ store }) => {
   return (
@@ -51,5 +52,21 @@ const StoreDetailInfo = ({ store }) => {
   );
 };
 
-export default StoreDetailInfo;
+StoreDetailInfo.propTypes = {
+  store: PropTypes.shape({
+    category: PropTypes.string.isRequired,
+    rating: PropTypes.number.isRequired,
+    reviewCount: PropTypes.number.isRequired,
+    favoriteCount: PropTypes.number.isRequired,
+    tags: PropTypes.arrayOf(PropTypes.string).isRequired,
+    description: PropTypes.string.isRequired,
+    address: PropTypes.string.isRequired,
+    hours: PropTypes.string.isRequired,
+    hasBreakTime: PropTypes.bool,
+    breakStartTime: PropTypes.string,
+    breakEndTime: PropTypes.string,
+    phone: PropTypes.string.isRequired,
+  }).isRequired,
+};
 
+export default StoreDetailInfo;

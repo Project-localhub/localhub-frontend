@@ -12,7 +12,7 @@ import StoreEditPage from '@/pages/owner/StoreEditPage';
 import OAuthRedirectPage from '@/pages/OAuthRedirectPage';
 import FindUserPage from '@/pages/FindUserPage';
 import ReviewPage from '@/pages/ReviewPage';
-import ProtectedRoute from './protectedRoute';
+import ProtectedRoute from '@/app/ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +32,14 @@ export const router = createBrowserRouter([
       // 🔒 로그인 필수 페이지 (ProtectedRoute로 감싸기)
       {
         path: 'chat',
+        element: (
+          <ProtectedRoute>
+            <ChatPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'chat/:roomId',
         element: (
           <ProtectedRoute>
             <ChatPage />

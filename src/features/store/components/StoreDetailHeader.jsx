@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Share2 } from 'lucide-react';
+import PropTypes from 'prop-types';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
 
 const StoreDetailHeader = ({ store, isFavorite, onToggleFavorite, isPending }) => {
@@ -35,6 +36,16 @@ const StoreDetailHeader = ({ store, isFavorite, onToggleFavorite, isPending }) =
       </div>
     </div>
   );
+};
+
+StoreDetailHeader.propTypes = {
+  store: PropTypes.shape({
+    image: PropTypes.string,
+    name: PropTypes.string.isRequired,
+  }).isRequired,
+  isFavorite: PropTypes.bool.isRequired,
+  onToggleFavorite: PropTypes.func.isRequired,
+  isPending: PropTypes.bool,
 };
 
 export default StoreDetailHeader;
