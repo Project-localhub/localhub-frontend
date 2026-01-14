@@ -26,8 +26,7 @@ const ReviewWritePage = () => {
 
       alert('리뷰가 등록되었습니다!');
       navigate(-1); // ⭐ 이전 페이지로 이동
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert('리뷰 등록 실패!');
     }
   };

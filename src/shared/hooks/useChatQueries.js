@@ -11,7 +11,7 @@ import {
 export const chatKeys = {
   all: ['chats'],
   rooms: () => [...chatKeys.all, 'rooms'],
-  inquiryChats: (params) => [...chatKeys.rooms(), 'inquiry', params],
+  inquiryChats: () => [...chatKeys.rooms(), 'inquiry'],
   ownerRooms: (storeId) => [...chatKeys.rooms(), 'owner', storeId],
   messages: () => [...chatKeys.all, 'messages'],
   roomMessages: (inquiryChatId) => [...chatKeys.messages(), inquiryChatId],
@@ -31,11 +31,11 @@ export const useCreateInquiryChat = () => {
   });
 };
 
-// 채팅방 조회
-export const useInquiryChats = (params = {}, options = {}) => {
+// 채팅방 조회 (현재 로그인한 사용자의 채팅방 목록)
+export const useInquiryChats = (options = {}) => {
   return useQuery({
-    queryKey: chatKeys.inquiryChats(params),
-    queryFn: () => getInquiryChats(params),
+    queryKey: chatKeys.inquiryChats(),
+    queryFn: () => getInquiryChats(),
     staleTime: 30 * 1000,
     refetchInterval: 30 * 1000,
     ...options,

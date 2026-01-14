@@ -1,16 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft,
-  Heart,
-  Share2,
-  Star,
-  MapPin,
-  Clock,
-  Phone,
-  MessageCircle,
-  Coffee,
-} from 'lucide-react';
+import { ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, Coffee } from 'lucide-react';
 
 import ImageWithFallback from '@/components/figma/imageWithFallback';
 import ReviewCard from '@/components/ReviewCard';
@@ -42,7 +32,7 @@ const StoreDetailPage = () => {
   useEffect(() => {
     const fetchStoreDetail = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         const data = await getRestaurantDetail(id);
         setStore(data);
         setReviews(data.reviews || []);
@@ -50,7 +40,7 @@ const StoreDetailPage = () => {
         console.error(e);
         setError(true);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -74,36 +64,66 @@ const StoreDetailPage = () => {
       return;
     }
 
+    // 기존 채팅방 확인 (에러가 발생해도 계속 진행)
+    let existingChat = null;
+    try {
+      const { getInquiryChats } = await import('@/shared/api/chatApi');
+      const chats = await getInquiryChats();
+      existingChat = chats.find((chat) => {
+        // 채팅방이 해당 가게와 연결되어 있는지 확인
+        // 응답 형식에 따라 storeId, restaurantId, ownerId 등 확인
+        return (
+          chat.storeId === id ||
+          chat.restaurantId === id ||
+          (chat.ownerId && chat.ownerId === store?.ownerId)
+        );
+      });
+    } catch {
+      // 채팅방 목록 조회 실패해도 계속 진행 (채팅방 생성 시도)
+    }
+
+    // 기존 채팅방이 있으면 해당 채팅방으로 이동
+    if (existingChat) {
+      const chatRoomId = existingChat.inquiryChatId || existingChat.id;
+      navigate(`/chat/${chatRoomId}`);
+      return;
+    }
+
+    // 기존 채팅방이 없으면 새로 생성
     setIsCreatingChat(true);
     try {
       const response = await createInquiryChat.mutateAsync({
-        storeId: id,
-        userId: user.id,
+        storeId: id, // 가게 ID
       });
 
-      const chatRoomId = response.id || response.inquiryChatId || response.chatRoomId;
-      navigate('/chat', { state: { chatRoomId } });
+      // 채팅방 생성 성공 시 ChatPage로 이동
+      // 응답 형식: { id, inquiryChatId, chatRoomId } 중 하나
+      const chatRoomId =
+        response?.id || response?.inquiryChatId || response?.chatRoomId || response?.data?.id;
+
+      if (!chatRoomId) {
+        throw new Error('채팅방 ID를 받을 수 없습니다.');
+      }
+
+      // 채팅방으로 이동
+      navigate(`/chat/${chatRoomId}`);
     } catch (error) {
-      console.error('채팅방 생성 오류:', error);
-      alert('채팅방 생성에 실패했습니다.');
+      // 409 Conflict (이미 존재하는 채팅방)인 경우 채팅 목록으로 이동
+      if (error.response?.status === 409) {
+        navigate('/chat');
+        return;
+      }
+
+      const errorMessage =
+        error.response?.status === 401
+          ? '인증이 필요합니다. 다시 로그인해주세요.'
+          : error.message || '채팅방 생성에 실패했습니다.';
+
+      alert(errorMessage);
     } finally {
       setIsCreatingChat(false);
     }
   };
-
-  if (loading) return <div className="p-4 text-center">로딩 중...</div>;
-  if (error || !store)
-    return <div className="p-4 text-center text-red-500">가게 정보를 불러올 수 없습니다.</div>;
-
-  // 단일 가게를 MapView에 배열로 전달
-  const mapStores = [
-    {
-      id: store.id,
-      name: store.name,
-      lat: store.latitude,
-      lng: store.longitude,
-    },
-  ];
 
   // 로딩 상태
   if (isLoading) {

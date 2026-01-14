@@ -134,7 +134,9 @@ const StoreEditPage = () => {
             {allImages.length < 3 && (
               <label
                 className={`aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center ${
-                  isUploadingImages ? 'cursor-wait opacity-50' : 'cursor-pointer hover:border-blue-500'
+                  isUploadingImages
+                    ? 'cursor-wait opacity-50'
+                    : 'cursor-pointer hover:border-blue-500'
                 }`}
               >
                 <input
@@ -275,4 +277,3 @@ const StoreEditPage = () => {
 };
 
 export default StoreEditPage;
-

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { updateStore, getMyStores } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
-import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/shared/lib/storeConstants';
+import { convertAddressToCoordinates } from '@/shared/lib/geocoding';
+import { validateBusinessNumber } from '@/shared/lib/storeUtils';
 
 const initialFormData = {
   name: '',
@@ -22,12 +23,6 @@ const initialFormData = {
   images: [], // File 객체 배열 (새로 추가된 이미지)
   imageKeys: [], // 업로드 완료된 이미지 key 배열 (기존 + 새로 업로드)
   existingImages: [], // 기존 이미지 URL 배열 (표시용)
-};
-
-// 사업자등록번호 형식 검증 (10자리 숫자)
-const validateBusinessNumber = (number) => {
-  const cleaned = number.replace(/-/g, '');
-  return /^\d{10}$/.test(cleaned);
 };
 
 export const useStoreEditForm = () => {
@@ -127,8 +122,6 @@ export const useStoreEditForm = () => {
   // 이미지 제거
   const handleImageRemove = (index) => {
     // 기존 이미지인지 새로 추가한 이미지인지 확인
-    const totalImages = formData.existingImages.length + formData.images.length;
-
     if (index < formData.existingImages.length) {
       // 기존 이미지 제거
       const newExistingImages = formData.existingImages.filter((_, i) => i !== index);
@@ -160,24 +153,19 @@ export const useStoreEditForm = () => {
 
     try {
       for (const file of files) {
-        // 1. Presign URL 발급
         const { key, url } = await getPresignUrl(file.name, file.type);
 
-        // 2. S3/R2에 이미지 업로드
         await uploadImageToStorage(url, file);
 
-        // 3. 업로드된 key 저장
         uploadedKeys.push(key);
       }
 
-      // 업로드 완료된 key들을 formData에 추가
       setFormData((prev) => ({
         ...prev,
         imageKeys: [...prev.imageKeys, ...uploadedKeys],
       }));
     } catch {
       alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
-      // 업로드 실패한 파일 제거
       setFormData((prev) => ({
         ...prev,
         images: prev.images.slice(0, prev.images.length - files.length),
@@ -187,7 +175,6 @@ export const useStoreEditForm = () => {
     }
   };
 
-  // 키워드 토글
   const handleKeywordToggle = (keyword) => {
     const newKeywords = formData.keywords.includes(keyword)
       ? formData.keywords.filter((k) => k !== keyword)
@@ -195,19 +182,15 @@ export const useStoreEditForm = () => {
     setFormData({ ...formData, keywords: newKeywords });
   };
 
-  // Daum Postcode API 스크립트 로드 대기
   const waitForDaumPostcode = () => {
     return new Promise((resolve, reject) => {
-      // 이미 로드되어 있으면 즉시 반환
       if (window.daum && window.daum.Postcode) {
         resolve();
         return;
       }
 
-      // 스크립트가 이미 로드 중인지 확인
       const existingScript = document.querySelector('script[src*="postcode"]');
       if (existingScript) {
-        // 스크립트 로드 완료를 기다림
         let attempts = 0;
         const maxAttempts = 50; // 5초 대기 (100ms * 50)
         const checkInterval = setInterval(() => {
@@ -366,35 +349,8 @@ export const useStoreEditForm = () => {
           longitude: '',
         }));
 
-        // 카카오맵 Geocoding API로 주소를 좌표로 변환 (Promise로 감싸기)
-        const convertAddressToCoordinates = () => {
-          return new Promise((resolve) => {
-            if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
-              // 카카오맵 API가 없으면 기본값으로 설정
-              resolve({ latitude: 0, longitude: 0 });
-              return;
-            }
-
-            const geocoder = new window.kakao.maps.services.Geocoder();
-
-            geocoder.addressSearch(fullAddress, (result, status) => {
-              if (status === window.kakao.maps.services.Status.OK) {
-                // 첫 번째 결과의 좌표 사용
-                const coords = result[0];
-                resolve({
-                  latitude: coords.y, // 위도
-                  longitude: coords.x, // 경도
-                });
-              } else {
-                // 좌표 변환 실패 시 기본값 사용
-                resolve({ latitude: 0, longitude: 0 });
-              }
-            });
-          });
-        };
-
         // 좌표 변환 완료 후 상태 업데이트
-        convertAddressToCoordinates()
+        convertAddressToCoordinates(fullAddress)
           .then(({ latitude, longitude }) => {
             setFormData((prev) => ({
               ...prev,
@@ -445,7 +401,10 @@ export const useStoreEditForm = () => {
     if (!formData.phone.trim()) newErrors.phone = '전화번호를 입력해주세요';
     if (formData.imageKeys.length === 0) {
       newErrors.images = '최소 1개 이상의 사진이 필요합니다';
-    } else if (formData.images.length > 0 && formData.imageKeys.length !== formData.existingImages.length + formData.images.length) {
+    } else if (
+      formData.images.length > 0 &&
+      formData.imageKeys.length !== formData.existingImages.length + formData.images.length
+    ) {
       newErrors.images = '이미지 업로드가 완료될 때까지 기다려주세요';
     }
 
@@ -494,4 +453,3 @@ export const useStoreEditForm = () => {
     handleSubmit,
   };
 };
-

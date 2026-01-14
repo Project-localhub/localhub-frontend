@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createStore } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
-import { loadKakaoMapSDK, isKakaoMapLoaded } from '@/shared/lib/kakaoMap';
+import { convertAddressToCoordinates } from '@/shared/lib/geocoding';
+import { validateBusinessNumber } from '@/shared/lib/storeUtils';
 
 const initialFormData = {
   name: '',
@@ -21,12 +22,6 @@ const initialFormData = {
   breakEndTime: '17:00',
   images: [], // File 객체 배열
   imageKeys: [], // 업로드 완료된 이미지 key 배열
-};
-
-// 사업자등록번호 형식 검증 (10자리 숫자)
-const validateBusinessNumber = (number) => {
-  const cleaned = number.replace(/-/g, '');
-  return /^\d{10}$/.test(cleaned);
 };
 
 export const useStoreForm = () => {
@@ -271,46 +266,8 @@ export const useStoreForm = () => {
           longitude: '',
         }));
 
-        // 카카오맵 Geocoding API로 주소를 좌표로 변환 (Promise로 감싸기)
-        const convertAddressToCoordinates = async () => {
-          try {
-            // 카카오맵 SDK가 로드되지 않았으면 로드
-            if (!isKakaoMapLoaded()) {
-              await loadKakaoMapSDK();
-            }
-
-            // SDK 로드 확인
-            if (!isKakaoMapLoaded() || !window.kakao.maps.services) {
-              console.error('카카오맵 SDK가 로드되지 않았습니다.');
-              return { latitude: 0, longitude: 0 };
-            }
-
-            return new Promise((resolve) => {
-              const geocoder = new window.kakao.maps.services.Geocoder();
-
-              geocoder.addressSearch(fullAddress, (result, status) => {
-                if (status === window.kakao.maps.services.Status.OK && result && result.length > 0) {
-                  // 첫 번째 결과의 좌표 사용
-                  const coords = result[0];
-                  resolve({
-                    latitude: parseFloat(coords.y), // 위도
-                    longitude: parseFloat(coords.x), // 경도
-                  });
-                } else {
-                  console.warn('주소를 좌표로 변환할 수 없습니다:', status);
-                  // 좌표 변환 실패 시 기본값 사용
-                  resolve({ latitude: 0, longitude: 0 });
-                }
-              });
-            });
-          } catch (error) {
-            console.error('카카오맵 SDK 로드 에러:', error);
-            return { latitude: 0, longitude: 0 };
-          }
-        };
-
         // 좌표 변환 완료 후 상태 업데이트
-        convertAddressToCoordinates()
+        convertAddressToCoordinates(fullAddress)
           .then(({ latitude, longitude }) => {
             if (latitude === 0 && longitude === 0) {
               alert('주소를 좌표로 변환할 수 없습니다. 주소를 다시 확인해주세요.');

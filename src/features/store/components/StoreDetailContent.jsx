@@ -76,4 +76,3 @@ const StoreDetailContent = ({ activeTab, storeId }) => {
 };
 
 export default StoreDetailContent;
-

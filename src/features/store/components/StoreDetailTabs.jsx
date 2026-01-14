@@ -43,4 +43,3 @@ const StoreDetailTabs = ({ activeTab, onTabChange, reviewCount }) => {
 
 export { TAB_TYPES };
 export default StoreDetailTabs;
-

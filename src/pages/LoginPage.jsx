@@ -24,15 +24,6 @@ const LoginPage = () => {
       const res = await loginAPI(data);
       const accessToken = res.accessToken;
 
-      // 디버깅: 로그인 응답 확인
-      if (import.meta.env.DEV) {
-        console.log('🔐 로그인 응답:', {
-          hasAccessToken: !!accessToken,
-          accessTokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : '없음',
-          fullResponse: res,
-        });
-      }
-
       if (!accessToken) {
         alert('로그인 실패: 서버에서 accessToken을 주지 않음');
         return;
@@ -40,8 +31,7 @@ const LoginPage = () => {
 
       await login(accessToken);
       navigate('/');
-    } catch (error) {
-      console.error('로그인 에러:', error);
+    } catch {
       alert('로그인 실패');
     }
   };
