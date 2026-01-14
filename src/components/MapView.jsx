@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { loadKakaoMap } from '../utils/loadKakaoMap,js';
+import { loadKakaoMap } from '../utils/loadKakaoMap.js';
 
 const MapView = ({ stores }) => {
   const mapRef = useRef(null);

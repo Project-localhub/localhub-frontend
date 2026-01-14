@@ -75,3 +75,8 @@ export const getRestaurantDetail = async (restaurantId) => {
   const response = await client.get(`/api/restaurant/${restaurantId}`);
   return response.data;
 };
+
+export const getRestaurantMenu = async (restaurantId) => {
+  const response = await client.get(`/api/getMenu/${restaurantId}`);
+  return response.data;
+};

@@ -146,7 +146,9 @@ const HomePage = () => {
           )}
         </div>
       ) : (
-        <MapView stores={stores} />
+        <div className="w-full h-[300px]">
+          <MapView stores={stores} />
+        </div>
       )}
     </div>
   );

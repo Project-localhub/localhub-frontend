@@ -35,6 +35,7 @@ const StoreDetailPage = () => {
   const [activeTab, setActiveTab] = useState(TAB_TYPES.INFO);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [menuLoading, setMenuLoading] = useState(false);
 
   const createInquiryChat = useCreateInquiryChat();
   const [isCreatingChat, setIsCreatingChat] = useState(false);
@@ -56,6 +57,26 @@ const StoreDetailPage = () => {
 
     fetchStoreDetail();
   }, [id]);
+
+  useEffect(() => {
+    if (activeTab !== TAB_TYPES.MENU) return;
+    if (!id) return;
+
+    const fetchMenu = async () => {
+      try {
+        setMenuLoading(true);
+        const data = await getRestaurantMenu(id);
+        setMenu(data || []);
+      } catch (e) {
+        console.error('메뉴 조회 실패:', e);
+        setMenu([]);
+      } finally {
+        setMenuLoading(false);
+      }
+    };
+
+    fetchMenu();
+  }, [activeTab, id]);
 
   const handleStartChat = async () => {
     if (!user) {
@@ -200,12 +221,18 @@ const StoreDetailPage = () => {
 
         {activeTab === TAB_TYPES.MENU && (
           <div className="space-y-3">
-            {store.menu?.map((item, idx) => (
-              <div key={idx} className="flex justify-between border-b py-2">
-                <span>{item.name}</span>
-                <span>{item.price}</span>
-              </div>
-            ))}
+            {menuLoading ? (
+              <div className="text-center text-gray-500">메뉴 불러오는 중...</div>
+            ) : menu.length > 0 ? (
+              menu.map((item, idx) => (
+                <div key={idx} className="flex justify-between border-b py-2">
+                  <span>{item.name}</span>
+                  <span>{item.price}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-400">등록된 메뉴가 없습니다</div>
+            )}
           </div>
         )}
 
