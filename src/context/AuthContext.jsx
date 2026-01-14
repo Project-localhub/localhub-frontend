@@ -116,7 +116,11 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.setItem('wasLoggedOut', 'true');
 
     try {
-      await kakaoLogout().catch(() => {});
+      // 카카오 로그인 사용자에게만 카카오 로그아웃 호출
+      const isSocialLogin = user?.isSocialLogin || localStorage.getItem('isSocialLogin') === 'true';
+      if (isSocialLogin) {
+        await kakaoLogout().catch(() => {});
+      }
       await logoutAPI().catch(() => {});
     } finally {
       setUser(null);

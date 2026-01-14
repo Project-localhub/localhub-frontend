@@ -125,16 +125,6 @@ const StoreDetailPage = () => {
     }
   };
 
-  // 단일 가게를 MapView에 배열로 전달
-  const mapStores = [
-    {
-      id: store.id,
-      name: store.name,
-      lat: store.latitude,
-      lng: store.longitude,
-    },
-  ];
-
   // 로딩 상태
   if (isLoading) {
     return (

@@ -8,11 +8,7 @@ const StoreDetailHeader = ({ store, isFavorite, onToggleFavorite, isPending }) =
 
   return (
     <div className="relative">
-      <ImageWithFallback
-        src={store.image}
-        alt={store.name}
-        className="w-full h-64 object-cover"
-      />
+      <ImageWithFallback src={store.image} alt={store.name} className="w-full h-64 object-cover" />
       <button
         onClick={() => navigate(-1)}
         className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-md"
@@ -28,10 +24,7 @@ const StoreDetailHeader = ({ store, isFavorite, onToggleFavorite, isPending }) =
           className="p-2 bg-white rounded-full shadow-md"
           disabled={isPending}
         >
-          <Heart
-            size={20}
-            className={isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-700'}
-          />
+          <Heart size={20} className={isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-700'} />
         </button>
       </div>
     </div>
@@ -49,4 +42,3 @@ StoreDetailHeader.propTypes = {
 };
 
 export default StoreDetailHeader;
-

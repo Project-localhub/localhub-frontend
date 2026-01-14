@@ -1,5 +1,5 @@
-// import { Client } from '@stomp/stompjs';
-// import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
 /**
  * STOMP 웹소켓 클라이언트 생성 및 관리

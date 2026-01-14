@@ -2,8 +2,7 @@ import { create } from 'zustand';
 
 export const useUIStore = create((set) => ({
   // 모달 상태
-  modals: {
-  },
+  modals: {},
   setModal: (modalName, isOpen) =>
     set((state) => ({
       modals: {
