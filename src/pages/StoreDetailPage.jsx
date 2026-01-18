@@ -17,7 +17,7 @@ import ReviewCard from '@/components/ReviewCard';
 import MapView from '@/components/MapView';
 import { useCreateInquiryChat } from '@/shared/hooks/useChatQueries';
 import { useAuth } from '@/context/AuthContext';
-import { getRestaurantDetail } from '../shared/api/auth';
+import { getRestaurantDetail, getReviewBy, getRestaurantMenu } from '../shared/api/auth';
 
 const TAB_TYPES = {
   INFO: 'info',
@@ -32,13 +32,16 @@ const StoreDetailPage = () => {
 
   const [store, setStore] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [menu, setMenu] = useState([]);
   const [activeTab, setActiveTab] = useState(TAB_TYPES.INFO);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [menuLoading, setMenuLoading] = useState(false);
-
   const createInquiryChat = useCreateInquiryChat();
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const handleWriteReview = () => {
+    navigate(`/review/${id}`);
+  };
 
   useEffect(() => {
     const fetchStoreDetail = async () => {
@@ -46,7 +49,6 @@ const StoreDetailPage = () => {
         setLoading(true);
         const data = await getRestaurantDetail(id);
         setStore(data);
-        setReviews(data.reviews || []);
       } catch (e) {
         console.error(e);
         setError(true);
@@ -77,6 +79,25 @@ const StoreDetailPage = () => {
 
     fetchMenu();
   }, [activeTab, id]);
+
+  const fetchReviews = async () => {
+    console.log('[fetchReviews] id:', id);
+
+    try {
+      const res = await getReviewBy(id);
+      console.log('[fetchReviews] res:', res);
+      console.log('[fetchReviews] res.content:', res?.content);
+
+      setReviews(res.content ?? []);
+    } catch (err) {
+      console.error('[fetchReviews] error:', err);
+    }
+  };
+
+  useEffect(() => {
+    console.log('[useEffect] fetchReviews 실행');
+    fetchReviews();
+  }, [id]);
 
   const handleStartChat = async () => {
     if (!user) {
@@ -154,7 +175,7 @@ const StoreDetailPage = () => {
 
         <div className="flex items-center gap-2 my-2">
           <Star size={18} className="fill-yellow-400 text-yellow-400" />
-          <span>{store.rating}</span>
+          <span>{store.score}</span>
           <span className="text-gray-500 text-sm">리뷰 {store.reviewCount}</span>
         </div>
 
@@ -215,6 +236,7 @@ const StoreDetailPage = () => {
                   lng: store.longitude,
                 },
               ]}
+              mode="detail"
             />
           </>
         )}
@@ -237,10 +259,27 @@ const StoreDetailPage = () => {
         )}
 
         {activeTab === TAB_TYPES.REVIEW && (
-          <div className="space-y-4">
-            {reviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
+          <div className="space-y-6">
+            {/* 리뷰 리스트 */}
+            {reviews.length > 0 ? (
+              <div className="space-y-4">
+                {reviews.map((review, index) => (
+                  <ReviewCard key={index} review={review} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-gray-400">아직 리뷰가 없습니다.</p>
+            )}
+
+            {/* 리뷰 작성 버튼 (하단) */}
+            <div className="pt-4 flex justify-center">
+              <button
+                onClick={handleWriteReview}
+                className="w-full py-3 text-sm font-medium text-white bg-blue-600 rounded-lg"
+              >
+                리뷰 작성하기
+              </button>
+            </div>
           </div>
         )}
       </div>

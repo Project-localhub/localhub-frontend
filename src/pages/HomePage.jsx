@@ -4,16 +4,15 @@ import MapView from '@/components/MapView';
 import { Search, Filter, MapPin } from 'lucide-react';
 import { useAllRestaurants } from '@/shared/hooks/useStoreQueries';
 import { useMyFavorites } from '@/shared/hooks/useFavoriteQueries';
+import { getDistanceKm } from '../utils/getDistance';
 
 const HomePage = () => {
   const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('강남구');
 
-  // ✅ 딱 이거만 추가
   const [location, setLocation] = useState(null);
 
-  // ✅ 위치 가져오기
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -47,20 +46,31 @@ const HomePage = () => {
   const favoriteIds = new Set(myFavorites.map((fav) => fav.id || fav.restaurantId));
 
   const stores =
-    restaurantsData?.content?.map((restaurant) => ({
-      id: restaurant.restaurantId,
-      name: restaurant.name,
-      category: restaurant.category,
-      rating: restaurant.score || 0,
-      reviewCount: restaurant.reviewCount || 0,
-      distance: restaurant.distance || '0.0km',
-      image: restaurant.imageUrl || '',
-      tags: restaurant.keyword || [],
-      isLiked: favoriteIds.has(restaurant.restaurantId),
-      lat: restaurant.latitude,
-      lng: restaurant.longitude,
-    })) || [];
+    restaurantsData?.content?.map((restaurant) => {
+      const distance =
+        location && restaurant.latitude && restaurant.longitude
+          ? `${getDistanceKm(
+              location.lat,
+              location.lng,
+              restaurant.latitude,
+              restaurant.longitude,
+            ).toFixed(1)}km`
+          : restaurant.distance || '0.0km';
 
+      return {
+        id: restaurant.restaurantId,
+        name: restaurant.name,
+        category: restaurant.category,
+        rating: restaurant.score || 0,
+        reviewCount: restaurant.reviewCount || 0,
+        distance,
+        image: restaurant.imageUrl || '',
+        tags: restaurant.keyword || [],
+        isLiked: favoriteIds.has(restaurant.restaurantId),
+        lat: restaurant.latitude,
+        lng: restaurant.longitude,
+      };
+    }) || [];
   return (
     <div className="flex flex-col min-h-screen">
       {/* 검색창 */}
@@ -147,7 +157,7 @@ const HomePage = () => {
         </div>
       ) : (
         <div className="w-full h-[300px]">
-          <MapView stores={stores} />
+          <MapView stores={stores} mode="home" />
         </div>
       )}
     </div>

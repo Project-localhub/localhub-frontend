@@ -1,38 +1,66 @@
 import { useEffect, useRef } from 'react';
 import { loadKakaoMap } from '../utils/loadKakaoMap.js';
+import { getLocation } from '../utils/getLocation.js';
 
-const MapView = ({ stores }) => {
+const MapView = ({ stores = [], mode = 'home' }) => {
   const mapRef = useRef(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
-    if (!stores || stores.length === 0) return;
     if (!containerRef.current) return;
 
-    loadKakaoMap(() => {
-      const validStore = stores.find((s) => s.lat && s.lng);
-      if (!validStore) return;
+    loadKakaoMap(async () => {
+      let centerLatLng;
 
-      const center = new window.kakao.maps.LatLng(validStore.lat, validStore.lng);
+      // 🔹 홈 지도: 내 위치 우선
+      if (mode === 'home') {
+        try {
+          const myLocation = await getLocation();
+          centerLatLng = new window.kakao.maps.LatLng(myLocation.lat, myLocation.lng);
+        } catch {
+          const fallbackStore = stores.find((s) => s.lat && s.lng);
+          if (!fallbackStore) return;
+
+          centerLatLng = new window.kakao.maps.LatLng(fallbackStore.lat, fallbackStore.lng);
+        }
+      }
+
+      //  가게 상세: 해당 가게 고정
+      if (mode === 'detail') {
+        const store = stores.find((s) => s.lat && s.lng);
+        if (!store) return;
+
+        centerLatLng = new window.kakao.maps.LatLng(store.lat, store.lng);
+      }
 
       const map = new window.kakao.maps.Map(containerRef.current, {
-        center,
+        center: centerLatLng,
         level: 4,
       });
 
       mapRef.current = map;
 
+      //  홈일 때만 내 위치 마커
+      if (mode === 'home') {
+        new window.kakao.maps.Marker({
+          map,
+          position: centerLatLng,
+          title: '내 위치',
+        });
+      }
+
+      //  가게 마커
       stores.forEach((store) => {
         if (!store.lat || !store.lng) return;
 
-        const marker = new window.kakao.maps.Marker({
+        new window.kakao.maps.Marker({
           map,
           position: new window.kakao.maps.LatLng(store.lat, store.lng),
           title: store.name,
         });
       });
     });
-  }, [stores]);
+  }, [stores, mode]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };

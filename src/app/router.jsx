@@ -71,7 +71,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'review/:id',
+        path: 'review/:restaurantId',
         element: (
           <ProtectedRoute>
             <ReviewPage />
