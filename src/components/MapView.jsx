@@ -2,13 +2,12 @@ import PropTypes from 'prop-types';
 import { useEffect, useRef } from 'react';
 import { loadKakaoMapSDK, isKakaoMapLoaded } from '@/shared/lib/kakaoMap';
 
-const MapView = ({ stores }) => {
+const MapView = ({ stores = [], mode = 'home' }) => {
   const mapRef = useRef(null);
   const containerRef = useRef(null);
   const markersRef = useRef([]);
 
   useEffect(() => {
-    if (!stores || stores.length === 0) return;
     if (!containerRef.current) return;
 
     const initializeMap = async () => {

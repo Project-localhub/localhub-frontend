@@ -53,9 +53,8 @@ export const toggleLike = async (restaurantId) => {
   return res.data;
 };
 
-export const saveReview = async (restaurantId, content) => {
-  const res = await client.post('/api/restaurant/save-review', { restaurantId, content });
-  return res.data;
+export const saveReview = (payload) => {
+  return client.post('/api/restaurant/save-review', payload);
 };
 
 export const getLikeList = async () => {
@@ -70,4 +69,23 @@ export const deleteFavorite = async (restaurantId) => {
 export const getRestaurantDetail = async (restaurantId) => {
   const response = await client.get(`/api/restaurant/${restaurantId}`);
   return response.data;
+};
+
+export const getRestaurantMenu = async (restaurantId) => {
+  const response = await client.get(`/api/getMenu/${restaurantId}`);
+  return response.data;
+};
+
+export const getReviewBy = async (restaurantId) => {
+  console.log('[getReviewBy] restaurantId:', restaurantId);
+
+  try {
+    const response = await client.get(`/api/restaurant/getReviewBy/${restaurantId}`);
+    console.log('[getReviewBy] response:', response);
+    console.log('[getReviewBy] response.data:', response.data);
+    return response.data;
+  } catch (err) {
+    console.error('[getReviewBy] error:', err);
+    throw err;
+  }
 };
