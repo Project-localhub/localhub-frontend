@@ -8,6 +8,7 @@ import {
   updateStore,
   incrementStoreView,
   getAllRestaurants,
+  getRestaurantsByFilter,
 } from '@/shared/api/storeApi';
 
 // Query Keys
@@ -19,6 +20,46 @@ export const storeKeys = {
   detail: (id) => [...storeKeys.details(), id],
   myStores: () => [...storeKeys.all, 'my'],
   stats: (id) => [...storeKeys.all, 'stats', id],
+};
+
+// 필터로 가게 목록 조회 (무한 스크롤)
+export const useRestaurantsByFilter = (filters = {}, options = {}) => {
+  const { enabled, ...restOptions } = options;
+
+  return useInfiniteQuery({
+    queryKey: [...storeKeys.lists(), 'filter', filters],
+    queryFn: async ({ pageParam = 0 }) => {
+      try {
+        const response = await getRestaurantsByFilter({
+          page: pageParam,
+          size: 10,
+          category: filters.category || undefined,
+          divide: filters.divide || undefined,
+        });
+        return response;
+      } catch (err) {
+        console.error('필터 가게 목록 조회 실패:', err);
+        return {
+          content: [],
+          totalElements: 0,
+          last: true,
+        };
+      }
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.last !== undefined) {
+        return lastPage.last ? undefined : allPages.length;
+      }
+      const hasMore = lastPage.content?.length === 10;
+      return hasMore ? allPages.length : undefined;
+    },
+    initialPageParam: 0,
+    staleTime: 2 * 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: enabled !== undefined ? Boolean(enabled) : true,
+    ...restOptions,
+  });
 };
 
 // 모든 가게 목록 조회 (홈페이지용, 무한 스크롤)

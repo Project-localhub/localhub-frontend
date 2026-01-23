@@ -1,5 +1,4 @@
 /* eslint-disable react/prop-types */
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Heart, MapPin } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
@@ -9,28 +8,7 @@ const StoreCard = ({ store }) => {
   const favorite = store.isLiked;
   const toggleFavoriteMutation = useToggleFavorite();
 
-  // 디버깅: StoreCard에 전달된 데이터 확인
-  useEffect(() => {
-    console.log('🃏 [StoreCard] store 데이터:', {
-      id: store.id,
-      name: store.name,
-      category: store.category,
-      rating: store.rating,
-      reviewCount: store.reviewCount,
-      distance: store.distance,
-      image: store.image,
-      tags: store.tags,
-      isLiked: store.isLiked,
-      latitude: store.latitude,
-      longitude: store.longitude,
-      fullStore: store,
-    });
-  }, [store]);
-
   const favoriteButtonHandler = async (e) => {
-    console.log('store.id:', store.id);
-    console.log('type:', typeof store.id);
-
     e.preventDefault();
     e.stopPropagation();
 

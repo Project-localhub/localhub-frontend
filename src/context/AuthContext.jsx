@@ -89,6 +89,9 @@ export const AuthProvider = ({ children }) => {
 
     await setUserFromApi(false);
     setIsLogin(true);
+
+    // 로그인 성공 후 React Query 캐시 무효화하여 데이터 재요청
+    queryClient.invalidateQueries();
   };
 
   /** 소셜 로그인 (redirect 페이지에서 사용) */
@@ -102,12 +105,18 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('isSocialLogin', 'true');
 
     await setUserFromApi(true);
+
+    // 로그인 성공 후 React Query 캐시 무효화하여 데이터 재요청
+    queryClient.invalidateQueries();
   };
 
   /** 쿠키 기반 로그인 */
   const loginWithCookie = async () => {
     const isSocialLogin = localStorage.getItem('isSocialLogin') === 'true';
     await setUserFromApi(isSocialLogin);
+
+    // 로그인 성공 후 React Query 캐시 무효화하여 데이터 재요청
+    queryClient.invalidateQueries();
   };
 
   /** 로그아웃 */

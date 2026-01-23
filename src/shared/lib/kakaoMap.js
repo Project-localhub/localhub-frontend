@@ -9,7 +9,7 @@ export const loadKakaoMapSDK = () =>
     if (isKakaoMapLoaded()) return resolve();
 
     if (!KAKAO_MAP_JS_KEY) {
-      return reject(new Error('VITE_KAKAO_MAP_JS_KEY가 없습니다.'));
+      return reject(new Error('VITE_KAKAO_JAVASCRIPT_KEY가 없습니다.'));
     }
 
     const existing = document.querySelector('script[data-kakao-map-sdk="true"]');

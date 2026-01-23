@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { createStore } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
 import { convertAddressToCoordinates } from '@/shared/lib/geocoding';
-import { validateBusinessNumber } from '@/shared/lib/storeUtils';
+import { validateBusinessNumber, extractDistrictFromAddress } from '@/shared/lib/storeUtils';
+import { storeKeys } from '@/shared/hooks/useStoreQueries';
 
 const initialFormData = {
   name: '',
@@ -14,6 +16,7 @@ const initialFormData = {
   address: '',
   latitude: '',
   longitude: '',
+  divide: '', // 구 정보 (자동 추출)
   keywords: [],
   openTime: '09:00',
   closeTime: '22:00',
@@ -26,6 +29,7 @@ const initialFormData = {
 
 export const useStoreForm = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -254,6 +258,9 @@ export const useStoreForm = () => {
 
         const fullAddress = address + extraAddress;
 
+        // 주소에서 구 정보 추출
+        const district = extractDistrictFromAddress(fullAddress);
+
         // 레이어 제거
         layer.remove();
 
@@ -262,6 +269,7 @@ export const useStoreForm = () => {
         setFormData((prev) => ({
           ...prev,
           address: fullAddress,
+          divide: district, // 구 정보 자동 설정
           latitude: '', // 좌표 변환 중이므로 초기화
           longitude: '',
         }));
@@ -344,6 +352,11 @@ export const useStoreForm = () => {
 
     try {
       await createStore(formData);
+
+      // 가게 등록 성공 후 관련 쿼리 캐시 무효화
+      // 홈페이지의 가게 목록을 갱신하기 위해
+      queryClient.invalidateQueries({ queryKey: storeKeys.all() });
+
       alert('가게 등록이 완료되었습니다!');
       navigate('/dashboard');
     } catch {

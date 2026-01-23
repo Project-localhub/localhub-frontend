@@ -30,7 +30,10 @@ const LoginPage = () => {
       }
 
       await login(accessToken);
-      navigate('/');
+      // 로그인 완료 후 약간의 지연을 두고 네비게이션하여 상태 업데이트 완료 보장
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 100);
     } catch {
       alert('로그인 실패');
     }
