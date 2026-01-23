@@ -189,3 +189,158 @@
 html {
   font-size: var(--font-size);
 }
+
+/* ============================================
+   자주 사용하는 Tailwind 유틸리티 클래스
+   ============================================ */
+
+/* 입력 필드 컨테이너 - @layer 밖에 정의하여 최우선 적용 */
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgb(243 244 246);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.search-input-field {
+  flex: 1 1 0%;
+  background-color: transparent;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+@layer components {
+  /* 버튼 스타일 */
+  .btn-primary {
+    @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  }
+
+  .btn-primary-sm {
+    @apply px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  }
+
+  .btn-text {
+    @apply text-blue-600 hover:text-blue-700 disabled:text-gray-400 transition-colors;
+  }
+
+  .btn-icon {
+    @apply p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors;
+  }
+
+  /* 메시지 버블 */
+  .message-bubble {
+    @apply max-w-[70%] rounded-lg px-4 py-2;
+  }
+
+  .message-bubble-my {
+    @apply message-bubble bg-blue-600 text-white;
+  }
+
+  .message-bubble-other {
+    @apply message-bubble bg-gray-200 text-gray-900;
+  }
+
+  /* 카드 스타일 */
+  .card {
+    @apply bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow;
+  }
+
+  .card-compact {
+    @apply bg-white rounded-lg shadow-sm;
+  }
+
+  /* 헤더/바 */
+  .header-bar {
+    padding: 1rem;
+    border-bottom: 1px solid rgb(229 231 235);
+  }
+
+  .header-flex {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  /* 레이아웃 패턴 */
+  .flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .flex-start {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .flex-col-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 배지/태그 */
+  .badge {
+    @apply px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-blue-600 text-white;
+  }
+
+  .badge-gray {
+    @apply badge bg-gray-200 text-gray-700;
+  }
+
+  /* 구분선 */
+  .divider {
+    @apply border-t border-gray-200;
+  }
+
+  /* 텍스트 스타일 */
+  .text-muted {
+    @apply text-gray-500 text-sm;
+  }
+
+  .text-subtitle {
+    @apply text-gray-600 text-sm;
+  }
+
+  /* 이미지 컨테이너 */
+  .avatar {
+    @apply w-10 h-10 rounded-full overflow-hidden bg-gray-300;
+  }
+
+  .avatar-sm {
+    @apply w-8 h-8 rounded-full overflow-hidden bg-gray-300;
+  }
+
+  .avatar-lg {
+    @apply w-12 h-12 rounded-full overflow-hidden bg-gray-300;
+  }
+
+  /* 스크롤 영역 */
+  .scroll-area {
+    flex: 1 1 0%;
+    overflow: auto;
+  }
+
+  /* 빈 상태 */
+  .empty-state {
+    @apply text-center text-gray-500 text-sm py-4;
+  }
+}

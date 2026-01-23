@@ -1,5 +1,21 @@
 import client from '@/shared/api/client';
 
+// 필터로 가게 목록 조회
+export const getRestaurantsByFilter = async (params = {}) => {
+  const queryParams = new URLSearchParams();
+
+  if (params.page !== undefined) queryParams.append('page', params.page);
+  if (params.size !== undefined) queryParams.append('size', params.size);
+  if (params.category) queryParams.append('category', params.category);
+  if (params.divide) queryParams.append('divide', params.divide);
+
+  const queryString = queryParams.toString();
+  const url = `/api/restaurant/get-all-restaurantsByFilter${queryString ? `?${queryString}` : ''}`;
+
+  const response = await client.get(url);
+  return response.data;
+};
+
 // 가게 등록
 export const createStore = async (storeData) => {
   const requestData = {
@@ -11,6 +27,7 @@ export const createStore = async (storeData) => {
     address: storeData.address, // String
     latitude: parseFloat(storeData.latitude) || 0, // BigDecimal (Number로 전송)
     longitude: parseFloat(storeData.longitude) || 0, // BigDecimal (Number로 전송)
+    divide: storeData.divide || '', // 구 정보 (String, 필수)
     keyword: storeData.keywords || [], // List<String>
     openTime: storeData.openTime, // LocalTime (HH:mm 형식)
     closeTime: storeData.closeTime, // LocalTime (HH:mm 형식)
@@ -58,7 +75,7 @@ export const getMyStores = async () => {
 
 // 가게 상세 정보 조회 (상세 페이지용)
 export const getRestaurantDetail = async (restaurantId) => {
-  const response = await client.get(`/api/restaurant/${restaurantId}`);
+  const response = await client.get(`/api/restaurant/details/${restaurantId}`);
   return response.data;
 };
 
@@ -133,6 +150,7 @@ export const updateStore = async (storeId, storeData) => {
     ...(storeData.address && { address: storeData.address }),
     ...(storeData.latitude && { latitude: parseFloat(storeData.latitude) }),
     ...(storeData.longitude && { longitude: parseFloat(storeData.longitude) }),
+    ...(storeData.divide && { divide: storeData.divide }), // 구 정보 (주소 변경 시 자동 업데이트)
     ...(storeData.keywords && storeData.keywords.length > 0 && { keyword: storeData.keywords }),
     ...(storeData.openTime && { openTime: storeData.openTime }),
     ...(storeData.closeTime && { closeTime: storeData.closeTime }),
@@ -152,5 +170,23 @@ export const updateStore = async (storeId, storeData) => {
 
   const response = await client.put('/api/restaurant/update', requestData);
 
+  return response.data;
+};
+
+// 메뉴 조회
+export const getMenu = async (restaurantId) => {
+  const response = await client.get(`/api/restaurant/getMenu/${restaurantId}`);
+  return response.data;
+};
+
+// 메뉴 추가
+export const addMenu = async (menuItems) => {
+  const response = await client.post('/api/restaurant/addMenu', menuItems);
+  return response.data;
+};
+
+// 메뉴 수정 (전체 수정, 기존 메뉴 전부 삭제 후 재등록)
+export const updateMenu = async (menuItems) => {
+  const response = await client.put('/api/restaurant/updateMenu', menuItems);
   return response.data;
 };

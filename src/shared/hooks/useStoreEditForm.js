@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { updateStore, getMyStores } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
 import { convertAddressToCoordinates } from '@/shared/lib/geocoding';
-import { validateBusinessNumber } from '@/shared/lib/storeUtils';
+import { validateBusinessNumber, extractDistrictFromAddress } from '@/shared/lib/storeUtils';
 
 const initialFormData = {
   name: '',
@@ -14,6 +14,7 @@ const initialFormData = {
   address: '',
   latitude: '',
   longitude: '',
+  divide: '', // 구 정보 (자동 추출)
   keywords: [],
   openTime: '09:00',
   closeTime: '22:00',
@@ -75,6 +76,10 @@ export const useStoreEditForm = () => {
         // keywordList는 문자열 배열
         const keywords = Array.isArray(storeData.keywordList) ? storeData.keywordList : [];
 
+        // 기존 주소에서 구 정보 추출 (이미 저장된 divide가 있으면 사용, 없으면 주소에서 추출)
+        const existingDistrict =
+          storeData.divide || extractDistrictFromAddress(storeData.address || '');
+
         setFormData({
           name: storeData.name || '',
           businessNumber: storeData.businessNumber || '',
@@ -84,6 +89,7 @@ export const useStoreEditForm = () => {
           address: storeData.address || '',
           latitude: storeData.latitude?.toString() || '',
           longitude: storeData.longitude?.toString() || '',
+          divide: existingDistrict, // 구 정보 설정
           keywords: keywords,
           openTime: storeData.openTime || '09:00',
           closeTime: storeData.closeTime || '22:00',
@@ -337,6 +343,9 @@ export const useStoreEditForm = () => {
 
         const fullAddress = address + extraAddress;
 
+        // 주소에서 구 정보 추출
+        const district = extractDistrictFromAddress(fullAddress);
+
         // 레이어 제거
         layer.remove();
 
@@ -345,6 +354,7 @@ export const useStoreEditForm = () => {
         setFormData((prev) => ({
           ...prev,
           address: fullAddress,
+          divide: district, // 구 정보 자동 설정
           latitude: '', // 좌표 변환 중이므로 초기화
           longitude: '',
         }));

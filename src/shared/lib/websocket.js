@@ -21,91 +21,150 @@ class WebSocketClient {
    * @returns {Promise<void>}
    */
   connect(roomId, onMessage, onError) {
-    console.log('🔌 [WebSocket] connect() 호출:', { roomId, isConnected: this.isConnected });
+    // 이미 연결되어 있고 구독도 있으면 바로 반환 (중복 연결 방지)
+    if (this.isConnected && this.subscriptions.has(roomId)) {
+      return Promise.resolve();
+    }
 
     if (this.isConnected) {
-      console.log('✅ [WebSocket] 이미 연결되어 있음');
+      // 이미 연결되어 있지만 구독이 없는 경우만 구독 추가
+      const existingSubscription = this.subscriptions.get(roomId);
+      if (!existingSubscription) {
+        const subscribePath = `/sub/chats/${roomId}`;
+        const subscription = this.client.subscribe(
+          subscribePath,
+          (message) => this.handleMessage(message, onMessage),
+          { id: `sub-${roomId}` },
+        );
+        this.subscriptions.set(roomId, subscription);
+        console.log('✅ [WebSocket] 구독 추가 완료:', roomId);
+      }
       return Promise.resolve();
     }
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
     const wsUrl = `${apiBaseUrl}/stomp/chats`;
 
-    console.log('🔌 [WebSocket] 연결 시도:', { wsUrl, roomId, apiBaseUrl });
+    console.log('🔌 [WebSocket] 연결 시도:', roomId);
+
+    // 인증 토큰 가져오기 (클라이언트 생성 전에)
+    const token = localStorage.getItem('accessToken');
 
     this.client = new Client({
       webSocketFactory: () => {
-        console.log('🔌 [WebSocket] SockJS 생성:', wsUrl);
         return new SockJS(wsUrl);
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-      debug: (str) => {
-        if (import.meta.env.DEV) {
-          console.log('🔌 [STOMP Debug]:', str);
-        }
+      // 인증 헤더를 클라이언트 생성 시점에 설정
+      connectHeaders: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {},
+      debug: (_str) => {
+        // STOMP 디버그 로그 비활성화 (너무 많은 로그 출력 방지)
+        // 필요시 주석 해제
+        // if (import.meta.env.DEV) {
+        //   console.log('🔌 [STOMP Debug]:', _str);
+        // }
       },
-      onConnect: (frame) => {
-        console.log('✅ [WebSocket] 연결 성공:', frame);
+      onConnect: (_frame) => {
+        console.log('✅ [WebSocket] 연결 성공');
         this.isConnected = true;
         this.reconnectAttempts = 0;
 
-        // 채팅방 구독
+        // 채팅방 구독 (연결이 완전히 완료된 후에 구독)
         const subscribePath = `/sub/chats/${roomId}`;
-        console.log('📡 [WebSocket] 채팅방 구독:', subscribePath);
-        const subscription = this.client.subscribe(subscribePath, (message) => {
-          console.log('📨 [WebSocket] 메시지 수신:', message.body);
-          try {
-            const data = JSON.parse(message.body);
-            console.log('📨 [WebSocket] 파싱된 메시지:', data);
-            onMessage(data);
-          } catch (error) {
-            console.error('❌ [WebSocket] 메시지 파싱 오류:', error);
-          }
-        });
 
-        this.subscriptions.set(roomId, subscription);
-        console.log('✅ [WebSocket] 구독 완료:', roomId);
+        // 약간의 지연을 두어 연결이 완전히 안정화된 후 구독
+        setTimeout(() => {
+          try {
+            // client가 활성화되어 있고 연결되어 있는지 확인
+            if (!this.client || !this.client.connected) {
+              console.error('❌ [WebSocket] 클라이언트가 연결되지 않음');
+              return;
+            }
+
+            // 백엔드 예시와 동일한 방식으로 구독
+            // stompClient.subscribe("/sub/chats/1", (message) => { ... })
+            const subscription = this.client.subscribe(
+              subscribePath,
+              (message) => {
+                try {
+                  const parsed = JSON.parse(message.body);
+
+                  // 빈 배열이거나 배열인 경우 처리
+                  if (Array.isArray(parsed)) {
+                    if (parsed.length === 0) {
+                      return;
+                    }
+                    // 배열의 첫 번째 요소가 메시지일 수 있음
+                    const data = parsed[0];
+                    if (data && data.sender && data.message) {
+                      const transformedMessage = {
+                        content: data.message || data.content,
+                        message: data.message || data.content,
+                        sender: data.sender,
+                        senderId: data.senderId || data.sender,
+                        senderType: data.senderType || 'user',
+                        timestamp: data.timestamp || new Date().toISOString(),
+                        createdAt: data.createdAt || data.timestamp || new Date().toISOString(),
+                        id: data.id || Date.now().toString(),
+                        messageId: data.messageId || data.id || Date.now().toString(),
+                      };
+                      if (onMessage) {
+                        onMessage(transformedMessage);
+                      }
+                      return;
+                    }
+                  }
+
+                  // 객체인 경우 (일반적인 경우)
+                  if (parsed && typeof parsed === 'object' && parsed.sender && parsed.message) {
+                    // 기존 handleMessage 호출 (변환된 형식으로)
+                    this.handleMessage(message, onMessage);
+                  }
+                } catch (error) {
+                  console.error('❌ [WebSocket] 메시지 파싱 오류:', error);
+                  // 기존 방식으로도 시도
+                  this.handleMessage(message, onMessage);
+                }
+              },
+              {
+                id: `sub-${roomId}`,
+              },
+            );
+
+            this.subscriptions.set(roomId, subscription);
+            console.log('✅ [WebSocket] 구독 완료:', roomId);
+          } catch (error) {
+            console.error('❌ [WebSocket] 구독 실패:', error);
+            if (onError) {
+              onError(error);
+            }
+          }
+        }, 100); // 100ms 지연
       },
       onStompError: (frame) => {
         console.error('❌ [WebSocket] STOMP 에러:', frame);
+        console.error('❌ [WebSocket] STOMP 에러 메시지:', frame.headers?.message);
         this.isConnected = false;
         if (onError) {
           onError(frame);
         }
       },
-      onWebSocketClose: (event) => {
-        console.log('🔌 [WebSocket] 연결 종료:', event);
+      onWebSocketClose: () => {
         this.isConnected = false;
         this.subscriptions.clear();
       },
       onDisconnect: () => {
-        console.log('🔌 [WebSocket] 연결 해제');
         this.isConnected = false;
         this.subscriptions.clear();
       },
     });
 
-    // 인증 토큰 추가
-    const token = localStorage.getItem('accessToken');
-    console.log('🔑 [WebSocket] 토큰 확인:', token ? '있음' : '없음');
-    if (token) {
-      this.client.configure({
-        connectHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log('🔑 [WebSocket] Authorization 헤더 추가됨');
-    } else {
-      // 토큰이 없으면 기본 헤더 설정
-      this.client.configure({
-        connectHeaders: {},
-      });
-      console.warn('⚠️ [WebSocket] 토큰이 없습니다.');
-    }
-
-    console.log('🚀 [WebSocket] 클라이언트 활성화 시작...');
     this.client.activate();
 
     return new Promise((resolve, reject) => {
@@ -114,8 +173,10 @@ class WebSocketClient {
         reject(new Error('웹소켓 연결 타임아웃'));
       }, 10000);
 
+      let connectionChecked = false;
       const checkConnection = setInterval(() => {
-        if (this.isConnected) {
+        if (this.isConnected && !connectionChecked) {
+          connectionChecked = true;
           console.log('✅ [WebSocket] 연결 확인 완료');
           clearTimeout(timeout);
           clearInterval(checkConnection);
@@ -126,19 +187,53 @@ class WebSocketClient {
   }
 
   /**
+   * 메시지 수신 처리
+   * @param {Object} message - STOMP 메시지 객체
+   * @param {Function} onMessage - 메시지 수신 콜백
+   */
+  handleMessage(message, onMessage) {
+    if (!message.body) {
+      return;
+    }
+    try {
+      const data = JSON.parse(message.body);
+
+      // 백엔드 형식: { "sender": "testUser", "message": "안녕하세요" }
+      // 프론트엔드 형식으로 변환: { content, senderId, senderType, timestamp 등 }
+      const transformedMessage = {
+        content: data.message || data.content,
+        message: data.message || data.content,
+        sender: data.sender,
+        senderId: data.senderId || data.sender,
+        senderType: data.senderType || 'user',
+        timestamp: data.timestamp || new Date().toISOString(),
+        createdAt: data.createdAt || data.timestamp || new Date().toISOString(),
+        id: data.id || Date.now().toString(),
+        messageId: data.messageId || data.id || Date.now().toString(),
+      };
+
+      // 전역 이벤트 발생 (ChatListPage에서 채팅방 목록 갱신을 위해)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('chatMessageReceived', { detail: transformedMessage }),
+        );
+      }
+
+      if (onMessage) {
+        onMessage(transformedMessage);
+      }
+    } catch (error) {
+      console.error('❌ [WebSocket] 메시지 파싱 오류:', error);
+    }
+  }
+
+  /**
    * 메시지 전송
    * @param {string} roomId - 채팅방 ID
    * @param {string} content - 메시지 내용
    * @param {string} senderType - 발신자 타입 ('user' | 'store')
    */
   sendMessage(roomId, content, senderType = 'user') {
-    console.log('📤 [WebSocket] 메시지 전송 시도:', {
-      roomId,
-      content,
-      senderType,
-      isConnected: this.isConnected,
-    });
-
     if (!this.isConnected || !this.client) {
       console.error('❌ [WebSocket] 메시지 전송 실패: 연결되지 않음');
       throw new Error('웹소켓이 연결되지 않았습니다.');
@@ -147,11 +242,10 @@ class WebSocketClient {
     const destination = `/pub/chats/${roomId}`;
     const messageBody = {
       content,
+      message: content,
       senderType,
       timestamp: new Date().toISOString(),
     };
-
-    console.log('📤 [WebSocket] 메시지 전송:', { destination, messageBody });
 
     this.client.publish({
       destination,
@@ -176,7 +270,6 @@ class WebSocketClient {
    */
   disconnect() {
     if (this.client) {
-      console.log('🔌 [WebSocket] 연결 해제 시작...');
       this.subscriptions.forEach((subscription) => {
         subscription.unsubscribe();
       });
@@ -184,7 +277,6 @@ class WebSocketClient {
       this.client.deactivate();
       this.client = null;
       this.isConnected = false;
-      console.log('✅ [WebSocket] 연결 해제 완료');
     }
   }
 

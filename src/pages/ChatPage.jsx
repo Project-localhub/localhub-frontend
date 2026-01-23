@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Send } from 'lucide-react';
 import { webSocketClient } from '@/shared/lib/websocket';
@@ -17,6 +17,7 @@ const ChatPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [messages, setMessages] = useState([]);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
   const messagesEndRef = useRef(null);
 
   const { data: chats = [], isLoading: isChatsLoading } = useInquiryChats({
@@ -28,6 +29,7 @@ const ChatPage = () => {
   const selectedRoomId = roomId || roomIdFromQuery;
 
   // URL state에서 채팅방 ID를 받아서 URL 파라미터로 리다이렉트 (하위 호환성)
+  // 단, 가게 정보(storeName, storeImage)는 유지하기 위해 state를 완전히 제거하지 않음
   useEffect(() => {
     const chatRoomIdFromState = location.state?.chatRoomId;
 
@@ -37,8 +39,15 @@ const ChatPage = () => {
         (chat) => chat.id === chatRoomIdFromState || chat.inquiryChatId === chatRoomIdFromState,
       );
       if (chatExists) {
-        // URL 파라미터로 리다이렉트
-        navigate(`/chat/${chatRoomIdFromState}`, { replace: true, state: null });
+        // URL 파라미터로 리다이렉트하되, 가게 정보는 유지
+        const currentState = location.state;
+        navigate(`/chat/${chatRoomIdFromState}`, {
+          replace: true,
+          state: {
+            storeName: currentState?.storeName,
+            storeImage: currentState?.storeImage,
+          },
+        });
       }
     }
   }, [location.state, chats, navigate]);
@@ -47,6 +56,31 @@ const ChatPage = () => {
   const currentChat = selectedRoomId
     ? chats.find((chat) => chat.id === selectedRoomId || chat.inquiryChatId === selectedRoomId)
     : null;
+
+  // location.state에서 가게 정보 가져오기 (StoreDetailPage에서 전달된 경우)
+  const storeNameFromState = location.state?.storeName;
+  const storeImageFromState = location.state?.storeImage;
+
+  // 채팅방 정보가 없어도 state에서 가게 정보가 있으면 사용
+  const displayStoreName = currentChat?.storeName || storeNameFromState || '알 수 없음';
+  const displayStoreImage = currentChat?.storeImage || storeImageFromState;
+
+  // 디버깅: 가게 정보 확인
+  useEffect(() => {
+    console.log('🔍 [ChatPage] location.state:', location.state);
+    console.log('🔍 [ChatPage] storeNameFromState:', storeNameFromState);
+    console.log('🔍 [ChatPage] storeImageFromState:', storeImageFromState);
+    console.log('🔍 [ChatPage] currentChat:', currentChat);
+    console.log('🔍 [ChatPage] displayStoreName:', displayStoreName);
+    console.log('🔍 [ChatPage] displayStoreImage:', displayStoreImage);
+  }, [
+    location.state,
+    storeNameFromState,
+    storeImageFromState,
+    currentChat,
+    displayStoreName,
+    displayStoreImage,
+  ]);
 
   // 선택된 채팅방의 실제 ID (inquiryChatId 우선, 없으면 id 사용)
   const selectedChatId = currentChat?.inquiryChatId || currentChat?.id || selectedRoomId;
@@ -78,37 +112,48 @@ const ChatPage = () => {
     }
   }, [chatMessagesData]);
 
+  // 웹소켓 연결 함수
+  const connectWebSocket = useCallback(async () => {
+    if (!selectedChatId) {
+      return;
+    }
+
+    setIsConnecting(true);
+    setConnectionError(null);
+    try {
+      // POST /stomp/chats로 채팅방 연결
+      await connectChatRoom(selectedChatId);
+
+      // 웹소켓 연결
+      await webSocketClient.connect(
+        selectedChatId,
+        (receivedMessage) => {
+          // 메시지 수신 시 상태 업데이트
+          console.log('📨 [ChatPage] 메시지 수신:', receivedMessage);
+          setMessages((prev) => [...prev, receivedMessage]);
+        },
+        () => {
+          console.error('❌ [ChatPage] 웹소켓 연결 실패');
+          setConnectionError('채팅 연결에 실패했습니다. 다시 시도해주세요.');
+        },
+      );
+      console.log('✅ [ChatPage] 웹소켓 연결 성공:', selectedChatId);
+    } catch (error) {
+      console.error('❌ [ChatPage] 채팅방 연결 실패:', error);
+      setConnectionError('채팅 연결에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [selectedChatId]);
+
   // 웹소켓 연결 및 메시지 수신
   useEffect(() => {
     if (!selectedChatId) {
       // 채팅방이 선택되지 않으면 웹소켓 연결 해제
       webSocketClient.disconnect();
+      setConnectionError(null);
       return;
     }
-
-    const connectWebSocket = async () => {
-      setIsConnecting(true);
-      try {
-        // POST /stomp/chats로 채팅방 연결
-        await connectChatRoom(selectedChatId);
-
-        // 웹소켓 연결
-        await webSocketClient.connect(
-          selectedChatId,
-          (receivedMessage) => {
-            // 메시지 수신 시 상태 업데이트
-            setMessages((prev) => [...prev, receivedMessage]);
-          },
-          () => {
-            alert('채팅 연결에 실패했습니다. 다시 시도해주세요.');
-          },
-        );
-      } catch {
-        alert('채팅 연결에 실패했습니다. 다시 시도해주세요.');
-      } finally {
-        setIsConnecting(false);
-      }
-    };
 
     connectWebSocket();
 
@@ -116,7 +161,7 @@ const ChatPage = () => {
     return () => {
       webSocketClient.disconnect();
     };
-  }, [selectedChatId]);
+  }, [selectedChatId, connectWebSocket]);
 
   const handleSend = () => {
     if (!message.trim() || !selectedChatId) {
@@ -128,7 +173,7 @@ const ChatPage = () => {
       webSocketClient.sendMessage(selectedChatId, message.trim(), 'user');
       setMessage('');
     } catch {
-      alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+      setConnectionError('메시지 전송에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -237,14 +282,6 @@ const ChatPage = () => {
 
   // 채팅 내역 컴포넌트
   const ChatDetail = () => {
-    if (!currentChat && selectedRoomId) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-gray-500">채팅방을 찾을 수 없습니다.</div>
-        </div>
-      );
-    }
-
     if (!selectedRoomId) {
       return (
         <div className="flex items-center justify-center h-full bg-gray-50">
@@ -252,6 +289,25 @@ const ChatPage = () => {
             <p className="mb-2">채팅방을 선택해주세요</p>
             <p className="text-sm">왼쪽 목록에서 채팅방을 선택하세요</p>
           </div>
+        </div>
+      );
+    }
+
+    // 채팅방 정보가 없어도 selectedRoomId와 state의 가게 정보가 있으면 표시
+    // (채팅방이 방금 생성되었거나 목록이 아직 로드되지 않은 경우)
+    if (!currentChat && selectedRoomId && !storeNameFromState) {
+      // 채팅 목록이 로드 중이면 로딩 표시
+      if (isChatsLoading) {
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-gray-500">채팅방 정보를 불러오는 중...</div>
+          </div>
+        );
+      }
+      // 채팅 목록이 로드되었는데도 채팅방을 찾을 수 없으면 에러 표시
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-gray-500">채팅방을 찾을 수 없습니다.</div>
         </div>
       );
     }
@@ -265,22 +321,33 @@ const ChatPage = () => {
             </button>
           )}
           <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
-            {currentChat?.storeImage ? (
+            {displayStoreImage ? (
               <img
-                src={currentChat.storeImage}
-                alt={currentChat.storeName || '가게'}
+                src={displayStoreImage}
+                alt={displayStoreName}
                 className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white">
-                {currentChat?.storeName?.[0] || '?'}
+                {displayStoreName?.[0] || '?'}
               </div>
             )}
           </div>
-          <span className="text-gray-900 font-medium">
-            {currentChat?.storeName || '알 수 없음'}
-          </span>
+          <span className="text-gray-900 font-medium">{displayStoreName}</span>
         </div>
+
+        {/* 연결 에러 메시지 */}
+        {connectionError && (
+          <div className="mx-4 mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+            <span className="text-red-700 text-sm flex-1">{connectionError}</span>
+            <button
+              onClick={connectWebSocket}
+              className="ml-3 px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+            >
+              재시도
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-auto p-4 space-y-3">
           {isConnecting && (
@@ -334,7 +401,7 @@ const ChatPage = () => {
             />
             <button
               onClick={handleSend}
-              disabled={!message.trim()}
+              disabled={!message.trim() || isConnecting || !!connectionError}
               className="text-blue-600 disabled:text-gray-400"
             >
               <Send size={20} />

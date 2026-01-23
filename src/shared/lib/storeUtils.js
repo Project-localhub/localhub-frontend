@@ -66,3 +66,20 @@ export const formatDistance = (distanceInKm) => {
   }
   return `${distanceInKm.toFixed(1)}km`;
 };
+
+// 주소에서 구 정보 추출 (예: "서울특별시 강남구 테헤란로 123" -> "강남구")
+export const extractDistrictFromAddress = (address) => {
+  if (!address || typeof address !== 'string') {
+    return '';
+  }
+
+  // "구"로 끝나는 부분 찾기
+  // 예: "서울특별시 강남구", "경기도 성남시 분당구", "부산광역시 해운대구"
+  const districtMatch = address.match(/([가-힣]+구)/);
+  if (districtMatch && districtMatch[1]) {
+    return districtMatch[1]; // "강남구", "분당구", "해운대구" 등
+  }
+
+  // "구"가 없으면 빈 문자열 반환
+  return '';
+};
