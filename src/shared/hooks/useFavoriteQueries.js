@@ -85,8 +85,47 @@ export const useToggleFavorite = () => {
         return await addFavorite(restaurantId);
       }
     },
+    // Optimistic Update: UI를 즉시 업데이트
+    onMutate: async ({ restaurantId, isFavorite }) => {
+      // 진행 중인 쿼리 취소
+      await queryClient.cancelQueries({ queryKey: favoriteKeys.myFavorites() });
+
+      // 이전 데이터 백업
+      const previousFavorites = queryClient.getQueryData(favoriteKeys.myFavorites());
+
+      // Optimistic update: 찜한 목록을 즉시 업데이트
+      queryClient.setQueryData(favoriteKeys.myFavorites(), (old = []) => {
+        if (isFavorite) {
+          // 찜 해제: 목록에서 제거 (타입 변환하여 비교)
+          return old.filter(
+            (fav) =>
+              fav.id !== restaurantId &&
+              fav.id !== Number(restaurantId) &&
+              fav.restaurantId !== restaurantId &&
+              fav.restaurantId !== Number(restaurantId),
+          );
+        } else {
+          // 찜하기: 목록에 추가 (임시 데이터)
+          const newFavorite = {
+            id: restaurantId,
+            restaurantId: restaurantId,
+            isLiked: true,
+          };
+          return [...old, newFavorite];
+        }
+      });
+
+      // 롤백을 위한 컨텍스트 반환
+      return { previousFavorites };
+    },
+    onError: (err, variables, context) => {
+      // 에러 발생 시 이전 데이터로 롤백
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(favoriteKeys.myFavorites(), context.previousFavorites);
+      }
+    },
     onSuccess: (data, variables) => {
-      // 찜한 가게 목록 갱신
+      // 찜한 가게 목록 갱신 (서버 데이터로 최종 동기화)
       queryClient.invalidateQueries({ queryKey: favoriteKeys.myFavorites() });
       // 찜 수 갱신
       queryClient.invalidateQueries({ queryKey: favoriteKeys.count(variables.restaurantId) });

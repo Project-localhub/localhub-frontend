@@ -44,7 +44,14 @@ const QuickActions = ({ selectedStoreId }) => {
               </div>
               <ChevronRight size={20} className="text-gray-400" />
             </button>
-            <button className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+            <button
+              onClick={() => {
+                if (selectedStoreId) {
+                  navigate(`/dashboard/menu/${selectedStoreId}`);
+                }
+              }}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+            >
               <div className="flex items-center gap-3">
                 <MessageCircle size={20} className="text-blue-600" />
                 <span className="text-gray-900">메뉴 관리</span>

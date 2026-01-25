@@ -28,11 +28,30 @@ export const initKakao = (javascriptKey) => {
 };
 
 /**
+ * 카카오 로그인 상태 확인
+ * @returns {boolean} 카카오 로그인 여부
+ */
+export const isKakaoLoggedIn = () => {
+  if (!isKakaoInitialized()) {
+    return false;
+  }
+
+  try {
+    // 카카오 액세스 토큰이 있으면 로그인된 상태
+    const accessToken = window.Kakao.Auth.getAccessToken();
+    return !!accessToken;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * 카카오 로그아웃
  * @returns {Promise} 카카오 로그아웃 Promise
  */
 export const kakaoLogout = async () => {
-  if (!isKakaoInitialized()) {
+  // 카카오 SDK가 초기화되지 않았거나 로그인하지 않은 경우 바로 반환
+  if (!isKakaoInitialized() || !isKakaoLoggedIn()) {
     return Promise.resolve();
   }
 
@@ -42,6 +61,11 @@ export const kakaoLogout = async () => {
   } catch (error) {
     // 401 에러는 이미 로그아웃된 상태이므로 조용히 처리
     // 다른 에러도 조용히 처리 (카카오 로그아웃 실패는 치명적이지 않음)
+    if (error?.response?.status === 401) {
+      // 401 에러는 이미 로그아웃된 상태이므로 정상 처리
+      return Promise.resolve();
+    }
+    // 다른 에러도 조용히 처리
     return Promise.resolve();
   }
 };

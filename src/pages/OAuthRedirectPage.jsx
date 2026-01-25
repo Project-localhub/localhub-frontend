@@ -27,7 +27,10 @@ const OAuthRedirectPage = () => {
 
     loginWithToken(finalToken)
       .then(() => {
-        navigate('/');
+        // 로그인 완료 후 약간의 지연을 두고 네비게이션하여 상태 업데이트 완료 보장
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 100);
       })
       .catch((error) => {
         alert(`소셜 로그인 처리 중 오류가 발생했습니다.\n${error.message || '알 수 없는 오류'}`);

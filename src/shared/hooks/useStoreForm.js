@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { createStore } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
+import { convertAddressToCoordinates } from '@/shared/lib/geocoding';
+import { validateBusinessNumber, extractDistrictFromAddress } from '@/shared/lib/storeUtils';
+import { storeKeys } from '@/shared/hooks/useStoreQueries';
 
 const initialFormData = {
   name: '',
@@ -12,6 +16,7 @@ const initialFormData = {
   address: '',
   latitude: '',
   longitude: '',
+  divide: '', // 구 정보 (자동 추출)
   keywords: [],
   openTime: '09:00',
   closeTime: '22:00',
@@ -22,14 +27,9 @@ const initialFormData = {
   imageKeys: [], // 업로드 완료된 이미지 key 배열
 };
 
-// 사업자등록번호 형식 검증 (10자리 숫자)
-const validateBusinessNumber = (number) => {
-  const cleaned = number.replace(/-/g, '');
-  return /^\d{10}$/.test(cleaned);
-};
-
 export const useStoreForm = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -258,6 +258,9 @@ export const useStoreForm = () => {
 
         const fullAddress = address + extraAddress;
 
+        // 주소에서 구 정보 추출
+        const district = extractDistrictFromAddress(fullAddress);
+
         // 레이어 제거
         layer.remove();
 
@@ -266,48 +269,26 @@ export const useStoreForm = () => {
         setFormData((prev) => ({
           ...prev,
           address: fullAddress,
+          divide: district, // 구 정보 자동 설정
           latitude: '', // 좌표 변환 중이므로 초기화
           longitude: '',
         }));
 
-        // 카카오맵 Geocoding API로 주소를 좌표로 변환 (Promise로 감싸기)
-        const convertAddressToCoordinates = () => {
-          return new Promise((resolve) => {
-            if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
-              // 카카오맵 API가 없으면 기본값으로 설정
-              resolve({ latitude: 0, longitude: 0 });
-              return;
-            }
-
-            const geocoder = new window.kakao.maps.services.Geocoder();
-
-            geocoder.addressSearch(fullAddress, (result, status) => {
-              if (status === window.kakao.maps.services.Status.OK) {
-                // 첫 번째 결과의 좌표 사용
-                const coords = result[0];
-                resolve({
-                  latitude: coords.y, // 위도
-                  longitude: coords.x, // 경도
-                });
-              } else {
-                // 좌표 변환 실패 시 기본값 사용
-                resolve({ latitude: 0, longitude: 0 });
-              }
-            });
-          });
-        };
-
         // 좌표 변환 완료 후 상태 업데이트
-        convertAddressToCoordinates()
+        convertAddressToCoordinates(fullAddress)
           .then(({ latitude, longitude }) => {
+            if (latitude === 0 && longitude === 0) {
+              alert('주소를 좌표로 변환할 수 없습니다. 주소를 다시 확인해주세요.');
+            }
             setFormData((prev) => ({
               ...prev,
               latitude: latitude.toString(),
               longitude: longitude.toString(),
             }));
           })
-          .catch(() => {
-            // 에러 발생 시에도 기본값으로 설정
+          .catch((error) => {
+            console.error('좌표 변환 에러:', error);
+            alert('주소를 좌표로 변환하는 중 오류가 발생했습니다.');
             setFormData((prev) => ({
               ...prev,
               latitude: '0',
@@ -371,6 +352,11 @@ export const useStoreForm = () => {
 
     try {
       await createStore(formData);
+
+      // 가게 등록 성공 후 관련 쿼리 캐시 무효화
+      // 홈페이지의 가게 목록을 갱신하기 위해
+      queryClient.invalidateQueries({ queryKey: storeKeys.all() });
+
       alert('가게 등록이 완료되었습니다!');
       navigate('/dashboard');
     } catch {

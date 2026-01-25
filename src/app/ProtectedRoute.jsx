@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { getUserInfo } from '../shared/api/auth';
 
 const ProtectedRoute = ({ children }) => {
@@ -10,7 +11,7 @@ const ProtectedRoute = ({ children }) => {
       try {
         await getUserInfo();
         setIsLogin(true);
-      } catch (e) {
+      } catch {
         setIsLogin(false);
       }
     };
@@ -25,6 +26,10 @@ const ProtectedRoute = ({ children }) => {
 
   // 로그인 되어있으면 콘텐츠 출력
   return children;
+};
+
+ProtectedRoute.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default ProtectedRoute;

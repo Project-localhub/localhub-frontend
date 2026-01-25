@@ -74,12 +74,8 @@ export const deleteFavorite = async (restaurantId) => {
   return client.delete(`/api/restaurant/deleteBy/${Number(restaurantId)}`);
 };
 
-export const getRestaurantList = (params) => {
-  return axios.get('/restaurant/list', { params });
-};
-
 export const getRestaurantDetail = async (restaurantId) => {
-  const response = await client.get(`/api/restaurant/${restaurantId}`);
+  const response = await client.get(`/api/restaurant/details/${restaurantId}`);
   return response.data;
 };
 

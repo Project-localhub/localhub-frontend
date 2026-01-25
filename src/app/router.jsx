@@ -4,16 +4,18 @@ import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
-import ChatPage from '@/pages/ChatPage';
+import ChatListPage from '@/pages/ChatListPage';
+import ChatDetailPage from '@/pages/ChatDetailPage';
 import FavoritePage from '@/pages/FavoritePage';
 import OwnerDashboardPage from '@/pages/owner/OwnerDashboardPage';
 import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
 import StoreEditPage from '@/pages/owner/StoreEditPage';
+import MenuManagePage from '@/pages/owner/MenuManagePage';
 import OAuthRedirectPage from '@/pages/OAuthRedirectPage';
 import FindUserPage from '@/pages/FindUserPage';
 import FindPasswordPage from '../pages/FindPasswordPage';
 import ReviewPage from '@/pages/ReviewPage';
-import ProtectedRoute from './protectedRoute';
+import ProtectedRoute from '@/app/ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
@@ -36,7 +38,15 @@ export const router = createBrowserRouter([
         path: 'chat',
         element: (
           <ProtectedRoute>
-            <ChatPage />
+            <ChatListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'chat/:roomId',
+        element: (
+          <ProtectedRoute>
+            <ChatDetailPage />
           </ProtectedRoute>
         ),
       },
@@ -69,6 +79,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <StoreEditPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'dashboard/menu/:id',
+        element: (
+          <ProtectedRoute>
+            <MenuManagePage />
           </ProtectedRoute>
         ),
       },

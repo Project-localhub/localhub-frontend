@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { updateStore } from '@/shared/api/storeApi';
-import { getStore } from '@/shared/api/storeApi';
+import { updateStore, getMyStores } from '@/shared/api/storeApi';
 import { getPresignUrl, uploadImageToStorage } from '@/shared/api/storageApi';
-import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/shared/lib/storeConstants';
+import { convertAddressToCoordinates } from '@/shared/lib/geocoding';
+import { validateBusinessNumber, extractDistrictFromAddress } from '@/shared/lib/storeUtils';
 
 const initialFormData = {
   name: '',
@@ -14,6 +14,7 @@ const initialFormData = {
   address: '',
   latitude: '',
   longitude: '',
+  divide: '', // 구 정보 (자동 추출)
   keywords: [],
   openTime: '09:00',
   closeTime: '22:00',
@@ -25,38 +26,59 @@ const initialFormData = {
   existingImages: [], // 기존 이미지 URL 배열 (표시용)
 };
 
-// 사업자등록번호 형식 검증 (10자리 숫자)
-const validateBusinessNumber = (number) => {
-  const cleaned = number.replace(/-/g, '');
-  return /^\d{10}$/.test(cleaned);
-};
-
 export const useStoreEditForm = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: urlStoreId } = useParams();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isConvertingCoordinates, setIsConvertingCoordinates] = useState(false);
+  const [storeId, setStoreId] = useState(null);
 
   // 기존 가게 정보 로드
   useEffect(() => {
     const loadStoreData = async () => {
-      if (!id) {
-        alert('가게 ID가 없습니다.');
-        navigate('/dashboard');
-        return;
-      }
-
       try {
         setIsLoading(true);
-        const storeData = await getStore(id);
+        const stores = await getMyStores();
 
-        // 기존 이미지 URL 추출 (표시용)
-        const existingImageUrls = storeData.images || [];
-        const existingImageKeys = existingImageUrls.map((img) => img.imageKey || img.key || '');
+        if (!stores || stores.length === 0) {
+          alert('가게 정보를 찾을 수 없습니다.');
+          navigate('/dashboard');
+          return;
+        }
+
+        // URL 파라미터로 가게 ID가 있으면 해당 가게 사용, 없으면 첫 번째 가게 사용
+        const storeData = urlStoreId
+          ? stores.find((store) => store.id === Number(urlStoreId)) || stores[0]
+          : stores[0];
+
+        if (!storeData) {
+          alert('가게 정보를 찾을 수 없습니다.');
+          navigate('/dashboard');
+          return;
+        }
+
+        // 가게 ID 저장
+        setStoreId(storeData.id);
+
+        // imageUrlList는 문자열 배열이므로 그대로 사용
+        const existingImageUrls = Array.isArray(storeData.imageUrlList)
+          ? storeData.imageUrlList.map((url, index) => ({
+              url,
+              imageKey: url, // URL을 key로 사용 (수정 시에는 새로 업로드 필요)
+              sortOrder: index + 1,
+            }))
+          : [];
+
+        // keywordList는 문자열 배열
+        const keywords = Array.isArray(storeData.keywordList) ? storeData.keywordList : [];
+
+        // 기존 주소에서 구 정보 추출 (이미 저장된 divide가 있으면 사용, 없으면 주소에서 추출)
+        const existingDistrict =
+          storeData.divide || extractDistrictFromAddress(storeData.address || '');
 
         setFormData({
           name: storeData.name || '',
@@ -67,14 +89,15 @@ export const useStoreEditForm = () => {
           address: storeData.address || '',
           latitude: storeData.latitude?.toString() || '',
           longitude: storeData.longitude?.toString() || '',
-          keywords: storeData.keywords || [],
+          divide: existingDistrict, // 구 정보 설정
+          keywords: keywords,
           openTime: storeData.openTime || '09:00',
           closeTime: storeData.closeTime || '22:00',
           hasBreakTime: storeData.hasBreakTime || false,
           breakStartTime: storeData.breakStartTime || '14:00',
           breakEndTime: storeData.breakEndTime || '17:00',
           images: [], // 새로 추가할 이미지
-          imageKeys: existingImageKeys, // 기존 이미지 key 유지
+          imageKeys: existingImageUrls.map((img) => img.imageKey || img.url || ''), // 기존 이미지 key 유지
           existingImages: existingImageUrls, // 기존 이미지 URL (표시용)
         });
       } catch {
@@ -86,7 +109,7 @@ export const useStoreEditForm = () => {
     };
 
     loadStoreData();
-  }, [id, navigate]);
+  }, [urlStoreId, navigate]);
 
   // 이미지 추가
   const handleImageAdd = async (e) => {
@@ -105,8 +128,6 @@ export const useStoreEditForm = () => {
   // 이미지 제거
   const handleImageRemove = (index) => {
     // 기존 이미지인지 새로 추가한 이미지인지 확인
-    const totalImages = formData.existingImages.length + formData.images.length;
-
     if (index < formData.existingImages.length) {
       // 기존 이미지 제거
       const newExistingImages = formData.existingImages.filter((_, i) => i !== index);
@@ -138,24 +159,19 @@ export const useStoreEditForm = () => {
 
     try {
       for (const file of files) {
-        // 1. Presign URL 발급
         const { key, url } = await getPresignUrl(file.name, file.type);
 
-        // 2. S3/R2에 이미지 업로드
         await uploadImageToStorage(url, file);
 
-        // 3. 업로드된 key 저장
         uploadedKeys.push(key);
       }
 
-      // 업로드 완료된 key들을 formData에 추가
       setFormData((prev) => ({
         ...prev,
         imageKeys: [...prev.imageKeys, ...uploadedKeys],
       }));
     } catch {
       alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
-      // 업로드 실패한 파일 제거
       setFormData((prev) => ({
         ...prev,
         images: prev.images.slice(0, prev.images.length - files.length),
@@ -165,7 +181,6 @@ export const useStoreEditForm = () => {
     }
   };
 
-  // 키워드 토글
   const handleKeywordToggle = (keyword) => {
     const newKeywords = formData.keywords.includes(keyword)
       ? formData.keywords.filter((k) => k !== keyword)
@@ -173,19 +188,15 @@ export const useStoreEditForm = () => {
     setFormData({ ...formData, keywords: newKeywords });
   };
 
-  // Daum Postcode API 스크립트 로드 대기
   const waitForDaumPostcode = () => {
     return new Promise((resolve, reject) => {
-      // 이미 로드되어 있으면 즉시 반환
       if (window.daum && window.daum.Postcode) {
         resolve();
         return;
       }
 
-      // 스크립트가 이미 로드 중인지 확인
       const existingScript = document.querySelector('script[src*="postcode"]');
       if (existingScript) {
-        // 스크립트 로드 완료를 기다림
         let attempts = 0;
         const maxAttempts = 50; // 5초 대기 (100ms * 50)
         const checkInterval = setInterval(() => {
@@ -332,6 +343,9 @@ export const useStoreEditForm = () => {
 
         const fullAddress = address + extraAddress;
 
+        // 주소에서 구 정보 추출
+        const district = extractDistrictFromAddress(fullAddress);
+
         // 레이어 제거
         layer.remove();
 
@@ -340,39 +354,13 @@ export const useStoreEditForm = () => {
         setFormData((prev) => ({
           ...prev,
           address: fullAddress,
+          divide: district, // 구 정보 자동 설정
           latitude: '', // 좌표 변환 중이므로 초기화
           longitude: '',
         }));
 
-        // 카카오맵 Geocoding API로 주소를 좌표로 변환 (Promise로 감싸기)
-        const convertAddressToCoordinates = () => {
-          return new Promise((resolve) => {
-            if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
-              // 카카오맵 API가 없으면 기본값으로 설정
-              resolve({ latitude: 0, longitude: 0 });
-              return;
-            }
-
-            const geocoder = new window.kakao.maps.services.Geocoder();
-
-            geocoder.addressSearch(fullAddress, (result, status) => {
-              if (status === window.kakao.maps.services.Status.OK) {
-                // 첫 번째 결과의 좌표 사용
-                const coords = result[0];
-                resolve({
-                  latitude: coords.y, // 위도
-                  longitude: coords.x, // 경도
-                });
-              } else {
-                // 좌표 변환 실패 시 기본값 사용
-                resolve({ latitude: 0, longitude: 0 });
-              }
-            });
-          });
-        };
-
         // 좌표 변환 완료 후 상태 업데이트
-        convertAddressToCoordinates()
+        convertAddressToCoordinates(fullAddress)
           .then(({ latitude, longitude }) => {
             setFormData((prev) => ({
               ...prev,
@@ -423,7 +411,10 @@ export const useStoreEditForm = () => {
     if (!formData.phone.trim()) newErrors.phone = '전화번호를 입력해주세요';
     if (formData.imageKeys.length === 0) {
       newErrors.images = '최소 1개 이상의 사진이 필요합니다';
-    } else if (formData.images.length > 0 && formData.imageKeys.length !== formData.existingImages.length + formData.images.length) {
+    } else if (
+      formData.images.length > 0 &&
+      formData.imageKeys.length !== formData.existingImages.length + formData.images.length
+    ) {
       newErrors.images = '이미지 업로드가 완료될 때까지 기다려주세요';
     }
 
@@ -439,10 +430,15 @@ export const useStoreEditForm = () => {
       return;
     }
 
+    if (!storeId) {
+      alert('가게 정보를 불러올 수 없습니다.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await updateStore(id, formData);
+      await updateStore(storeId, formData);
       alert('가게 정보가 수정되었습니다!');
       navigate('/dashboard');
     } catch {
@@ -467,4 +463,3 @@ export const useStoreEditForm = () => {
     handleSubmit,
   };
 };
-

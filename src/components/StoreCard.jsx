@@ -9,9 +9,6 @@ const StoreCard = ({ store }) => {
   const toggleFavoriteMutation = useToggleFavorite();
 
   const favoriteButtonHandler = async (e) => {
-    console.log('store.id:', store.id);
-    console.log('type:', typeof store.id);
-
     e.preventDefault();
     e.stopPropagation();
 

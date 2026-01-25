@@ -81,8 +81,10 @@ const Layout = () => {
         </Link>
         <Link
           to="/chat"
-          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg ${
-            isActive('/chat') ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
+          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+            location.pathname.startsWith('/chat')
+              ? 'text-blue-600 bg-blue-50'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           <MessageCircle size={24} />
