@@ -11,6 +11,7 @@ import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
 import StoreEditPage from '@/pages/owner/StoreEditPage';
 import OAuthRedirectPage from '@/pages/OAuthRedirectPage';
 import FindUserPage from '@/pages/FindUserPage';
+import FindPasswordPage from '../pages/FindPasswordPage';
 import ReviewPage from '@/pages/ReviewPage';
 import ProtectedRoute from './protectedRoute';
 
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
       { path: 'findUser', element: <FindUserPage /> },
+      { path: 'findPassword', element: <FindPasswordPage /> },
       { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
       { path: 'store/:id', element: <StoreDetailPage /> },
 

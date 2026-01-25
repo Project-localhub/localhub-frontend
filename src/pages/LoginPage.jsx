@@ -54,8 +54,11 @@ const LoginPage = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/kakao`;
   };
 
-  const findButtonHandler = () => {
+  const findIdButtonHandler = () => {
     navigate('/findUser');
+  };
+  const findPasswordButtonHandler = () => {
+    navigate('/findPassword');
   };
 
   return (
@@ -121,11 +124,13 @@ const LoginPage = () => {
 
           <div className="flex items-center justify-center gap-4 mt-6 text-sm">
             <div className="flex flex-row gap-2">
-              <button onClick={findButtonHandler} className="text-gray-600">
+              <button onClick={findIdButtonHandler} className="text-gray-600">
                 아이디 찾기
               </button>
               <span>/</span>
-              <button className="text-gray-600">비밀번호 찾기</button>
+              <button onClick={findPasswordButtonHandler} className="text-gray-600">
+                비밀번호 찾기
+              </button>
             </div>
             <span className="text-gray-300">|</span>
             <Link to="/signup" className="text-blue-600">

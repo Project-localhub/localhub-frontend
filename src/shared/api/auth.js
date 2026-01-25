@@ -37,7 +37,15 @@ export const logout = async () => {
 };
 
 export const findUsername = (email) => {
-  return client.post(`/api/auth/findUsername`, { email });
+  return client.post('/api/auth/findUsername', {
+    email,
+  });
+};
+
+export const findPassword = (email) => {
+  return client.post(`/api/auth/findPassword`, {
+    email,
+  });
 };
 
 export const sendEmailCode = (email) => {
