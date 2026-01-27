@@ -97,3 +97,8 @@ export const getReviewBy = async (restaurantId) => {
     throw err;
   }
 };
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const res = await client.put(`/api/user/changePassword`, currentPassword, newPassword);
+  return res.data;
+};

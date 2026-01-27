@@ -2,10 +2,10 @@ import { useContext, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { login as loginAPI } from '../shared/api/auth';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext, useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
-  const { login } = useContext(AuthContext);
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -15,32 +15,29 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const data = {
-      username: formData.username,
-      password: formData.password,
-    };
-
     try {
-      const res = await loginAPI(data);
-      const accessToken = res.accessToken;
+      const data = await loginAPI({
+        username: formData.username,
+        password: formData.password,
+      });
 
-      if (!accessToken) {
-        alert('로그인 실패: 서버에서 accessToken을 주지 않음');
+      console.log('LOGIN RES', data);
+      await login(data);
+
+      const { accessToken, mustChangePassword } = data;
+
+      localStorage.setItem('accessToken', accessToken);
+
+      if (mustChangePassword) {
+        navigate('/change-password', { replace: true });
         return;
       }
 
-      await login(accessToken);
-      // 로그인 완료 후 약간의 지연을 두고 네비게이션하여 상태 업데이트 완료 보장
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 100);
-    } catch {
+      navigate('/', { replace: true });
+    } catch (e) {
+      console.error(e);
       alert('로그인 실패');
     }
-  };
-
-  const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
   };
 
   const handleKakaoLogin = () => {
@@ -107,7 +104,6 @@ const LoginPage = () => {
             </div>
 
             <button
-              onClick={handleLogin}
               type="submit"
               className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
@@ -143,12 +139,6 @@ const LoginPage = () => {
               className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
             >
               <span className="text-gray-900">카카오로 시작하기</span>
-            </button>
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
-            >
-              <span className="text-gray-900">구글로 시작하기</span>
             </button>
           </div>
         </div>

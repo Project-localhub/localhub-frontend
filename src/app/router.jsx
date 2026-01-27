@@ -16,6 +16,7 @@ import FindUserPage from '@/pages/FindUserPage';
 import FindPasswordPage from '../pages/FindPasswordPage';
 import ReviewPage from '@/pages/ReviewPage';
 import ProtectedRoute from '@/app/ProtectedRoute';
+import ChangePasswordPage from '@/pages/ChangePasswordPage';
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: 'findPassword', element: <FindPasswordPage /> },
       { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
       { path: 'store/:id', element: <StoreDetailPage /> },
+      { path: 'change-password', element: <ChangePasswordPage /> },
 
       // 🔒 로그인 필수 페이지 (ProtectedRoute로 감싸기)
       {

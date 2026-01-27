@@ -8,9 +8,6 @@ const ReviewCard = ({ review }) => {
     <div className="bg-white border border-gray-200 rounded-lg p-4">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-            <span className="text-white">{review.username?.[0]?.toUpperCase() ?? '?'}</span>
-          </div>
           <div>
             <div className="text-gray-900">{review.username}</div>
             <div className="text-gray-500 text-sm">{date}</div>
