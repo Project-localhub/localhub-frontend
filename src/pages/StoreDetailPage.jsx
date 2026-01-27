@@ -469,9 +469,7 @@ const StoreDetailPage = () => {
 
       {/* 기본 정보 */}
       <div className="p-4 border-b border-gray-200">
-        <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-sm">
-          {store.category}
-        </span>
+        <span className="px-2 py-1 bg-blue-600 text-white rounded text-sm">{store.category}</span>
 
         <div className="flex items-center gap-2 my-2">
           <Star size={18} className="fill-yellow-400 text-yellow-400" />
