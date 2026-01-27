@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyFavoriteList, addFavorite, removeFavorite } from '@/shared/api/favoriteApi';
+import { useAuth } from '@/context/AuthContext';
 
 export const favoriteKeys = {
   all: ['favorites'],
@@ -7,6 +8,8 @@ export const favoriteKeys = {
 };
 
 export const useMyFavorites = (options = {}) => {
+  const { isLogin } = useAuth();
+
   return useQuery({
     queryKey: favoriteKeys.myFavorites(),
     queryFn: async () => {
@@ -27,6 +30,7 @@ export const useMyFavorites = (options = {}) => {
         return [];
       }
     },
+    enabled: options.enabled !== undefined ? options.enabled : isLogin,
     staleTime: 1 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false,

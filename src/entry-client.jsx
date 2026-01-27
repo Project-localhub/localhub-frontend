@@ -7,12 +7,53 @@ import { App } from './app/App';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './features/chat/context/SocketProvider';
+import { initKakao } from './shared/lib/kakao';
 import client from './shared/api/client';
 
 if (typeof window !== 'undefined') {
   const token = localStorage.getItem('accessToken');
   if (token) {
     client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  }
+
+  const KAKAO_JAVASCRIPT_KEY = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY;
+
+  if (KAKAO_JAVASCRIPT_KEY) {
+    const initKakaoWhenReady = () => {
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => {
+          const checkKakaoSDK = setInterval(() => {
+            if (window.Kakao) {
+              initKakao(KAKAO_JAVASCRIPT_KEY);
+              clearInterval(checkKakaoSDK);
+            }
+          }, 100);
+
+          setTimeout(() => {
+            clearInterval(checkKakaoSDK);
+          }, 5000);
+        });
+      } else {
+        setTimeout(() => {
+          const checkKakaoSDK = setInterval(() => {
+            if (window.Kakao) {
+              initKakao(KAKAO_JAVASCRIPT_KEY);
+              clearInterval(checkKakaoSDK);
+            }
+          }, 100);
+
+          setTimeout(() => {
+            clearInterval(checkKakaoSDK);
+          }, 5000);
+        }, 1000);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      initKakaoWhenReady();
+    } else {
+      window.addEventListener('load', initKakaoWhenReady);
+    }
   }
 
   const dehydratedState = window.__REACT_QUERY_STATE__ ?? null;

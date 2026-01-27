@@ -1,8 +1,25 @@
 import StoreCard from '@/components/StoreCard';
 import { useMyFavorites } from '@/features/favorite/hooks/useFavoriteQueries';
+import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
 
 const FavoritesPage = () => {
+  const { isLogin } = useAuth();
   const { data: favorites = [], isLoading } = useMyFavorites();
+
+  if (!isLogin) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-4">
+        <div className="text-gray-400 mb-4">로그인이 필요한 서비스입니다</div>
+        <Link
+          to="/login"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          로그인하기
+        </Link>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
