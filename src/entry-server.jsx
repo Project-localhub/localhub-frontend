@@ -21,7 +21,7 @@ export async function render(url, _context = {}) {
   let html = '';
 
   try {
-    html = renderToString(
+    const appElement = (
       <React.StrictMode>
         <MemoryRouter initialEntries={[url]}>
           <AuthProvider>
@@ -32,10 +32,18 @@ export async function render(url, _context = {}) {
             </QueryClientProvider>
           </AuthProvider>
         </MemoryRouter>
-      </React.StrictMode>,
+      </React.StrictMode>
     );
+
+    html = renderToString(appElement);
+
+    if (!html || html.trim() === '') {
+      console.error('renderToString returned empty string');
+      html = '<div id="root"><div>로딩 중...</div></div>';
+    }
   } catch (error) {
     console.error('SSR 렌더링 오류:', error);
+    console.error('Error stack:', error.stack);
     html = '<div id="root"><div>로딩 중...</div></div>';
   }
 

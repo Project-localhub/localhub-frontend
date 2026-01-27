@@ -16,20 +16,31 @@ app.use('*', async (req, res, next) => {
 
   try {
     const template = await fs.readFile(path.resolve(base, 'dist/client/index.html'), 'utf-8');
-    const { render } = await import(path.resolve(base, 'dist/server/entry-server.js'));
+    
+    try {
+      const { render } = await import(path.resolve(base, 'dist/server/entry-server.js'));
+      const { html: appHtml, queryState } = await render(url, {});
 
-    const { html: appHtml, queryState } = await render(url, {});
+      if (appHtml && appHtml.trim() !== '') {
+        const html = template
+          .replace(`<!--ssr-outlet-->`, appHtml)
+          .replace(
+            `<!--ssr-state-->`,
+            `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(queryState)}</script>`,
+          );
+        return res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      }
+    } catch (ssrError) {
+      console.error('SSR Error (falling back to CSR):', ssrError.message);
+    }
 
     const html = template
-      .replace(`<!--ssr-outlet-->`, appHtml)
-      .replace(
-        `<!--ssr-state-->`,
-        `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(queryState)}</script>`,
-      );
-
+      .replace(`<!--ssr-outlet-->`, '<div id="root"></div>')
+      .replace(`<!--ssr-state-->`, '');
+    
     res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
   } catch (e) {
-    console.error('SSR Error:', e);
+    console.error('Template Error:', e);
     res.status(500).send('Internal Server Error');
   }
 });
