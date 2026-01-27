@@ -1,85 +1,31 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useInquiryChats, chatKeys } from '@/shared/hooks/useChatQueries';
+import { useQuery } from '@tanstack/react-query';
+import { useInquiryChats } from '@/features/chat/hooks/useChatQueries';
 import { useAuth } from '@/context/AuthContext';
 import { getRestaurantDetail } from '@/shared/api/storeApi';
 
 const ChatListPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 사용자 역할 확인
   const isOwner = user?.userType === 'OWNER' || user?.userType === 'owner';
 
-  console.log('🔍 [ChatListPage] 사용자 정보:', {
-    userId: user?.id,
-    userType: user?.userType,
-    isOwner,
-  });
-
-  // 채팅방 목록 조회
-  // 사업자인 경우 더 자주 갱신 (새로운 메시지가 올 수 있음)
-  const {
-    data: chats = [],
-    isLoading: isChatsLoading,
-    refetch,
-  } = useInquiryChats({
+  const { data: chats = [], isLoading: isChatsLoading } = useInquiryChats({
     enabled: !!user?.id,
-    refetchInterval: isOwner ? 5 * 1000 : 30 * 1000, // 사업자는 5초마다, 일반 사용자는 30초마다
-    refetchOnWindowFocus: true, // 창 포커스 시 자동 갱신
+    refetchInterval: isOwner ? 3 * 1000 : 10 * 1000,
+    refetchOnWindowFocus: true,
   });
 
-  // 웹소켓 메시지 수신 시 채팅방 목록 갱신
-  useEffect(() => {
-    if (!user?.id) return;
-
-    // 웹소켓 메시지 수신 이벤트 리스너 등록
-    const handleMessage = () => {
-      console.log('🔄 [ChatListPage] 웹소켓 메시지 수신 감지 - 채팅방 목록 갱신');
-      // 채팅방 목록 쿼리 무효화 및 재조회
-      queryClient.invalidateQueries({ queryKey: chatKeys.inquiryChats() });
-      refetch();
-    };
-
-    // 전역 웹소켓 이벤트 리스너 (websocket.js에서 이벤트를 발생시키도록 수정 필요)
-    // 임시로 window 이벤트 사용
-    window.addEventListener('chatMessageReceived', handleMessage);
-
-    return () => {
-      window.removeEventListener('chatMessageReceived', handleMessage);
-    };
-  }, [user?.id, queryClient, refetch]);
-
-  console.log('🔍 [ChatListPage] 채팅방 목록:', {
-    chatsCount: chats.length,
-    chats: chats.map((chat) => ({
-      roomId: chat.roomId,
-      peer: chat.peer,
-      restaurant: chat.restaurant,
-      lastMessage: chat.lastMessage,
-      lastMessageAt: chat.lastMessageAt,
-      unreadCount: chat.unreadCount,
-      // 이전 형식 호환성 (있는 경우)
-      id: chat.id,
-      ownerId: chat.ownerId,
-      userId: chat.userId,
-      restaurantId: chat.restaurantId,
-    })),
-  });
-
-  // 실제 응답 형식: restaurantId로 가게 정보 조회 필요
   const restaurantIds = useMemo(() => {
     const ids = chats
       .map((chat) => chat.restaurantId || chat.restaurant?.id)
       .filter((id) => id != null);
-    return [...new Set(ids)]; // 중복 제거
+    return [...new Set(ids)];
   }, [chats]);
 
-  // 가게 이미지가 필요한 경우에만 추가 조회 (restaurant.image가 없는 경우)
   const restaurantQueries = useQuery({
     queryKey: ['restaurants', restaurantIds],
     queryFn: async () => {
@@ -88,13 +34,11 @@ const ChatListPage = () => {
           try {
             const restaurant = await getRestaurantDetail(restaurantId);
             return { restaurantId, restaurant };
-          } catch (error) {
-            console.error(`❌ [ChatListPage] 가게 정보 조회 실패 (ID: ${restaurantId}):`, error);
+          } catch {
             return { restaurantId, restaurant: null };
           }
         }),
       );
-      // Map으로 변환하여 빠른 조회 가능하도록
       const restaurantMap = new Map();
       results.forEach(({ restaurantId, restaurant }) => {
         restaurantMap.set(restaurantId, restaurant);
@@ -102,18 +46,18 @@ const ChatListPage = () => {
       return restaurantMap;
     },
     enabled: restaurantIds.length > 0 && !isChatsLoading,
-    staleTime: 5 * 60 * 1000, // 5분간 캐시 유지
+    staleTime: 5 * 60 * 1000,
   });
 
-  const restaurantMap = restaurantQueries.data || new Map();
+  const restaurantMap = useMemo(() => {
+    return restaurantQueries.data || new Map();
+  }, [restaurantQueries.data]);
 
-  // 필터링된 채팅방 목록
   const filteredChats = useMemo(() => {
     return chats.filter((chat) => {
       if (!searchQuery) return true;
       const searchLower = searchQuery.toLowerCase();
 
-      // 실제 응답 형식에 맞게 필터링
       const restaurantId = chat.restaurantId || chat.restaurant?.id;
       const restaurant = restaurantId ? restaurantMap.get(restaurantId) : null;
       const storeName = restaurant?.name || '';
@@ -130,10 +74,7 @@ const ChatListPage = () => {
   }, [chats, searchQuery, restaurantMap]);
 
   const handleChatClick = (chat) => {
-    // 실제 응답 형식: id가 채팅방 ID
     const chatId = chat.id || chat.roomId;
-
-    // 사용자 역할에 따라 표시할 이름과 이미지 결정
     const restaurantId = chat.restaurantId || chat.restaurant?.id;
     const restaurant = restaurantId ? restaurantMap.get(restaurantId) : null;
 
@@ -141,14 +82,9 @@ const ChatListPage = () => {
     let displayImage = null;
 
     if (isOwner) {
-      // 사장님인 경우: 채팅 온 유저 닉네임 표시
-      // 응답에 userName 필드가 없으므로, userId가 있으면 "유저"로 표시하거나
-      // 백엔드에서 userName 필드를 추가해야 함
       displayName = chat.userName || (chat.userId ? `유저 ${chat.userId}` : '알 수 없음');
-      // TODO: 유저 프로필 이미지 API가 있으면 사용
       displayImage = null;
     } else {
-      // 일반 유저인 경우: 가게 이름 표시
       displayName = restaurant?.name || chat.ownerName || '알 수 없음';
       displayImage =
         restaurant?.images && restaurant.images.length > 0
@@ -156,7 +92,6 @@ const ChatListPage = () => {
           : null;
     }
 
-    // 마지막 채팅방 ID 저장
     localStorage.setItem('lastChatRoomId', String(chatId));
     navigate(`/chat/${chatId}`, {
       state: {
@@ -196,10 +131,7 @@ const ChatListPage = () => {
           </div>
         ) : (
           filteredChats.map((chat) => {
-            // 실제 응답 형식: id가 채팅방 ID
             const chatId = chat.id || chat.roomId;
-
-            // 사용자 역할에 따라 표시할 이름과 이미지 결정
             const restaurantId = chat.restaurantId || chat.restaurant?.id;
             const restaurant = restaurantId ? restaurantMap.get(restaurantId) : null;
 
@@ -207,14 +139,9 @@ const ChatListPage = () => {
             let displayImage = null;
 
             if (isOwner) {
-              // 사장님인 경우: 채팅 온 유저 닉네임 표시
-              // 응답에 userName 필드가 없으므로, userId가 있으면 "유저"로 표시하거나
-              // 백엔드에서 userName 필드를 추가해야 함
               displayName = chat.userName || (chat.userId ? `유저 ${chat.userId}` : '알 수 없음');
-              // TODO: 유저 프로필 이미지 API가 있으면 사용
               displayImage = null;
             } else {
-              // 일반 유저인 경우: 가게 이름 표시
               displayName = restaurant?.name || chat.ownerName || '알 수 없음';
               displayImage =
                 restaurant?.images && restaurant.images.length > 0
@@ -235,7 +162,6 @@ const ChatListPage = () => {
                       alt={displayName}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // 이미지 로드 실패 시 기본 이미지로 대체
                         e.target.style.display = 'none';
                         e.target.nextElementSibling.style.display = 'flex';
                       }}

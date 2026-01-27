@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 const TAB_TYPES = {
   INFO: 'info',
   MENU: 'menu',
@@ -39,6 +41,12 @@ const StoreDetailTabs = ({ activeTab, onTabChange, reviewCount }) => {
       </button>
     </div>
   );
+};
+
+StoreDetailTabs.propTypes = {
+  activeTab: PropTypes.string.isRequired,
+  onTabChange: PropTypes.func.isRequired,
+  reviewCount: PropTypes.number.isRequired,
 };
 
 export { TAB_TYPES };

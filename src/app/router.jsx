@@ -1,22 +1,34 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import Layout from '../components/Layout';
+import ProtectedRoute from '@/app/ProtectedRoute';
+
+// 홈페이지는 즉시 로드 (가장 자주 사용)
 import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
-import StoreDetailPage from '@/pages/StoreDetailPage';
-import ChatListPage from '@/pages/ChatListPage';
-import ChatDetailPage from '@/pages/ChatDetailPage';
-import FavoritePage from '@/pages/FavoritePage';
-import OwnerDashboardPage from '@/pages/owner/OwnerDashboardPage';
-import StoreRegisterPage from '@/pages/owner/StoreRegisterPage';
-import StoreEditPage from '@/pages/owner/StoreEditPage';
-import MenuManagePage from '@/pages/owner/MenuManagePage';
-import OAuthRedirectPage from '@/pages/OAuthRedirectPage';
-import FindUserPage from '@/pages/FindUserPage';
-import FindPasswordPage from '../pages/FindPasswordPage';
-import ReviewPage from '@/pages/ReviewPage';
-import ProtectedRoute from '@/app/ProtectedRoute';
-import ChangePasswordPage from '@/pages/ChangePasswordPage';
+
+// 나머지 페이지들은 lazy loading
+const StoreDetailPage = lazy(() => import('@/pages/StoreDetailPage'));
+const ChatListPage = lazy(() => import('@/pages/ChatListPage'));
+const ChatDetailPage = lazy(() => import('@/pages/ChatDetailPage'));
+const FavoritePage = lazy(() => import('@/pages/FavoritePage'));
+const OwnerDashboardPage = lazy(() => import('@/pages/owner/OwnerDashboardPage'));
+const StoreRegisterPage = lazy(() => import('@/pages/owner/StoreRegisterPage'));
+const StoreEditPage = lazy(() => import('@/pages/owner/StoreEditPage'));
+const MenuManagePage = lazy(() => import('@/pages/owner/MenuManagePage'));
+const OAuthRedirectPage = lazy(() => import('@/pages/OAuthRedirectPage'));
+const FindUserPage = lazy(() => import('@/pages/FindUserPage'));
+const FindPasswordPage = lazy(() => import('@/pages/FindPasswordPage'));
+const ChangePasswordPage = lazy(() => import('@/pages/ChangePasswordPage'));
+const ReviewPage = lazy(() => import('@/pages/ReviewPage'));
+
+// 로딩 컴포넌트
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-gray-500">로딩 중...</div>
+  </div>
+);
 
 export const router = createBrowserRouter([
   {
@@ -29,18 +41,55 @@ export const router = createBrowserRouter([
       // 공용 페이지
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
-      { path: 'findUser', element: <FindUserPage /> },
-      { path: 'findPassword', element: <FindPasswordPage /> },
-      { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
-      { path: 'store/:id', element: <StoreDetailPage /> },
-      { path: 'change-password', element: <ChangePasswordPage /> },
+      {
+        path: 'findUser',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <FindUserPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'findPassword',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <FindPasswordPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'oauth/redirect',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <OAuthRedirectPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'store/:id',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <StoreDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'change-password',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <ChangePasswordPage />
+          </Suspense>
+        ),
+      },
 
       // 🔒 로그인 필수 페이지 (ProtectedRoute로 감싸기)
       {
         path: 'chat',
         element: (
           <ProtectedRoute>
-            <ChatListPage />
+            <Suspense fallback={<LoadingFallback />}>
+              <ChatListPage />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -48,7 +97,9 @@ export const router = createBrowserRouter([
         path: 'chat/:roomId',
         element: (
           <ProtectedRoute>
-            <ChatDetailPage />
+            <Suspense fallback={<LoadingFallback />}>
+              <ChatDetailPage />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -56,7 +107,9 @@ export const router = createBrowserRouter([
         path: 'favorites',
         element: (
           <ProtectedRoute>
-            <FavoritePage />
+            <Suspense fallback={<LoadingFallback />}>
+              <FavoritePage />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -64,7 +117,9 @@ export const router = createBrowserRouter([
         path: 'dashboard',
         element: (
           <ProtectedRoute>
-            <OwnerDashboardPage />
+            <Suspense fallback={<LoadingFallback />}>
+              <OwnerDashboardPage />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -72,7 +127,9 @@ export const router = createBrowserRouter([
         path: 'dashboard/store/register',
         element: (
           <ProtectedRoute>
-            <StoreRegisterPage />
+            <Suspense fallback={<LoadingFallback />}>
+              <StoreRegisterPage />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -80,7 +137,9 @@ export const router = createBrowserRouter([
         path: 'dashboard/store/edit/:id',
         element: (
           <ProtectedRoute>
-            <StoreEditPage />
+            <Suspense fallback={<LoadingFallback />}>
+              <StoreEditPage />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -88,7 +147,9 @@ export const router = createBrowserRouter([
         path: 'dashboard/menu/:id',
         element: (
           <ProtectedRoute>
-            <MenuManagePage />
+            <Suspense fallback={<LoadingFallback />}>
+              <MenuManagePage />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -96,7 +157,9 @@ export const router = createBrowserRouter([
         path: 'review/:restaurantId',
         element: (
           <ProtectedRoute>
-            <ReviewPage />
+            <Suspense fallback={<LoadingFallback />}>
+              <ReviewPage />
+            </Suspense>
           </ProtectedRoute>
         ),
       },

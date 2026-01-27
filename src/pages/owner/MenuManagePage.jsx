@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { getMenu, updateMenu } from '@/shared/api/storeApi';
-import { useMyStores } from '@/shared/hooks/useStoreQueries';
+import { useMyStores } from '@/features/store/hooks/useStoreQueries';
 
 const MenuManagePage = () => {
   const { id } = useParams();
@@ -15,7 +15,6 @@ const MenuManagePage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  // 메뉴 조회
   useEffect(() => {
     const fetchMenu = async () => {
       if (!id) return;
@@ -25,8 +24,7 @@ const MenuManagePage = () => {
         setError(null);
         const data = await getMenu(id);
         setMenuItems(data || []);
-      } catch (err) {
-        console.error('메뉴 조회 실패:', err);
+      } catch {
         setError('메뉴를 불러오는데 실패했습니다.');
         setMenuItems([]);
       } finally {
@@ -37,7 +35,6 @@ const MenuManagePage = () => {
     fetchMenu();
   }, [id]);
 
-  // 메뉴 항목 추가
   const handleAddMenuItem = () => {
     setMenuItems([
       ...menuItems,
@@ -49,12 +46,10 @@ const MenuManagePage = () => {
     ]);
   };
 
-  // 메뉴 항목 삭제
   const handleRemoveMenuItem = (index) => {
     setMenuItems(menuItems.filter((_, i) => i !== index));
   };
 
-  // 메뉴 항목 수정
   const handleMenuItemChange = (index, field, value) => {
     const updated = [...menuItems];
     if (field === 'price') {
@@ -65,14 +60,12 @@ const MenuManagePage = () => {
     setMenuItems(updated);
   };
 
-  // 메뉴 저장
   const handleSave = async () => {
     if (!id) {
       alert('가게 ID가 없습니다.');
       return;
     }
 
-    // 유효성 검사
     const invalidItems = menuItems.filter(
       (item) => !item.name || !item.name.trim() || item.price <= 0,
     );
@@ -82,14 +75,11 @@ const MenuManagePage = () => {
       return;
     }
 
-    // API 형식에 맞게 데이터 변환
     const itemsToSave = menuItems.map((item) => ({
       restaurantId: Number(id),
       name: item.name.trim(),
       price: Number(item.price),
     }));
-
-    console.log('📤 [MenuManagePage] 전송할 메뉴 데이터:', JSON.stringify(itemsToSave, null, 2));
 
     try {
       setIsSaving(true);
@@ -101,8 +91,7 @@ const MenuManagePage = () => {
 
       alert('메뉴가 저장되었습니다.');
       navigate('/dashboard');
-    } catch (err) {
-      console.error('메뉴 저장 실패:', err);
+    } catch {
       setError('메뉴 저장에 실패했습니다. 다시 시도해주세요.');
       alert('메뉴 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
@@ -168,10 +157,14 @@ const MenuManagePage = () => {
               >
                 <div className="flex-1 space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor={`menu-name-${index}`}
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       메뉴 이름
                     </label>
                     <input
+                      id={`menu-name-${index}`}
                       type="text"
                       value={item.name || ''}
                       onChange={(e) => handleMenuItemChange(index, 'name', e.target.value)}
@@ -180,8 +173,14 @@ const MenuManagePage = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">가격</label>
+                    <label
+                      htmlFor={`menu-price-${index}`}
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      가격
+                    </label>
                     <input
+                      id={`menu-price-${index}`}
                       type="number"
                       value={item.price || 0}
                       onChange={(e) => handleMenuItemChange(index, 'price', e.target.value)}

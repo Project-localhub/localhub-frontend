@@ -239,11 +239,11 @@ html {
   }
 
   .message-bubble-my {
-    @apply message-bubble bg-blue-600 text-white;
+    @apply max-w-[70%] rounded-lg px-4 py-2 bg-blue-600 text-white;
   }
 
   .message-bubble-other {
-    @apply message-bubble bg-gray-200 text-gray-900;
+    @apply max-w-[70%] rounded-lg px-4 py-2 bg-gray-200 text-gray-900;
   }
 
   /* 카드 스타일 */
@@ -299,11 +299,11 @@ html {
   }
 
   .badge-primary {
-    @apply badge bg-blue-600 text-white;
+    @apply px-2 py-0.5 rounded-full text-xs font-medium bg-blue-600 text-white;
   }
 
   .badge-gray {
-    @apply badge bg-gray-200 text-gray-700;
+    @apply px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700;
   }
 
   /* 구분선 */

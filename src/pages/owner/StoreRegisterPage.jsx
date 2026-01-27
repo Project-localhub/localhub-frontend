@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/shared/lib/storeConstants';
-import { useStoreForm } from '@/shared/hooks/useStoreForm';
+import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/features/store/constants/storeConstants';
+import { useStoreForm } from '@/features/store/hooks/useStoreForm';
 import ImageUpload from '@/components/dashboard/ImageUpload';
 import AddressSearch from '@/components/dashboard/AddressSearch';
 import OperatingHours from '@/components/dashboard/OperatingHours';
+import DaumPostcodeModal from '@/components/dashboard/DaumPostcodeModal';
 
 const StoreRegisterPage = () => {
   const navigate = useNavigate();
@@ -14,10 +15,13 @@ const StoreRegisterPage = () => {
     errors,
     isSubmitting,
     isUploadingImages,
+    showAddressModal,
+    setShowAddressModal,
     handleImageAdd,
     handleImageRemove,
     handleKeywordToggle,
     handleAddressSearch,
+    handleAddressComplete,
     handleSubmit,
   } = useStoreForm();
 
@@ -156,6 +160,12 @@ const StoreRegisterPage = () => {
           onAddressChange={(value) => setFormData({ ...formData, address: value })}
           onSearch={handleAddressSearch}
           error={errors.address}
+        />
+
+        <DaumPostcodeModal
+          isOpen={showAddressModal}
+          onClose={() => setShowAddressModal(false)}
+          onComplete={handleAddressComplete}
         />
 
         {/* 전화번호 */}

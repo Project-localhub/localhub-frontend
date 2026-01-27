@@ -7,7 +7,7 @@ const StoreDetailInfo = ({ store }) => {
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-sm">
+            <span className="px-2 py-1 bg-blue-600 text-white rounded text-sm">
               {store.category}
             </span>
           </div>
