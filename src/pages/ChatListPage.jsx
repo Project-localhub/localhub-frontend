@@ -1,49 +1,29 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useInquiryChats, chatKeys } from '@/shared/hooks/useChatQueries';
+import { useQuery } from '@tanstack/react-query';
+import { useInquiryChats } from '@/features/chat/hooks/useChatQueries';
 import { useAuth } from '@/context/AuthContext';
 import { getRestaurantDetail } from '@/shared/api/storeApi';
 
 const ChatListPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
 
   const isOwner = user?.userType === 'OWNER' || user?.userType === 'owner';
 
-  const {
-    data: chats = [],
-    isLoading: isChatsLoading,
-    refetch,
-  } = useInquiryChats({
+  const { data: chats = [], isLoading: isChatsLoading } = useInquiryChats({
     enabled: !!user?.id,
-    refetchInterval: isOwner ? 5 * 1000 : 30 * 1000,
+    refetchInterval: isOwner ? 3 * 1000 : 10 * 1000,
     refetchOnWindowFocus: true,
   });
-
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const handleMessage = () => {
-      queryClient.invalidateQueries({ queryKey: chatKeys.inquiryChats() });
-      refetch();
-    };
-
-    window.addEventListener('chatMessageReceived', handleMessage);
-
-    return () => {
-      window.removeEventListener('chatMessageReceived', handleMessage);
-    };
-  }, [user?.id, queryClient, refetch]);
 
   const restaurantIds = useMemo(() => {
     const ids = chats
       .map((chat) => chat.restaurantId || chat.restaurant?.id)
       .filter((id) => id != null);
-    return [...new Set(ids)]; // 중복 제거
+    return [...new Set(ids)];
   }, [chats]);
 
   const restaurantQueries = useQuery({
@@ -73,12 +53,10 @@ const ChatListPage = () => {
     return restaurantQueries.data || new Map();
   }, [restaurantQueries.data]);
 
-
   const filteredChats = useMemo(() => {
     return chats.filter((chat) => {
       if (!searchQuery) return true;
       const searchLower = searchQuery.toLowerCase();
-
 
       const restaurantId = chat.restaurantId || chat.restaurant?.id;
       const restaurant = restaurantId ? restaurantMap.get(restaurantId) : null;
@@ -96,10 +74,7 @@ const ChatListPage = () => {
   }, [chats, searchQuery, restaurantMap]);
 
   const handleChatClick = (chat) => {
-    // 실제 응답 형식: id가 채팅방 ID
     const chatId = chat.id || chat.roomId;
-
-    // 사용자 역할에 따라 표시할 이름과 이미지 결정
     const restaurantId = chat.restaurantId || chat.restaurant?.id;
     const restaurant = restaurantId ? restaurantMap.get(restaurantId) : null;
 
@@ -107,14 +82,9 @@ const ChatListPage = () => {
     let displayImage = null;
 
     if (isOwner) {
-      // 사장님인 경우: 채팅 온 유저 닉네임 표시
-      // 응답에 userName 필드가 없으므로, userId가 있으면 "유저"로 표시하거나
-      // 백엔드에서 userName 필드를 추가해야 함
       displayName = chat.userName || (chat.userId ? `유저 ${chat.userId}` : '알 수 없음');
-      // TODO: 유저 프로필 이미지 API가 있으면 사용
       displayImage = null;
     } else {
-      // 일반 유저인 경우: 가게 이름 표시
       displayName = restaurant?.name || chat.ownerName || '알 수 없음';
       displayImage =
         restaurant?.images && restaurant.images.length > 0
@@ -122,7 +92,6 @@ const ChatListPage = () => {
           : null;
     }
 
-    // 마지막 채팅방 ID 저장
     localStorage.setItem('lastChatRoomId', String(chatId));
     navigate(`/chat/${chatId}`, {
       state: {
@@ -162,10 +131,7 @@ const ChatListPage = () => {
           </div>
         ) : (
           filteredChats.map((chat) => {
-            // 실제 응답 형식: id가 채팅방 ID
             const chatId = chat.id || chat.roomId;
-
-            // 사용자 역할에 따라 표시할 이름과 이미지 결정
             const restaurantId = chat.restaurantId || chat.restaurant?.id;
             const restaurant = restaurantId ? restaurantMap.get(restaurantId) : null;
 
@@ -173,14 +139,9 @@ const ChatListPage = () => {
             let displayImage = null;
 
             if (isOwner) {
-              // 사장님인 경우: 채팅 온 유저 닉네임 표시
-              // 응답에 userName 필드가 없으므로, userId가 있으면 "유저"로 표시하거나
-              // 백엔드에서 userName 필드를 추가해야 함
               displayName = chat.userName || (chat.userId ? `유저 ${chat.userId}` : '알 수 없음');
-              // TODO: 유저 프로필 이미지 API가 있으면 사용
               displayImage = null;
             } else {
-              // 일반 유저인 경우: 가게 이름 표시
               displayName = restaurant?.name || chat.ownerName || '알 수 없음';
               displayImage =
                 restaurant?.images && restaurant.images.length > 0
@@ -201,7 +162,6 @@ const ChatListPage = () => {
                       alt={displayName}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // 이미지 로드 실패 시 기본 이미지로 대체
                         e.target.style.display = 'none';
                         e.target.nextElementSibling.style.display = 'flex';
                       }}
