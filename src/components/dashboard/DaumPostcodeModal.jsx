@@ -10,6 +10,9 @@ const DaumPostcodeModal = ({ isOpen, onClose, onComplete }) => {
   useEffect(() => {
     if (!isOpen) return;
 
+    let checkIntervalId = null;
+    let timeoutId = null;
+
     const loadDaumPostcode = () => {
       if (window.daum && window.daum.Postcode) {
         setIsScriptLoaded(true);
@@ -20,13 +23,15 @@ const DaumPostcodeModal = ({ isOpen, onClose, onComplete }) => {
       if (existingScript) {
         let attempts = 0;
         const maxAttempts = 50;
-        const checkInterval = setInterval(() => {
+        checkIntervalId = setInterval(() => {
           attempts++;
           if (window.daum && window.daum.Postcode) {
-            clearInterval(checkInterval);
+            clearInterval(checkIntervalId);
+            checkIntervalId = null;
             setIsScriptLoaded(true);
           } else if (attempts >= maxAttempts) {
-            clearInterval(checkInterval);
+            clearInterval(checkIntervalId);
+            checkIntervalId = null;
             alert('주소 검색 서비스 로드 시간 초과');
             onClose();
           }
@@ -38,13 +43,14 @@ const DaumPostcodeModal = ({ isOpen, onClose, onComplete }) => {
       script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
       script.async = true;
       script.onload = () => {
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           if (window.daum && window.daum.Postcode) {
             setIsScriptLoaded(true);
           } else {
             alert('주소 검색 서비스 초기화 실패');
             onClose();
           }
+          timeoutId = null;
         }, 100);
       };
       script.onerror = () => {
@@ -55,6 +61,15 @@ const DaumPostcodeModal = ({ isOpen, onClose, onComplete }) => {
     };
 
     loadDaumPostcode();
+
+    return () => {
+      if (checkIntervalId) {
+        clearInterval(checkIntervalId);
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [isOpen, onClose]);
 
   useEffect(() => {

@@ -8,21 +8,20 @@ const MapView = ({ stores = [], mode: _mode = 'home' }) => {
   const markersRef = useRef([]);
 
   useEffect(() => {
-    // containerRef가 아직 설정되지 않았을 수 있으므로 재시도 로직 추가
+    let retryTimeoutId = null;
     let retryCount = 0;
-    const maxRetries = 10; // 최대 10번 재시도 (약 500ms)
+    const maxRetries = 10;
 
     const tryInitialize = async () => {
       if (!containerRef.current) {
         if (retryCount < maxRetries) {
           retryCount++;
-          setTimeout(tryInitialize, 50);
+          retryTimeoutId = setTimeout(tryInitialize, 50);
           return;
         }
         return;
       }
 
-      // containerRef가 설정되었으면 지도 초기화 시작
       initializeMap();
     };
 
@@ -232,14 +231,14 @@ const MapView = ({ stores = [], mode: _mode = 'home' }) => {
       }
     };
 
-    // containerRef가 설정될 때까지 재시도하며 지도 초기화 시작
     tryInitialize();
 
-    // cleanup: 컴포넌트 언마운트 시 마커 제거
     return () => {
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+      }
       if (markersRef.current.length > 0) {
         markersRef.current.forEach((marker) => {
-          // 정보창이 열려있으면 닫기
           if (marker.infoWindow) {
             marker.infoWindow.close();
           }
@@ -247,7 +246,6 @@ const MapView = ({ stores = [], mode: _mode = 'home' }) => {
         });
         markersRef.current = [];
       }
-      // 전역 InfoWindow 객체 정리
       if (window.kakaoInfoWindows) {
         Object.keys(window.kakaoInfoWindows).forEach((key) => {
           const infoWindow = window.kakaoInfoWindows[key];

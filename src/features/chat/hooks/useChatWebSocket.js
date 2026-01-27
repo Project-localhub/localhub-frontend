@@ -7,6 +7,7 @@ export const useChatWebSocket = (selectedChatId, onMessageReceived) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState(null);
   const onMessageReceivedRef = useRef(onMessageReceived);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     onMessageReceivedRef.current = onMessageReceived;
@@ -17,25 +18,39 @@ export const useChatWebSocket = (selectedChatId, onMessageReceived) => {
       return;
     }
 
+    if (!isMountedRef.current) {
+      return;
+    }
+
     setIsConnecting(true);
     setConnectionError(null);
 
     try {
       await connectChatRoom(selectedChatId);
 
+      if (!isMountedRef.current) {
+        return;
+      }
+
       await socket.connect(selectedChatId, (receivedMessage) => {
-        if (onMessageReceivedRef.current) {
+        if (onMessageReceivedRef.current && isMountedRef.current) {
           onMessageReceivedRef.current(receivedMessage);
         }
       });
-    } catch {
-      setConnectionError('채팅 연결에 실패했습니다. 다시 시도해주세요.');
+    } catch (error) {
+      if (isMountedRef.current) {
+        setConnectionError('채팅 연결에 실패했습니다. 다시 시도해주세요.');
+      }
     } finally {
-      setIsConnecting(false);
+      if (isMountedRef.current) {
+        setIsConnecting(false);
+      }
     }
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     if (!selectedChatId) {
       socket.disconnect(selectedChatId);
       setConnectionError(null);
@@ -45,6 +60,7 @@ export const useChatWebSocket = (selectedChatId, onMessageReceived) => {
     connectWebSocket();
 
     return () => {
+      isMountedRef.current = false;
       socket.disconnect(selectedChatId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

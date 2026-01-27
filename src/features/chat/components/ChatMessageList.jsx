@@ -18,10 +18,11 @@ const ChatMessageList = ({
 
   useEffect(() => {
     if (isInitialLoadRef.current && messages.length > 0 && !isConnecting) {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
         isInitialLoadRef.current = false;
       }, 100);
+      return () => clearTimeout(timeoutId);
     }
   }, [messages.length, isConnecting]);
 
@@ -47,6 +48,8 @@ const ChatMessageList = ({
       return;
     }
 
+    let timeoutId = null;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -55,10 +58,14 @@ const ChatMessageList = ({
           if (container) {
             previousScrollHeightRef.current = container.scrollHeight;
             onLoadMore().then(() => {
-              setTimeout(() => {
+              if (timeoutId) {
+                clearTimeout(timeoutId);
+              }
+              timeoutId = setTimeout(() => {
                 const newScrollHeight = container.scrollHeight;
                 const scrollDiff = newScrollHeight - previousScrollHeightRef.current;
                 container.scrollTop = container.scrollTop + scrollDiff;
+                timeoutId = null;
               }, 0);
             });
           }
@@ -72,7 +79,12 @@ const ChatMessageList = ({
     );
 
     observer.observe(topElement);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [hasNextPage, isFetchingNextPage, onLoadMore]);
 
   const isMyMessage = (message) => {

@@ -172,16 +172,35 @@ export const SocketProvider = ({ children }) => {
       stompClient.activate();
 
       return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('웹소켓 연결 타임아웃'));
+        let timeoutId = null;
+        let intervalId = null;
+        let isResolved = false;
+
+        const cleanup = () => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+        };
+
+        timeoutId = setTimeout(() => {
+          if (!isResolved) {
+            isResolved = true;
+            cleanup();
+            reject(new Error('웹소켓 연결 타임아웃'));
+          }
         }, 10000);
 
         let connectionChecked = false;
-        const checkConnection = setInterval(() => {
-          if (stompClient.connected && !connectionChecked) {
+        intervalId = setInterval(() => {
+          if (stompClient.connected && !connectionChecked && !isResolved) {
             connectionChecked = true;
-            clearTimeout(timeout);
-            clearInterval(checkConnection);
+            isResolved = true;
+            cleanup();
             resolve();
           }
         }, 100);
