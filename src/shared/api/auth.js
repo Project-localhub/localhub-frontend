@@ -37,7 +37,15 @@ export const logout = async () => {
 };
 
 export const findUsername = (email) => {
-  return client.post(`/api/auth/findUsername`, { email });
+  return client.post('/api/auth/findUsername', {
+    email,
+  });
+};
+
+export const findPassword = (email) => {
+  return client.post(`/api/auth/findPassword`, {
+    email,
+  });
 };
 
 export const sendEmailCode = (email) => {
@@ -58,6 +66,20 @@ export const getRestaurantDetail = async (restaurantId) => {
 };
 
 export const getReviewBy = async (restaurantId) => {
-  const response = await client.get(`/api/restaurant/getReviewBy/${restaurantId}`);
-  return response.data;
+  console.log('[getReviewBy] restaurantId:', restaurantId);
+
+  try {
+    const response = await client.get(`/api/restaurant/getReviewBy/${restaurantId}`);
+    console.log('[getReviewBy] response:', response);
+    console.log('[getReviewBy] response.data:', response.data);
+    return response.data;
+  } catch (err) {
+    console.error('[getReviewBy] error:', err);
+    throw err;
+  }
+};
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const res = await client.put(`/api/user/changePassword`, currentPassword, newPassword);
+  return res.data;
 };

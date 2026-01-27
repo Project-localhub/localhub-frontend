@@ -19,6 +19,8 @@ const StoreEditPage = lazy(() => import('@/pages/owner/StoreEditPage'));
 const MenuManagePage = lazy(() => import('@/pages/owner/MenuManagePage'));
 const OAuthRedirectPage = lazy(() => import('@/pages/OAuthRedirectPage'));
 const FindUserPage = lazy(() => import('@/pages/FindUserPage'));
+const FindPasswordPage = lazy(() => import('@/pages/FindPasswordPage'));
+const ChangePasswordPage = lazy(() => import('@/pages/ChangePasswordPage'));
 const ReviewPage = lazy(() => import('@/pages/ReviewPage'));
 
 // 로딩 컴포넌트
@@ -48,6 +50,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'findPassword',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <FindPasswordPage />
+          </Suspense>
+        ),
+      },
+      {
         path: 'oauth/redirect',
         element: (
           <Suspense fallback={<LoadingFallback />}>
@@ -60,6 +70,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <StoreDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'change-password',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <ChangePasswordPage />
           </Suspense>
         ),
       },

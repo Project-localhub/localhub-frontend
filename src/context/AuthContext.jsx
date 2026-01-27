@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [isLogin, setIsLogin] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   /** 사용자 정보 API 호출 후 user 업데이트 */
   const setUserFromApi = useCallback(
@@ -66,7 +67,9 @@ export const AuthProvider = ({ children }) => {
 
       if (token) {
         try {
-          await setUserFromApi(isSocialLogin);
+          if (!mustChangePassword) {
+            await setUserFromApi(isSocialLogin);
+          }
         } catch {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('isSocialLogin');
@@ -80,14 +83,22 @@ export const AuthProvider = ({ children }) => {
   }, [setUserFromApi, isLoggingOut]);
 
   /** 일반 로그인 */
-  const login = async (accessToken) => {
+  const login = async ({ accessToken, mustChangePassword }) => {
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
 
     localStorage.setItem('accessToken', accessToken);
     localStorage.removeItem('isSocialLogin'); // 일반 로그인
 
+    setMustChangePassword(mustChangePassword);
+    //임시비밀번호면 return
+    if (mustChangePassword) {
+      setIsLogin(true);
+      return;
+    }
+
     await setUserFromApi(false);
+
     setIsLogin(true);
 
     // 로그인 성공 후 React Query 캐시 무효화하여 데이터 재요청
@@ -154,6 +165,7 @@ export const AuthProvider = ({ children }) => {
         user,
         isLogin,
         isInitializing,
+        mustChangePassword,
         login,
         loginWithToken,
         loginWithCookie,

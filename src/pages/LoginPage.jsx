@@ -2,10 +2,10 @@ import { useContext, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { login as loginAPI } from '../shared/api/auth';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext, useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
-  const { login } = useContext(AuthContext);
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -15,39 +15,40 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const data = {
-      username: formData.username,
-      password: formData.password,
-    };
-
     try {
-      const res = await loginAPI(data);
-      const accessToken = res.accessToken;
+      const data = await loginAPI({
+        username: formData.username,
+        password: formData.password,
+      });
 
-      if (!accessToken) {
-        alert('로그인 실패: 서버에서 accessToken을 주지 않음');
+      console.log('LOGIN RES', data);
+      await login(data);
+
+      const { accessToken, mustChangePassword } = data;
+
+      localStorage.setItem('accessToken', accessToken);
+
+      if (mustChangePassword) {
+        navigate('/change-password', { replace: true });
         return;
       }
 
-      await login(accessToken);
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 100);
-    } catch {
+      navigate('/', { replace: true });
+    } catch (e) {
+      console.error(e);
       alert('로그인 실패');
     }
-  };
-
-  const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
   };
 
   const handleKakaoLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/kakao`;
   };
 
-  const findButtonHandler = () => {
+  const findIdButtonHandler = () => {
     navigate('/findUser');
+  };
+  const findPasswordButtonHandler = () => {
+    navigate('/findPassword');
   };
 
   return (
@@ -103,7 +104,6 @@ const LoginPage = () => {
             </div>
 
             <button
-              onClick={handleLogin}
               type="submit"
               className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
@@ -113,11 +113,13 @@ const LoginPage = () => {
 
           <div className="flex items-center justify-center gap-4 mt-6 text-sm">
             <div className="flex flex-row gap-2">
-              <button onClick={findButtonHandler} className="text-gray-600">
+              <button onClick={findIdButtonHandler} className="text-gray-600">
                 아이디 찾기
               </button>
               <span>/</span>
-              <button className="text-gray-600">비밀번호 찾기</button>
+              <button onClick={findPasswordButtonHandler} className="text-gray-600">
+                비밀번호 찾기
+              </button>
             </div>
             <span className="text-gray-300">|</span>
             <Link to="/signup" className="text-blue-600">
@@ -137,12 +139,6 @@ const LoginPage = () => {
               className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
             >
               <span className="text-gray-900">카카오로 시작하기</span>
-            </button>
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
-            >
-              <span className="text-gray-900">구글로 시작하기</span>
             </button>
           </div>
         </div>
