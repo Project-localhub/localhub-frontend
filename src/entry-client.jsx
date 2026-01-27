@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClientProvider, HydrationBoundary } from '@tanstack/react-query';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { queryClient } from './app/queryClient';
 import { App } from './app/App';
 import './index.css';
@@ -70,36 +71,37 @@ if (typeof window !== 'undefined') {
   const dehydratedState = window.__REACT_QUERY_STATE__ || null;
   const rootElement = document.getElementById('root');
 
-  if (!rootElement) {
-    console.error('Root element not found');
-    return;
-  }
-
-  const app = (
-    <React.StrictMode>
-      <BrowserRouter>
-        <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            {dehydratedState ? (
-              <HydrationBoundary state={dehydratedState}>
+  if (rootElement) {
+    const app = (
+      <React.StrictMode>
+        <BrowserRouter>
+          <AuthProvider>
+            <QueryClientProvider client={queryClient}>
+              {dehydratedState ? (
+                <HydrationBoundary state={dehydratedState}>
+                  <SocketProvider>
+                    <App />
+                    <SpeedInsights />
+                  </SocketProvider>
+                </HydrationBoundary>
+              ) : (
                 <SocketProvider>
                   <App />
+                  <SpeedInsights />
                 </SocketProvider>
-              </HydrationBoundary>
-            ) : (
-              <SocketProvider>
-                <App />
-              </SocketProvider>
-            )}
-          </QueryClientProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </React.StrictMode>
-  );
+              )}
+            </QueryClientProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </React.StrictMode>
+    );
 
-  if (rootElement.hasChildNodes()) {
-    ReactDOM.hydrateRoot(rootElement, app);
+    if (rootElement.hasChildNodes()) {
+      ReactDOM.hydrateRoot(rootElement, app);
+    } else {
+      ReactDOM.createRoot(rootElement).render(app);
+    }
   } else {
-    ReactDOM.createRoot(rootElement).render(app);
+    console.error('Root element not found');
   }
 }
