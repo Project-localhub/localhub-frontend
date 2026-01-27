@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X, Plus } from 'lucide-react';
-import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/shared/lib/storeConstants';
-import { useStoreEditForm } from '@/shared/hooks/useStoreEditForm';
+import { FOOD_CATEGORIES, KEYWORD_OPTIONS } from '@/features/store/constants/storeConstants';
+import { useStoreEditForm } from '@/features/store/hooks/useStoreEditForm';
 import AddressSearch from '@/components/dashboard/AddressSearch';
 import OperatingHours from '@/components/dashboard/OperatingHours';
+import DaumPostcodeModal from '@/components/dashboard/DaumPostcodeModal';
 
 const StoreEditPage = () => {
   const navigate = useNavigate();
@@ -14,10 +15,13 @@ const StoreEditPage = () => {
     isSubmitting,
     isUploadingImages,
     isLoading,
+    showAddressModal,
+    setShowAddressModal,
     handleImageAdd,
     handleImageRemove,
     handleKeywordToggle,
     handleAddressSearch,
+    handleAddressComplete,
     handleSubmit,
   } = useStoreEditForm();
 
@@ -29,7 +33,6 @@ const StoreEditPage = () => {
     );
   }
 
-  // 기존 이미지와 새로 추가한 이미지를 합쳐서 표시
   const allImages = [
     ...formData.existingImages.map((img) => ({
       url: img.url || img.imageUrl || '',
@@ -228,6 +231,12 @@ const StoreEditPage = () => {
           onAddressChange={(value) => setFormData({ ...formData, address: value })}
           onSearch={handleAddressSearch}
           error={errors.address}
+        />
+
+        <DaumPostcodeModal
+          isOpen={showAddressModal}
+          onClose={() => setShowAddressModal(false)}
+          onComplete={handleAddressComplete}
         />
 
         {/* 전화번호 */}
