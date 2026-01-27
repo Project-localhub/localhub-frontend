@@ -8,7 +8,6 @@ const FindUserPage = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
 
-  //인증코드 전송
   const handleSendCode = async () => {
     try {
       await sendEmailCode(email);
@@ -19,7 +18,6 @@ const FindUserPage = () => {
     }
   };
 
-  //인증코드 검증
   const handleVerifyCode = async () => {
     try {
       await verifyEmailCode(email, code);
@@ -30,7 +28,6 @@ const FindUserPage = () => {
     }
   };
 
-  //아이디 찾기
   const handleFind = async (e) => {
     e.preventDefault();
     try {
@@ -47,7 +44,6 @@ const FindUserPage = () => {
       <h1 className="text-xl font-semibold mb-6 text-center">아이디 찾기</h1>
 
       <form onSubmit={handleFind} className="space-y-4">
-        {/* 이메일 입력 (모든 단계 공통) */}
         <input
           type="email"
           placeholder="가입한 이메일 입력"
@@ -58,7 +54,6 @@ const FindUserPage = () => {
           disabled={step > 1}
         />
 
-        {/* 1️⃣ 인증코드 전송 */}
         {step === 1 && (
           <button
             type="button"
@@ -69,7 +64,6 @@ const FindUserPage = () => {
           </button>
         )}
 
-        {/* 2️⃣ 인증코드 입력 */}
         {step === 2 && (
           <>
             <input
@@ -90,7 +84,6 @@ const FindUserPage = () => {
           </>
         )}
 
-        {/* 3️⃣ 아이디 찾기 */}
         {step === 3 && (
           <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg">
             아이디 전송

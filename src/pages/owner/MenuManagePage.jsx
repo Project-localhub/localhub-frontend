@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { getMenu, updateMenu } from '@/shared/api/storeApi';
-import { useMyStores } from '@/shared/hooks/useStoreQueries';
+import { useMyStores } from '@/features/store/hooks/useStoreQueries';
 
 const MenuManagePage = () => {
   const { id } = useParams();
@@ -15,7 +15,6 @@ const MenuManagePage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  // 메뉴 조회
   useEffect(() => {
     const fetchMenu = async () => {
       if (!id) return;
@@ -36,7 +35,6 @@ const MenuManagePage = () => {
     fetchMenu();
   }, [id]);
 
-  // 메뉴 항목 추가
   const handleAddMenuItem = () => {
     setMenuItems([
       ...menuItems,
@@ -48,12 +46,10 @@ const MenuManagePage = () => {
     ]);
   };
 
-  // 메뉴 항목 삭제
   const handleRemoveMenuItem = (index) => {
     setMenuItems(menuItems.filter((_, i) => i !== index));
   };
 
-  // 메뉴 항목 수정
   const handleMenuItemChange = (index, field, value) => {
     const updated = [...menuItems];
     if (field === 'price') {
@@ -64,14 +60,12 @@ const MenuManagePage = () => {
     setMenuItems(updated);
   };
 
-  // 메뉴 저장
   const handleSave = async () => {
     if (!id) {
       alert('가게 ID가 없습니다.');
       return;
     }
 
-    // 유효성 검사
     const invalidItems = menuItems.filter(
       (item) => !item.name || !item.name.trim() || item.price <= 0,
     );
@@ -81,7 +75,6 @@ const MenuManagePage = () => {
       return;
     }
 
-    // API 형식에 맞게 데이터 변환
     const itemsToSave = menuItems.map((item) => ({
       restaurantId: Number(id),
       name: item.name.trim(),

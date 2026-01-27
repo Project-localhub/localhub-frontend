@@ -1,5 +1,5 @@
 import StoreCard from '@/components/StoreCard';
-import { useMyFavorites } from '@/shared/hooks/useFavoriteQueries';
+import { useMyFavorites } from '@/features/favorite/hooks/useFavoriteQueries';
 
 const FavoritesPage = () => {
   const { data: favorites = [], isLoading } = useMyFavorites();

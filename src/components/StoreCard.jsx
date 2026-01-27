@@ -3,7 +3,7 @@ import { memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Heart, MapPin } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
-import { useToggleFavorite } from '@/shared/hooks/useFavoriteQueries';
+import { useToggleFavorite } from '@/features/favorite/hooks/useFavoriteQueries';
 
 const StoreCard = memo(({ store }) => {
   const favorite = store.isLiked;

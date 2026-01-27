@@ -16,17 +16,12 @@ import {
 import ImageWithFallback from '@/components/figma/imageWithFallback';
 import ReviewCard from '@/components/ReviewCard';
 import MapView from '@/components/MapView';
-import { useCreateInquiryChat } from '@/shared/hooks/useChatQueries';
+import { useCreateInquiryChat } from '@/features/chat/hooks/useChatQueries';
 import { useAuth } from '@/context/AuthContext';
-import { useMyFavorites, useToggleFavorite } from '@/shared/hooks/useFavoriteQueries';
+import { useMyFavorites, useToggleFavorite } from '@/features/favorite/hooks/useFavoriteQueries';
 import { getRestaurantDetail, getReviewBy } from '../shared/api/auth';
 import { getMenu } from '@/shared/api/storeApi';
-
-const TAB_TYPES = {
-  INFO: 'info',
-  MENU: 'menu',
-  REVIEW: 'review',
-};
+import { TAB_TYPES } from '@/shared/constants/pageConstants';
 
 const StoreDetailPage = () => {
   const { id } = useParams();
@@ -44,12 +39,9 @@ const StoreDetailPage = () => {
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // 찜하기 관련 훅
   const { data: myFavorites = [] } = useMyFavorites({ enabled: !!user?.id });
   const toggleFavoriteMutation = useToggleFavorite();
 
-  // 현재 가게가 찜한 목록에 있는지 확인
-  // id와 restaurantId의 타입이 다를 수 있으므로 Number 변환하여 비교
   const isFavorite = useMemo(() => {
     return myFavorites.some(
       (fav) =>
@@ -92,7 +84,6 @@ const StoreDetailPage = () => {
         setIsLoading(true);
         const data = await getRestaurantDetail(id);
         setStore(data);
-        // 이미지 인덱스 초기화
         setCurrentImageIndex(0);
       } catch {
         setError(true);
@@ -128,7 +119,7 @@ const StoreDetailPage = () => {
       const res = await getReviewBy(id);
       setReviews(res.content ?? []);
     } catch {
-      // 리뷰 조회 실패 시 빈 배열 유지
+      setReviews([]);
     }
   };
 
@@ -154,13 +145,11 @@ const StoreDetailPage = () => {
       return;
     }
 
-    // 기존 채팅방 확인 (에러가 발생해도 계속 진행)
     let existingChat = null;
     try {
       const { getInquiryChats } = await import('@/shared/api/chatApi');
       const chats = await getInquiryChats();
       existingChat = chats.find((chat) => {
-        // 실제 응답 형식: chat.restaurantId 또는 chat.restaurant?.id가 가게 ID와 일치하는지 확인
         return (
           chat.restaurantId === id ||
           chat.restaurantId === Number(id) ||
@@ -170,7 +159,7 @@ const StoreDetailPage = () => {
         );
       });
     } catch {
-      // 채팅방 목록 조회 실패해도 계속 진행 (채팅방 생성 시도)
+      // 채팅방 목록 조회 실패 시 계속 진행
     }
 
     if (existingChat) {
@@ -216,11 +205,9 @@ const StoreDetailPage = () => {
       if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
         try {
           const { getInquiryChats } = await import('@/shared/api/chatApi');
-          // 약간의 지연을 두고 조회 (백엔드에서 채팅방 생성이 완료될 시간 확보)
           await new Promise((resolve) => setTimeout(resolve, 500));
           const chats = await getInquiryChats();
           const existingChat = chats.find((chat) => {
-            // 새로운 응답 형식: chat.restaurant.id 사용
             return (
               chat.restaurant?.id === id ||
               chat.restaurant?.id === Number(id) ||
@@ -231,11 +218,11 @@ const StoreDetailPage = () => {
             const chatRoomId = existingChat.id || existingChat.roomId;
             navigate(`/chat/${chatRoomId}`, {
               state: {
-                storeName: store?.name, // 가게 이름 전달
+                storeName: store?.name,
                 storeImage:
                   store?.imageUrlList && store.imageUrlList.length > 0
                     ? store.imageUrlList[0].imageUrl
-                    : store?.image || store?.imageUrl || '', // 가게 이미지 전달
+                    : store?.image || store?.imageUrl || '',
               },
             });
             return;
@@ -257,7 +244,6 @@ const StoreDetailPage = () => {
           const { getInquiryChats } = await import('@/shared/api/chatApi');
           const chats = await getInquiryChats();
           foundChat = chats.find((chat) => {
-            // 실제 응답 형식: chat.restaurantId 또는 chat.restaurant?.id 사용
             const restaurantIdMatch =
               chat.restaurantId === id ||
               chat.restaurantId === Number(id) ||
@@ -304,11 +290,11 @@ const StoreDetailPage = () => {
             const chatRoomId = existingChat.id || existingChat.roomId;
             navigate(`/chat/${chatRoomId}`, {
               state: {
-                storeName: store?.name, // 가게 이름 전달
+                storeName: store?.name,
                 storeImage:
                   store?.imageUrlList && store.imageUrlList.length > 0
                     ? store.imageUrlList[0].imageUrl
-                    : store?.image || store?.imageUrl || '', // 가게 이미지 전달
+                    : store?.image || store?.imageUrl || '',
               },
             });
             return;
@@ -331,7 +317,6 @@ const StoreDetailPage = () => {
     }
   };
 
-  // 로딩 상태
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -340,7 +325,6 @@ const StoreDetailPage = () => {
     );
   }
 
-  // 에러 상태
   if (error || !store) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -354,9 +338,7 @@ const StoreDetailPage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-white w-full max-w-md mx-auto shadow-lg">
-      {/* 이미지 슬라이드 */}
       <div className="relative">
-        {/* 이미지 목록 가져오기 */}
         {(() => {
           const imageList =
             store.imageUrlList && store.imageUrlList.length > 0
@@ -386,7 +368,6 @@ const StoreDetailPage = () => {
                   </div>
                 )}
 
-                {/* 이전/다음 버튼 (이미지가 여러 개일 때만 표시) */}
                 {hasMultipleImages && (
                   <>
                     <button
@@ -416,7 +397,6 @@ const StoreDetailPage = () => {
                   </>
                 )}
 
-                {/* 이미지 인디케이터 (이미지가 여러 개일 때만 표시) */}
                 {hasMultipleImages && (
                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
                     {imageList.map((_, index) => (
@@ -467,7 +447,6 @@ const StoreDetailPage = () => {
         })()}
       </div>
 
-      {/* 기본 정보 */}
       <div className="p-4 border-b border-gray-200">
         <span className="px-2 py-1 bg-blue-600 text-white rounded text-sm">{store.category}</span>
 
@@ -503,7 +482,6 @@ const StoreDetailPage = () => {
         </div>
       </div>
 
-      {/* 탭 */}
       <div className="flex border-b border-gray-200">
         {Object.values(TAB_TYPES).map((tab) => (
           <button
@@ -520,11 +498,9 @@ const StoreDetailPage = () => {
         ))}
       </div>
 
-      {/* 탭 내용 */}
       <div className="flex-1 overflow-auto p-4">
         {activeTab === TAB_TYPES.INFO && (
           <>
-            {/* 지도 */}
             <MapView
               stores={[
                 {
@@ -558,7 +534,6 @@ const StoreDetailPage = () => {
 
         {activeTab === TAB_TYPES.REVIEW && (
           <div className="space-y-6">
-            {/* 리뷰 리스트 */}
             {reviews.length > 0 ? (
               <div className="space-y-4">
                 {reviews.map((review, index) => (
@@ -569,7 +544,6 @@ const StoreDetailPage = () => {
               <p className="text-center text-gray-400">아직 리뷰가 없습니다.</p>
             )}
 
-            {/* 리뷰 작성 버튼 (하단) */}
             <div className="pt-4 flex justify-center">
               <button
                 onClick={handleWriteReview}
@@ -582,7 +556,6 @@ const StoreDetailPage = () => {
         )}
       </div>
 
-      {/* 하단 버튼 */}
       {user?.userType === 'CUSTOMER' && (
         <div className="p-4 border-t flex gap-2">
           <button
