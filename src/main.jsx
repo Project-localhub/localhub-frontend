@@ -6,6 +6,7 @@ import { queryClient } from './app/queryClient';
 import { router } from './app/router';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './features/chat/context/SocketProvider';
 import { initKakao } from './shared/lib/kakao';
 import client from './shared/api/client';
 
@@ -62,7 +63,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <SocketProvider>
+          <RouterProvider router={router} />
+        </SocketProvider>
       </QueryClientProvider>
     </AuthProvider>
   </React.StrictMode>,
