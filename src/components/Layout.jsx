@@ -41,7 +41,7 @@ const Layout = () => {
 
         {isInitializing ? (
           <div className="w-20 h-8" />
-        ) : isLogin && user ? (
+        ) : isLogin ? (
           <div className="flex items-center gap-2">
             <span className="text-gray-900 font-medium text-sm">{user?.name ?? ''}님</span>
             <button

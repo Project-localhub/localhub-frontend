@@ -9,7 +9,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(() => typeof window !== 'undefined');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
 

@@ -85,9 +85,14 @@ if (typeof window !== 'undefined') {
     </React.StrictMode>
   );
 
-  if (rootElement.hasChildNodes() && rootElement.innerHTML.trim() !== '') {
-    hydrateRoot(rootElement, app);
-  } else {
+  try {
+    if (rootElement.hasChildNodes() && rootElement.innerHTML.trim() !== '') {
+      hydrateRoot(rootElement, app);
+    } else {
+      createRoot(rootElement).render(app);
+    }
+  } catch (error) {
+    console.error('Hydration error, falling back to client-side rendering:', error);
     createRoot(rootElement).render(app);
   }
 }
