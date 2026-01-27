@@ -2,7 +2,6 @@
 import { Star } from 'lucide-react';
 
 const ReviewCard = ({ review }) => {
-  console.log('review:', review);
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4">
       <div className="flex items-start justify-between mb-2">

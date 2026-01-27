@@ -1,9 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import {
   getMyStores,
-  getStore,
   getRestaurantDetail,
-  // getStoreStats, // 백엔드 API 미완성으로 주석처리
   createStore,
   updateStore,
   incrementStoreView,
@@ -37,8 +35,7 @@ export const useRestaurantsByFilter = (filters = {}, options = {}) => {
           divide: filters.divide || undefined,
         });
         return response;
-      } catch (err) {
-        console.error('필터 가게 목록 조회 실패:', err);
+      } catch {
         return {
           content: [],
           totalElements: 0,
@@ -74,8 +71,7 @@ export const useAllRestaurants = (options = {}) => {
           sort: 'createdAt,desc', // 기본 정렬
         });
         return response;
-      } catch (err) {
-        console.error('가게 목록 조회 실패:', err);
+      } catch {
         return {
           content: [],
           totalElements: 0,
@@ -96,17 +92,6 @@ export const useAllRestaurants = (options = {}) => {
     staleTime: 2 * 60 * 1000, // 2분
     retry: false,
     refetchOnWindowFocus: false,
-    ...options,
-  });
-};
-
-// 사장님의 가게 목록 조회 (배열 반환)
-export const useStoreDetail = (storeId, options = {}) => {
-  return useQuery({
-    queryKey: storeKeys.detail(storeId),
-    queryFn: () => getStore(storeId),
-    enabled: !!storeId && options.enabled !== false,
-    staleTime: 5 * 60 * 1000,
     ...options,
   });
 };
@@ -136,17 +121,6 @@ export const useRestaurantDetail = (restaurantId, options = {}) => {
     queryKey: storeKeys.detail(restaurantId),
     queryFn: () => getRestaurantDetail(restaurantId),
     enabled: !!restaurantId && options.enabled !== false,
-    staleTime: 5 * 60 * 1000,
-    ...options,
-  });
-};
-
-// 가게 정보 조회 (기존)
-export const useStore = (storeId, options = {}) => {
-  return useQuery({
-    queryKey: storeKeys.detail(storeId),
-    queryFn: () => getStore(storeId),
-    enabled: !!storeId && options.enabled !== false,
     staleTime: 5 * 60 * 1000,
     ...options,
   });

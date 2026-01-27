@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import {
   createInquiryChat,
   getInquiryChats,
@@ -70,13 +70,27 @@ export const useMonthlyChatInquiryCount = (storeId, year, month, options = {}) =
   });
 };
 
-// 채팅방 메시지 조회
+// 채팅방 메시지 조회 (무한 스크롤, cursorId 기반)
 export const useChatMessages = (inquiryChatId, params = {}, options = {}) => {
   const { enabled, ...restOptions } = options;
 
-  return useQuery({
-    queryKey: chatKeys.roomMessages(inquiryChatId),
-    queryFn: () => getChatMessages(inquiryChatId, params),
+  return useInfiniteQuery({
+    queryKey: [...chatKeys.roomMessages(inquiryChatId), params],
+    queryFn: ({ pageParam }) => {
+      return getChatMessages(inquiryChatId, {
+        ...params,
+        cursorId: pageParam,
+        size: params.size || 10,
+      });
+    },
+    getNextPageParam: (lastPage) => {
+      // hasNext가 true이고 nextId가 있으면 nextId 반환, 아니면 undefined
+      if (lastPage?.hasNext && lastPage?.nextId !== undefined) {
+        return lastPage.nextId;
+      }
+      return undefined;
+    },
+    initialPageParam: undefined, // 첫 요청은 cursorId 없이
     enabled: !!inquiryChatId && (enabled !== undefined ? Boolean(enabled) : true),
     staleTime: 10 * 1000,
     refetchInterval: 10 * 1000,

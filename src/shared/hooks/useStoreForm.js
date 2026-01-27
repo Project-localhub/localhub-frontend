@@ -286,8 +286,7 @@ export const useStoreForm = () => {
               longitude: longitude.toString(),
             }));
           })
-          .catch((error) => {
-            console.error('좌표 변환 에러:', error);
+          .catch(() => {
             alert('주소를 좌표로 변환하는 중 오류가 발생했습니다.');
             setFormData((prev) => ({
               ...prev,

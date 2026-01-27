@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { findUsername, sendEmailCode, verifyEmailCode } from '../shared/api/auth';
 
 const FindUserPage = () => {
@@ -26,7 +26,7 @@ const FindUserPage = () => {
       alert('인증 성공');
       setStep(3);
     } catch (e) {
-      alert('인증 실패: ' + e.response?.data?.message ?? '');
+      alert('인증 실패: ' + (e.response?.data?.message ?? ''));
     }
   };
 
@@ -37,7 +37,7 @@ const FindUserPage = () => {
       const res = await findUsername(email);
       alert(`아이디는 ${res.data}`);
       navigate('/login');
-    } catch (err) {
+    } catch {
       alert('아이디 찾기에 실패했습니다');
     }
   };

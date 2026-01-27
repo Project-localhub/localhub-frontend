@@ -17,8 +17,7 @@ const StoreCard = ({ store }) => {
         restaurantId: store.id,
         isFavorite: favorite,
       });
-    } catch (err) {
-      console.error('찜하기 오류:', err);
+    } catch {
       alert('찜하기 처리에 실패했습니다. 다시 시도해주세요.');
     }
   };

@@ -37,7 +37,7 @@ export const useCreateReview = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ storeId, reviewData }) => {
+    mutationFn: () => {
       // TODO: createReview API 함수 구현 필요
       // return createReview(storeId, reviewData);
     },

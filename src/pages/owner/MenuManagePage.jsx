@@ -25,8 +25,7 @@ const MenuManagePage = () => {
         setError(null);
         const data = await getMenu(id);
         setMenuItems(data || []);
-      } catch (err) {
-        console.error('메뉴 조회 실패:', err);
+      } catch {
         setError('메뉴를 불러오는데 실패했습니다.');
         setMenuItems([]);
       } finally {
@@ -89,8 +88,6 @@ const MenuManagePage = () => {
       price: Number(item.price),
     }));
 
-    console.log('📤 [MenuManagePage] 전송할 메뉴 데이터:', JSON.stringify(itemsToSave, null, 2));
-
     try {
       setIsSaving(true);
       setError(null);
@@ -101,8 +98,7 @@ const MenuManagePage = () => {
 
       alert('메뉴가 저장되었습니다.');
       navigate('/dashboard');
-    } catch (err) {
-      console.error('메뉴 저장 실패:', err);
+    } catch {
       setError('메뉴 저장에 실패했습니다. 다시 시도해주세요.');
       alert('메뉴 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
@@ -168,10 +164,14 @@ const MenuManagePage = () => {
               >
                 <div className="flex-1 space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor={`menu-name-${index}`}
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       메뉴 이름
                     </label>
                     <input
+                      id={`menu-name-${index}`}
                       type="text"
                       value={item.name || ''}
                       onChange={(e) => handleMenuItemChange(index, 'name', e.target.value)}
@@ -180,8 +180,14 @@ const MenuManagePage = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">가격</label>
+                    <label
+                      htmlFor={`menu-price-${index}`}
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      가격
+                    </label>
                     <input
+                      id={`menu-price-${index}`}
                       type="number"
                       value={item.price || 0}
                       onChange={(e) => handleMenuItemChange(index, 'price', e.target.value)}

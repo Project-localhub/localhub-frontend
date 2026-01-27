@@ -23,14 +23,17 @@ const ChatDetailPage = () => {
     location.state,
   );
 
-  // 선택된 채팅방의 메시지 조회
+  // 선택된 채팅방의 메시지 조회 (무한 스크롤)
   const {
     data: chatMessagesData,
     error: messagesError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     refetch: refetchMessages,
   } = useChatMessages(
     selectedChatId,
-    {},
+    { size: 20 },
     {
       enabled: !!selectedChatId,
       refetchOnMount: true,
@@ -57,16 +60,19 @@ const ChatDetailPage = () => {
     }
   }, [selectedChatId]);
 
-  // 기존 메시지 로드 (useMemo로 변환하여 useEffect 경고 방지)
   const loadedMessages = useMemo(() => {
-    if (chatMessagesData?.content) {
-      // 페이지네이션 응답 형식
-      return chatMessagesData.content || [];
-    } else if (chatMessagesData && Array.isArray(chatMessagesData)) {
-      // 배열 형식 응답
-      return chatMessagesData;
+    if (!chatMessagesData?.pages) {
+      return [];
     }
-    return [];
+
+    const allMessages = chatMessagesData.pages.flatMap((page) => {
+      if (page?.data && Array.isArray(page.data)) {
+        return page.data;
+      }
+      return [];
+    });
+
+    return allMessages;
   }, [chatMessagesData]);
 
   // 최종 메시지 목록 (로드된 메시지 + optimistic/received 메시지)
@@ -89,12 +95,13 @@ const ChatDetailPage = () => {
       }
     });
 
-    // 시간순 정렬
-    return allMessages.sort((a, b) => {
+    const sortedMessages = allMessages.sort((a, b) => {
       const timeA = new Date(a.timestamp || a.createdAt || 0);
       const timeB = new Date(b.timestamp || b.createdAt || 0);
       return timeA - timeB;
     });
+
+    return sortedMessages;
   }, [loadedMessages, optimisticMessages]);
 
   // 웹소켓 메시지 수신 핸들러 (useCallback으로 메모이제이션)
@@ -167,12 +174,8 @@ const ChatDetailPage = () => {
 
     try {
       webSocketClient.sendMessage(selectedChatId, messageContent, 'user');
-      console.log('✅ [ChatDetailPage] 메시지 전송 완료:', messageContent);
-    } catch (error) {
-      console.error('❌ [ChatDetailPage] 메시지 전송 실패:', error);
-      // 전송 실패 시 optimistic message 제거
+    } catch {
       setOptimisticMessages((prev) => prev.filter((msg) => msg.id !== optimisticMessage.id));
-      // alert 제거 - 연결 에러가 있으면 자동으로 표시됨
     }
   };
 
@@ -205,7 +208,14 @@ const ChatDetailPage = () => {
         </div>
       )}
 
-      <ChatMessageList messages={messages} currentUser={user} isConnecting={isConnecting} />
+      <ChatMessageList
+        messages={messages}
+        currentUser={user}
+        isConnecting={isConnecting}
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage || false}
+        isFetchingNextPage={isFetchingNextPage || false}
+      />
 
       <ChatInput
         message={message}

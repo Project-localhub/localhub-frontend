@@ -15,8 +15,8 @@ const ReviewWritePage = () => {
       try {
         const res = await getUserInfo();
         setWriter(res.data.name);
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // 사용자 정보 조회 실패 시 무시
       }
     };
     fetchUser();
@@ -45,8 +45,6 @@ const ReviewWritePage = () => {
       score: Number(score),
       content: content,
     };
-
-    console.log('payload:', payload);
 
     try {
       await saveReview(payload);

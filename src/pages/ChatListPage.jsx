@@ -12,17 +12,8 @@ const ChatListPage = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 사용자 역할 확인
   const isOwner = user?.userType === 'OWNER' || user?.userType === 'owner';
 
-  console.log('🔍 [ChatListPage] 사용자 정보:', {
-    userId: user?.id,
-    userType: user?.userType,
-    isOwner,
-  });
-
-  // 채팅방 목록 조회
-  // 사업자인 경우 더 자주 갱신 (새로운 메시지가 올 수 있음)
   const {
     data: chats = [],
     isLoading: isChatsLoading,
@@ -33,20 +24,14 @@ const ChatListPage = () => {
     refetchOnWindowFocus: true, // 창 포커스 시 자동 갱신
   });
 
-  // 웹소켓 메시지 수신 시 채팅방 목록 갱신
   useEffect(() => {
     if (!user?.id) return;
 
-    // 웹소켓 메시지 수신 이벤트 리스너 등록
     const handleMessage = () => {
-      console.log('🔄 [ChatListPage] 웹소켓 메시지 수신 감지 - 채팅방 목록 갱신');
-      // 채팅방 목록 쿼리 무효화 및 재조회
       queryClient.invalidateQueries({ queryKey: chatKeys.inquiryChats() });
       refetch();
     };
 
-    // 전역 웹소켓 이벤트 리스너 (websocket.js에서 이벤트를 발생시키도록 수정 필요)
-    // 임시로 window 이벤트 사용
     window.addEventListener('chatMessageReceived', handleMessage);
 
     return () => {
@@ -54,24 +39,6 @@ const ChatListPage = () => {
     };
   }, [user?.id, queryClient, refetch]);
 
-  console.log('🔍 [ChatListPage] 채팅방 목록:', {
-    chatsCount: chats.length,
-    chats: chats.map((chat) => ({
-      roomId: chat.roomId,
-      peer: chat.peer,
-      restaurant: chat.restaurant,
-      lastMessage: chat.lastMessage,
-      lastMessageAt: chat.lastMessageAt,
-      unreadCount: chat.unreadCount,
-      // 이전 형식 호환성 (있는 경우)
-      id: chat.id,
-      ownerId: chat.ownerId,
-      userId: chat.userId,
-      restaurantId: chat.restaurantId,
-    })),
-  });
-
-  // 실제 응답 형식: restaurantId로 가게 정보 조회 필요
   const restaurantIds = useMemo(() => {
     const ids = chats
       .map((chat) => chat.restaurantId || chat.restaurant?.id)
@@ -79,7 +46,6 @@ const ChatListPage = () => {
     return [...new Set(ids)]; // 중복 제거
   }, [chats]);
 
-  // 가게 이미지가 필요한 경우에만 추가 조회 (restaurant.image가 없는 경우)
   const restaurantQueries = useQuery({
     queryKey: ['restaurants', restaurantIds],
     queryFn: async () => {
@@ -88,13 +54,11 @@ const ChatListPage = () => {
           try {
             const restaurant = await getRestaurantDetail(restaurantId);
             return { restaurantId, restaurant };
-          } catch (error) {
-            console.error(`❌ [ChatListPage] 가게 정보 조회 실패 (ID: ${restaurantId}):`, error);
+          } catch {
             return { restaurantId, restaurant: null };
           }
         }),
       );
-      // Map으로 변환하여 빠른 조회 가능하도록
       const restaurantMap = new Map();
       results.forEach(({ restaurantId, restaurant }) => {
         restaurantMap.set(restaurantId, restaurant);
@@ -105,7 +69,9 @@ const ChatListPage = () => {
     staleTime: 5 * 60 * 1000, // 5분간 캐시 유지
   });
 
-  const restaurantMap = restaurantQueries.data || new Map();
+  const restaurantMap = useMemo(() => {
+    return restaurantQueries.data || new Map();
+  }, [restaurantQueries.data]);
 
   // 필터링된 채팅방 목록
   const filteredChats = useMemo(() => {

@@ -1,4 +1,3 @@
-import { Eye, Star, Users, MessageCircle } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 const StatsCards = ({ statsData, isLoading }) => {

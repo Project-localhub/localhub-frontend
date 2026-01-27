@@ -100,36 +100,13 @@ const HomePage = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const location = {
+          setUserLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-          };
-          console.log('📍 [HomePage] 사용자 위치:', location);
-          setUserLocation(location);
+          });
         },
-        (error) => {
-          // 에러 타입에 따라 다른 메시지 표시
-          let errorMessage = '위치 정보를 가져올 수 없습니다.';
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage =
-                '위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.';
-              console.warn('⚠️ [HomePage] 위치 권한 거부:', error.message);
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = '위치 정보를 사용할 수 없습니다.';
-              console.warn('⚠️ [HomePage] 위치 정보 사용 불가:', error.message);
-              break;
-            case error.TIMEOUT:
-              errorMessage = '위치 정보 요청 시간이 초과되었습니다.';
-              console.warn('⚠️ [HomePage] 위치 정보 요청 타임아웃:', error.message);
-              break;
-            default:
-              console.warn('⚠️ [HomePage] 위치 정보를 가져올 수 없습니다:', error.message);
-              break;
-          }
-          // 사용자에게는 콘솔에만 표시 (필요시 alert나 toast로 변경 가능)
-          console.warn('⚠️ [HomePage]', errorMessage);
+        () => {
+          // 위치 정보를 가져올 수 없습니다.
         },
         {
           enableHighAccuracy: true,
@@ -137,8 +114,6 @@ const HomePage = () => {
           maximumAge: 300000, // 5분간 캐시 사용 (0에서 변경)
         },
       );
-    } else {
-      console.warn('⚠️ [HomePage] 이 브라우저는 위치 정보를 지원하지 않습니다.');
     }
   }, []);
 
@@ -174,19 +149,26 @@ const HomePage = () => {
     [myFavorites],
   );
 
-  // 모든 페이지의 데이터를 하나의 배열로 합치기
-  const allRestaurants = useMemo(
-    () => data?.pages?.flatMap((page) => page?.content || []) || [],
-    [data?.pages],
-  );
+  // 모든 페이지의 데이터를 하나의 배열로 합치기 (중복 제거)
+  const allRestaurants = useMemo(() => {
+    const allItems = data?.pages?.flatMap((page) => page?.content || []) || [];
+    const uniqueMap = new Map();
+    allItems.forEach((restaurant) => {
+      if (restaurant && restaurant.restaurantId) {
+        if (!uniqueMap.has(restaurant.restaurantId)) {
+          uniqueMap.set(restaurant.restaurantId, restaurant);
+        }
+      }
+    });
+    return Array.from(uniqueMap.values());
+  }, [data?.pages]);
   const totalElements = data?.pages?.[0]?.totalElements || allRestaurants.length;
 
   // 필터링된 가게 목록 (검색어, 지역, 카테고리 등으로 필터링 가능)
   const filteredStores = useMemo(() => {
     return allRestaurants
-      .filter((restaurant) => restaurant && restaurant.restaurantId) // 유효한 데이터만 필터링
+      .filter((restaurant) => restaurant && restaurant.restaurantId)
       .filter((restaurant) => {
-        // 검색어 필터 (가게 이름, 카테고리)
         if (searchQuery.trim()) {
           const query = searchQuery.toLowerCase();
           const matchesName = restaurant.name?.toLowerCase().includes(query);
@@ -314,8 +296,8 @@ const HomePage = () => {
               {stores.length > 0 ? (
                 <>
                   <div className="space-y-3">
-                    {stores.map((store) => (
-                      <StoreCard key={store.id} store={store} />
+                    {stores.map((store, index) => (
+                      <StoreCard key={`${store.id}-${index}`} store={store} />
                     ))}
                   </div>
                   {/* 무한 스크롤 트리거 요소 */}

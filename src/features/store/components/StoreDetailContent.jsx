@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
+import PropTypes from 'prop-types';
 import ReviewCard from '@/components/ReviewCard';
 import { TAB_TYPES } from './StoreDetailTabs';
 
@@ -73,6 +74,11 @@ const StoreDetailContent = ({ activeTab, storeId }) => {
       )}
     </div>
   );
+};
+
+StoreDetailContent.propTypes = {
+  activeTab: PropTypes.string.isRequired,
+  storeId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default StoreDetailContent;

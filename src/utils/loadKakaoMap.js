@@ -32,7 +32,7 @@ export const loadKakaoMap = (onLoad) => {
   };
 
   script.onerror = () => {
-    console.error('❌ Kakao Map script 로드 실패');
+    // 스크립트 로드 실패 시 무시
   };
 
   document.head.appendChild(script);
