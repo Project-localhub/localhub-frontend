@@ -1,8 +1,8 @@
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createStaticHandler, createStaticRouter, StaticRouterProvider } from 'react-router-dom';
-import { routes } from './app/routes';
+import { MemoryRouter } from 'react-router-dom';
+import { App } from './app/App';
 import { AuthProvider } from './context/AuthContext';
 import './index.css';
 
@@ -21,32 +21,22 @@ export async function render(url, _context = {}) {
   let html = '';
 
   try {
-    const { query, dataRoutes } = createStaticHandler(routes);
-    const request = new Request(`http://localhost${url}`);
-    const context = await query(request);
-
-    if (context instanceof Response) {
-      throw context;
-    }
-
-    const router = createStaticRouter(dataRoutes, context);
-
     html = renderToString(
       <React.StrictMode>
-        <StaticRouterProvider router={router} context={context}>
+        <MemoryRouter initialEntries={[url]}>
           <AuthProvider>
             <QueryClientProvider client={queryClient}>
               <NoopSocketProvider>
-                <div id="root" />
+                <App />
               </NoopSocketProvider>
             </QueryClientProvider>
           </AuthProvider>
-        </StaticRouterProvider>
+        </MemoryRouter>
       </React.StrictMode>,
     );
   } catch (error) {
     console.error('SSR 렌더링 오류:', error);
-    html = '<div id="root"></div>';
+    html = '<div id="root"><div>로딩 중...</div></div>';
   }
 
   const queryState = queryClient

@@ -68,9 +68,14 @@ if (typeof window !== 'undefined') {
   }
 
   const dehydratedState = window.__REACT_QUERY_STATE__ || null;
+  const rootElement = document.getElementById('root');
 
-  ReactDOM.hydrateRoot(
-    document.getElementById('root'),
+  if (!rootElement) {
+    console.error('Root element not found');
+    return;
+  }
+
+  const app = (
     <React.StrictMode>
       <BrowserRouter>
         <AuthProvider>
@@ -89,6 +94,12 @@ if (typeof window !== 'undefined') {
           </QueryClientProvider>
         </AuthProvider>
       </BrowserRouter>
-    </React.StrictMode>,
+    </React.StrictMode>
   );
+
+  if (rootElement.hasChildNodes()) {
+    ReactDOM.hydrateRoot(rootElement, app);
+  } else {
+    ReactDOM.createRoot(rootElement).render(app);
+  }
 }
