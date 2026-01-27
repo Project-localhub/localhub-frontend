@@ -1,26 +1,30 @@
 /* eslint-disable react/prop-types */
+import { memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Heart, MapPin } from 'lucide-react';
 import ImageWithFallback from '@/components/figma/imageWithFallback';
 import { useToggleFavorite } from '@/shared/hooks/useFavoriteQueries';
 
-const StoreCard = ({ store }) => {
+const StoreCard = memo(({ store }) => {
   const favorite = store.isLiked;
   const toggleFavoriteMutation = useToggleFavorite();
 
-  const favoriteButtonHandler = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const favoriteButtonHandler = useCallback(
+    async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    try {
-      await toggleFavoriteMutation.mutateAsync({
-        restaurantId: store.id,
-        isFavorite: favorite,
-      });
-    } catch {
-      alert('찜하기 처리에 실패했습니다. 다시 시도해주세요.');
-    }
-  };
+      try {
+        await toggleFavoriteMutation.mutateAsync({
+          restaurantId: store.id,
+          isFavorite: favorite,
+        });
+      } catch {
+        alert('찜하기 처리에 실패했습니다. 다시 시도해주세요.');
+      }
+    },
+    [store.id, favorite, toggleFavoriteMutation],
+  );
 
   return (
     <Link
@@ -37,6 +41,7 @@ const StoreCard = ({ store }) => {
         <button
           onClick={favoriteButtonHandler}
           className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md"
+          aria-label={favorite ? '찜 해제' : '찜하기'}
         >
           <Heart size={20} className={favorite ? 'fill-red-500 text-red-500' : 'text-gray-400'} />
         </button>
@@ -50,7 +55,7 @@ const StoreCard = ({ store }) => {
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-xs">
+            <span className="px-2 py-0.5 bg-blue-600 text-white rounded text-xs">
               {store.category}
             </span>
           </div>
@@ -74,6 +79,8 @@ const StoreCard = ({ store }) => {
       </div>
     </Link>
   );
-};
+});
+
+StoreCard.displayName = 'StoreCard';
 
 export default StoreCard;
