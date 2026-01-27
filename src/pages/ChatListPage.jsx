@@ -20,8 +20,8 @@ const ChatListPage = () => {
     refetch,
   } = useInquiryChats({
     enabled: !!user?.id,
-    refetchInterval: isOwner ? 5 * 1000 : 30 * 1000, // 사업자는 5초마다, 일반 사용자는 30초마다
-    refetchOnWindowFocus: true, // 창 포커스 시 자동 갱신
+    refetchInterval: isOwner ? 5 * 1000 : 30 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
@@ -66,20 +66,20 @@ const ChatListPage = () => {
       return restaurantMap;
     },
     enabled: restaurantIds.length > 0 && !isChatsLoading,
-    staleTime: 5 * 60 * 1000, // 5분간 캐시 유지
+    staleTime: 5 * 60 * 1000,
   });
 
   const restaurantMap = useMemo(() => {
     return restaurantQueries.data || new Map();
   }, [restaurantQueries.data]);
 
-  // 필터링된 채팅방 목록
+
   const filteredChats = useMemo(() => {
     return chats.filter((chat) => {
       if (!searchQuery) return true;
       const searchLower = searchQuery.toLowerCase();
 
-      // 실제 응답 형식에 맞게 필터링
+
       const restaurantId = chat.restaurantId || chat.restaurant?.id;
       const restaurant = restaurantId ? restaurantMap.get(restaurantId) : null;
       const storeName = restaurant?.name || '';
