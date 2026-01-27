@@ -12,8 +12,9 @@ export async function render(url, _context = {}) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        retry: 1,
+        retry: false,
         refetchOnWindowFocus: false,
+        staleTime: Infinity,
       },
     },
   });
@@ -38,13 +39,17 @@ export async function render(url, _context = {}) {
     html = renderToString(appElement);
 
     if (!html || html.trim() === '') {
-      console.error('renderToString returned empty string');
-      html = '<div id="root"><div>로딩 중...</div></div>';
+      console.warn('renderToString returned empty string for URL:', url);
+      html = '<div id="root"></div>';
+    } else {
+      html = `<div id="root">${html}</div>`;
     }
   } catch (error) {
-    console.error('SSR 렌더링 오류:', error);
-    console.error('Error stack:', error.stack);
-    html = '<div id="root"><div>로딩 중...</div></div>';
+    console.error('SSR 렌더링 오류:', error.message);
+    if (error.stack) {
+      console.error('Error stack:', error.stack);
+    }
+    html = '<div id="root"></div>';
   }
 
   const queryState = queryClient

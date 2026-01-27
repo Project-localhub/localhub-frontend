@@ -12,8 +12,31 @@ const app = express();
 app.use('/assets', express.static(path.resolve(base, 'dist/client/assets'), { maxAge: '1y' }));
 
 app.use('*', async (req, res, next) => {
+  const url = req.originalUrl;
+
   try {
     const template = await fs.readFile(path.resolve(base, 'dist/client/index.html'), 'utf-8');
+    
+    try {
+      const { render } = await import(path.resolve(base, 'dist/server/entry-server.js'));
+      const result = await render(url, {});
+      
+      if (result && result.html && result.html.trim() !== '') {
+        const html = template
+          .replace(`<!--ssr-outlet-->`, result.html)
+          .replace(
+            `<!--ssr-state-->`,
+            `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(result.queryState || [])}</script>`,
+          );
+        return res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      } else {
+        console.warn('SSR returned empty HTML, falling back to CSR');
+      }
+    } catch (ssrError) {
+      console.error('SSR Error:', ssrError.message);
+      console.error('SSR Error Stack:', ssrError.stack);
+    }
+
     const html = template
       .replace(`<!--ssr-outlet-->`, '<div id="root"></div>')
       .replace(`<!--ssr-state-->`, '');

@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
         isSocialLogin =
           userData.provider ||
           userData.isSocialLogin ||
-          localStorage.getItem('isSocialLogin') === 'true';
+          (typeof window !== 'undefined' && localStorage.getItem('isSocialLogin') === 'true');
       }
 
       setUser({
