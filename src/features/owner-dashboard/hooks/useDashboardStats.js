@@ -1,8 +1,11 @@
 import { useMemo } from 'react';
 import { Eye, Star, Users, MessageCircle } from 'lucide-react';
-import { calculateChangePercentage, getTrend, getDefaultStats } from '@/shared/lib/statsUtils';
+import {
+  calculateChangePercentage,
+  getTrend,
+  getDefaultStats,
+} from '@/features/owner-dashboard/lib/statsUtils';
 
-// 대시보드 통계 데이터 생성 훅
 export const useDashboardStats = (storeStats, isLoading) => {
   const defaultStats = getDefaultStats();
   const currentStats = storeStats || defaultStats;

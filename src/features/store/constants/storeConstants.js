@@ -1,4 +1,3 @@
-// 가게 카테고리 목록
 export const FOOD_CATEGORIES = [
   '한식',
   '중식',
@@ -12,7 +11,6 @@ export const FOOD_CATEGORIES = [
   '기타',
 ];
 
-// 가게 키워드 옵션 목록
 export const KEYWORD_OPTIONS = [
   '깨끗함',
   '맛있음',

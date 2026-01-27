@@ -1,6 +1,3 @@
-// 통계 관련 유틸리티 함수
-
-// 전달 대비 증감률 계산
 export const calculateChangePercentage = (current, previous) => {
   if (!previous || previous === 0) {
     return current > 0 ? '+100%' : '0%';
@@ -10,7 +7,6 @@ export const calculateChangePercentage = (current, previous) => {
   return `${sign}${Math.round(change)}%`;
 };
 
-// 전달 대비 트렌드 판단
 export const getTrend = (current, previous) => {
   if (!previous || previous === 0) {
     return current > 0 ? 'up' : 'neutral';
@@ -20,7 +16,6 @@ export const getTrend = (current, previous) => {
   return 'neutral';
 };
 
-// 기본 통계 데이터
 export const getDefaultStats = () => ({
   todayViews: 0,
   monthlyReviews: 0,

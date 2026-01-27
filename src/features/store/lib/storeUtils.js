@@ -28,19 +28,17 @@ export const getAllImageUrls = (imageUrlList) => {
   return sorted.map((item) => item.imageUrl).filter(Boolean);
 };
 
-// 사업자등록번호 형식 검증 (10자리 숫자)
 export const validateBusinessNumber = (number) => {
   const cleaned = number.replace(/-/g, '');
   return /^\d{10}$/.test(cleaned);
 };
 
-// 두 좌표 간 거리 계산 (Haversine formula, 단위: km)
 export const calculateDistance = (lat1, lon1, lat2, lon2) => {
   if (!lat1 || !lon1 || !lat2 || !lon2) {
-    return null; // 좌표가 없으면 null 반환
+    return null;
   }
 
-  const R = 6371; // 지구 반지름 (km)
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -55,7 +53,6 @@ export const calculateDistance = (lat1, lon1, lat2, lon2) => {
   return distance;
 };
 
-// 거리를 포맷팅 (예: 1.2km, 500m)
 export const formatDistance = (distanceInKm) => {
   if (distanceInKm === null || distanceInKm === undefined) {
     return '';
@@ -67,19 +64,15 @@ export const formatDistance = (distanceInKm) => {
   return `${distanceInKm.toFixed(1)}km`;
 };
 
-// 주소에서 구 정보 추출 (예: "서울특별시 강남구 테헤란로 123" -> "강남구")
 export const extractDistrictFromAddress = (address) => {
   if (!address || typeof address !== 'string') {
     return '';
   }
 
-  // "구"로 끝나는 부분 찾기
-  // 예: "서울특별시 강남구", "경기도 성남시 분당구", "부산광역시 해운대구"
   const districtMatch = address.match(/([가-힣]+구)/);
   if (districtMatch && districtMatch[1]) {
-    return districtMatch[1]; // "강남구", "분당구", "해운대구" 등
+    return districtMatch[1];
   }
 
-  // "구"가 없으면 빈 문자열 반환
   return '';
 };

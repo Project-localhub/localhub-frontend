@@ -14,10 +14,22 @@ const ChatMessageList = ({
   const messagesTopRef = useRef(null);
   const containerRef = useRef(null);
   const previousScrollHeightRef = useRef(0);
+  const isInitialLoadRef = useRef(true);
 
-  // 메시지가 추가될 때마다 스크롤을 맨 아래로 (새 메시지가 추가될 때만)
   useEffect(() => {
-    // 스크롤이 맨 아래 근처에 있을 때만 자동 스크롤
+    if (isInitialLoadRef.current && messages.length > 0 && !isConnecting) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+        isInitialLoadRef.current = false;
+      }, 100);
+    }
+  }, [messages.length, isConnecting]);
+
+  useEffect(() => {
+    if (isInitialLoadRef.current) {
+      return;
+    }
+
     const container = containerRef.current;
     if (container) {
       const isNearBottom =
@@ -43,7 +55,6 @@ const ChatMessageList = ({
           if (container) {
             previousScrollHeightRef.current = container.scrollHeight;
             onLoadMore().then(() => {
-              // 스크롤 위치 유지 (새 메시지가 위에 추가되므로)
               setTimeout(() => {
                 const newScrollHeight = container.scrollHeight;
                 const scrollDiff = newScrollHeight - previousScrollHeightRef.current;
@@ -64,15 +75,9 @@ const ChatMessageList = ({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, onLoadMore]);
 
-  // 메시지가 내가 보낸 것인지 확인하는 함수
   const isMyMessage = (message) => {
     if (!currentUser) {
       return false;
-    }
-
-    // optimistic 메시지는 항상 내 메시지로 간주
-    if (message.isOptimistic) {
-      return true;
     }
 
     if (message.senderId !== undefined && message.senderId !== null) {
@@ -109,7 +114,6 @@ const ChatMessageList = ({
 
   return (
     <div ref={containerRef} className="flex-1 overflow-auto p-4 space-y-3">
-      {/* 무한 스크롤 로딩 인디케이터 (맨 위) */}
       {isFetchingNextPage && (
         <div className="text-center text-gray-500 text-sm py-2">이전 메시지 불러오는 중...</div>
       )}
@@ -139,7 +143,6 @@ ChatMessageList.propTypes = {
       timestamp: PropTypes.string,
       createdAt: PropTypes.string,
       time: PropTypes.string,
-      isOptimistic: PropTypes.bool,
     }),
   ).isRequired,
   currentUser: PropTypes.shape({
