@@ -40,5 +40,3 @@ describe('ChatHeader', () => {
     expect(screen.getByText('알 수 없음')).toBeInTheDocument();
   });
 });
-
-

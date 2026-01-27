@@ -50,6 +50,10 @@ export const AuthProvider = ({ children }) => {
   /** 앱 시작 시 자동 로그인 복구 */
   useEffect(() => {
     const initializeAuth = async () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
       if (isLoggingOut) {
         setIsInitializing(false);
         return;
@@ -84,6 +88,10 @@ export const AuthProvider = ({ children }) => {
 
   /** 일반 로그인 */
   const login = async ({ accessToken, mustChangePassword }) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
 
@@ -108,6 +116,9 @@ export const AuthProvider = ({ children }) => {
   /** 소셜 로그인 (redirect 페이지에서 사용) */
   const loginWithToken = async (accessToken) => {
     if (!accessToken) throw new Error('accessToken이 필요합니다.');
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
@@ -123,6 +134,10 @@ export const AuthProvider = ({ children }) => {
 
   /** 쿠키 기반 로그인 */
   const loginWithCookie = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     const isSocialLogin = localStorage.getItem('isSocialLogin') === 'true';
     await setUserFromApi(isSocialLogin);
 
@@ -132,6 +147,10 @@ export const AuthProvider = ({ children }) => {
 
   /** 로그아웃 */
   const logout = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     setIsLoggingOut(true);
     sessionStorage.setItem('wasLoggedOut', 'true');
 

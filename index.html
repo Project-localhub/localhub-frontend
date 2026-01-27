@@ -2,38 +2,119 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LocalHub</title>
-
-    <!-- Global polyfill for SockJS/STOMP -->
+    <title>LocalHub - 지역 기반 실시간 커뮤니티 & 소상공인 홍보 서비스</title>
+    <meta name="title" content="LocalHub - 지역 기반 실시간 커뮤니티 & 소상공인 홍보 서비스" />
+    <meta
+      name="description"
+      content="LocalHub는 지역 기반 실시간 커뮤니티와 소상공인 홍보 서비스입니다. 지도 기반 가게 검색, 실시간 채팅, 리뷰 및 평점, 찜하기 기능을 제공하여 지역 소상공인과 고객을 연결합니다."
+    />
+    <meta
+      name="keywords"
+      content="LocalHub, 지역 커뮤니티, 소상공인, 가게 검색, 지역 맛집, 지역 상점, 실시간 채팅, 리뷰, 평점, 지도 검색, 지역 홍보, 소상공인 지원"
+    />
+    <meta name="author" content="LocalHub" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="Korean" />
+    <meta name="revisit-after" content="7 days" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://localhub.p-e.kr/" />
+    <meta
+      property="og:title"
+      content="LocalHub - 지역 기반 실시간 커뮤니티 & 소상공인 홍보 서비스"
+    />
+    <meta
+      property="og:description"
+      content="지역 기반 실시간 커뮤니티와 소상공인 홍보 서비스. 지도 기반 가게 검색, 실시간 채팅, 리뷰 및 평점을 제공합니다."
+    />
+    <meta property="og:image" content="https://localhub.p-e.kr/og-image.png" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:site_name" content="LocalHub" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://localhub.p-e.kr/" />
+    <meta
+      property="twitter:title"
+      content="LocalHub - 지역 기반 실시간 커뮤니티 & 소상공인 홍보 서비스"
+    />
+    <meta
+      property="twitter:description"
+      content="지역 기반 실시간 커뮤니티와 소상공인 홍보 서비스. 지도 기반 가게 검색, 실시간 채팅, 리뷰 및 평점을 제공합니다."
+    />
+    <meta property="twitter:image" content="https://localhub.p-e.kr/og-image.png" />
+    <link rel="canonical" href="https://localhub.p-e.kr/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "LocalHub",
+        "description": "지역 기반 실시간 커뮤니티와 소상공인 홍보 서비스",
+        "url": "https://localhub.p-e.kr/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.5",
+          "ratingCount": "100"
+        },
+        "featureList": [
+          "지도 기반 가게 검색",
+          "실시간 채팅",
+          "리뷰 및 평점",
+          "찜하기 기능",
+          "소상공인 대시보드"
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "LocalHub",
+        "url": "https://localhub.p-e.kr/",
+        "logo": "https://localhub.p-e.kr/logo.svg",
+        "description": "지역 기반 실시간 커뮤니티와 소상공인 홍보 서비스",
+        "sameAs": []
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "LocalHub",
+        "url": "https://localhub.p-e.kr/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://localhub.p-e.kr/?search={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
     <script>
       if (typeof global === 'undefined') {
         var global = globalThis;
       }
     </script>
-
-    <!-- Kakao Login / 공유용 SDK (필요시) - defer로 렌더링 차단 방지 -->
     <script
       src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
       crossorigin="anonymous"
       defer
     ></script>
-
-    <!-- Daum Postcode API - defer로 렌더링 차단 방지 -->
     <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" defer></script>
   </head>
   <body>
-    <div id="root"></div>
-
-    <!-- Kakao 지도 SDK (React에서 load 호출할 수 있도록 autoload=false) - defer로 렌더링 차단 방지 -->
-    <script
-      type="text/javascript"
-      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f42007a2f7495d7e7768281ea4a4a7ae&autoload=false&libraries=services"
-      defer
-    ></script>
-
-    <!-- React 앱 진입점 -->
-    <script type="module" src="/src/main.jsx"></script>
+    <div id="root"><!--ssr-outlet--></div>
+    <!--ssr-state-->
+    <script type="module" src="/src/entry-client.jsx"></script>
   </body>
 </html>

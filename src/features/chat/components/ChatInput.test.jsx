@@ -81,4 +81,3 @@ describe('ChatInput', () => {
     expect(sendButton).toBeDisabled();
   });
 });
-

@@ -55,5 +55,3 @@ describe('ChatMessage', () => {
     expect(messageElement).toBeInTheDocument();
   });
 });
-
-

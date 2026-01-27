@@ -26,17 +26,40 @@ export default defineConfig({
     open: 'chrome',
   },
   build: {
-    minify: 'esbuild', // esbuild가 terser보다 빠름
+    minify: 'esbuild',
+    ssr: false,
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
       output: {
-        manualChunks: {
-          // 큰 라이브러리들을 별도 청크로 분리하여 캐싱 최적화
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'query-vendor': ['@tanstack/react-query'],
-          'ui-vendor': ['lucide-react'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'query-vendor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+            if (
+              !id.includes('react') &&
+              !id.includes('react-dom') &&
+              !id.includes('react-router') &&
+              !id.includes('@tanstack/react-query') &&
+              !id.includes('lucide-react')
+            ) {
+              return 'vendor';
+            }
+          }
         },
       },
     },
+  },
+  ssr: {
+    noExternal: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
   },
   test: {
     globals: true,

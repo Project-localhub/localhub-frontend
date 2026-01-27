@@ -1,0 +1,28 @@
+feat: SSR 구현 및 SEO 최적화, 보안 개선
+
+- SSR(Server-Side Rendering) 구현
+  - entry-server.jsx, entry-client.jsx 분리
+  - Express 서버 설정 (server/index.js)
+  - Vercel 배포 설정 (vercel.json, api/index.js)
+  - React Router v7 SSR 방식 적용
+
+- SEO 최적화
+  - 메타 태그 추가 (Primary, Open Graph, Twitter)
+  - Structured Data (JSON-LD) 추가
+  - Canonical URL 설정
+  - PWA manifest.json 추가
+
+- 보안 개선
+  - Kakao 지도 SDK appkey를 환경 변수로 관리
+  - HTML 소스에서 하드코딩된 appkey 제거
+  - 동적 스크립트 로드로 변경
+
+- UI 개선
+  - LocalHub 브랜드에 맞는 favicon 디자인 생성
+  - HTML 주석 제거
+
+- 빌드 설정
+  - Vite SSR 설정 추가
+  - 클라이언트/서버 빌드 분리
+  - cross-env 추가 (Windows 호환성)
+
