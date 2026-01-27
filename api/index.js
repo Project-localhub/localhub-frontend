@@ -23,18 +23,21 @@ app.use('*', async (req, res, next) => {
       
       if (result && result.html && result.html.trim() !== '') {
         const html = template
-          .replace(`<!--ssr-outlet-->`, result.html)
+          .replace(`<!--ssr-outlet-->`, `<div id="root">${result.html}</div>`)
           .replace(
             `<!--ssr-state-->`,
-            `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(result.queryState || [])}</script>`,
+            `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(result.dehydratedState || null)}</script>`,
           );
         return res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
       } else {
-        console.warn('SSR returned empty HTML, falling back to CSR');
+        console.warn('SSR returned empty HTML for URL:', url, '- falling back to CSR');
       }
     } catch (ssrError) {
-      console.error('SSR Error:', ssrError.message);
-      console.error('SSR Error Stack:', ssrError.stack);
+      console.error('SSR Error for URL:', url);
+      console.error('SSR Error Message:', ssrError.message);
+      if (ssrError.stack) {
+        console.error('SSR Error Stack:', ssrError.stack);
+      }
     }
 
     const html = template
