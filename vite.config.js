@@ -21,6 +21,23 @@ export default defineConfig({
     port: 5173,
     open: 'chrome',
   },
+  preview: {
+    port: 5173,
+    open: 'chrome',
+  },
+  build: {
+    minify: 'esbuild', // esbuild가 terser보다 빠름
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // 큰 라이브러리들을 별도 청크로 분리하여 캐싱 최적화
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'query-vendor': ['@tanstack/react-query'],
+          'ui-vendor': ['lucide-react'],
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
