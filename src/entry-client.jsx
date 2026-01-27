@@ -29,17 +29,12 @@ if (typeof window !== 'undefined') {
             }
           }, 100);
 
-          const timeoutId = setTimeout(() => {
+          setTimeout(() => {
             clearInterval(checkKakaoSDK);
           }, 5000);
-
-          return () => {
-            clearTimeout(timeoutId);
-            clearInterval(checkKakaoSDK);
-          };
         });
       } else {
-        const timeoutId = setTimeout(() => {
+        setTimeout(() => {
           const checkKakaoSDK = setInterval(() => {
             if (window.Kakao) {
               initKakao(KAKAO_JAVASCRIPT_KEY);
@@ -47,15 +42,9 @@ if (typeof window !== 'undefined') {
             }
           }, 100);
 
-          const innerTimeoutId = setTimeout(() => {
+          setTimeout(() => {
             clearInterval(checkKakaoSDK);
           }, 5000);
-
-          return () => {
-            clearTimeout(timeoutId);
-            clearTimeout(innerTimeoutId);
-            clearInterval(checkKakaoSDK);
-          };
         }, 1000);
       }
     };
@@ -70,36 +59,35 @@ if (typeof window !== 'undefined') {
   const dehydratedState = window.__REACT_QUERY_STATE__ || null;
   const rootElement = document.getElementById('root');
 
-  if (!rootElement) {
-    console.error('Root element not found');
-    return;
-  }
-
-  const app = (
-    <React.StrictMode>
-      <BrowserRouter>
-        <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            {dehydratedState ? (
-              <HydrationBoundary state={dehydratedState}>
+  if (rootElement) {
+    const app = (
+      <React.StrictMode>
+        <BrowserRouter>
+          <AuthProvider>
+            <QueryClientProvider client={queryClient}>
+              {dehydratedState ? (
+                <HydrationBoundary state={dehydratedState}>
+                  <SocketProvider>
+                    <App />
+                  </SocketProvider>
+                </HydrationBoundary>
+              ) : (
                 <SocketProvider>
                   <App />
                 </SocketProvider>
-              </HydrationBoundary>
-            ) : (
-              <SocketProvider>
-                <App />
-              </SocketProvider>
-            )}
-          </QueryClientProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </React.StrictMode>
-  );
+              )}
+            </QueryClientProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </React.StrictMode>
+    );
 
-  if (rootElement.hasChildNodes()) {
-    ReactDOM.hydrateRoot(rootElement, app);
+    if (rootElement.hasChildNodes()) {
+      ReactDOM.hydrateRoot(rootElement, app);
+    } else {
+      ReactDOM.createRoot(rootElement).render(app);
+    }
   } else {
-    ReactDOM.createRoot(rootElement).render(app);
+    console.error('Root element not found');
   }
 }
