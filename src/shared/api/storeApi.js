@@ -8,6 +8,7 @@ export const getRestaurantsByFilter = async (params = {}) => {
   if (params.size !== undefined) queryParams.append('size', params.size);
   if (params.category) queryParams.append('category', params.category);
   if (params.divide) queryParams.append('divide', params.divide);
+  if (params.name) queryParams.append('name', params.name);
 
   const queryString = queryParams.toString();
   const url = `/api/restaurant/get-all-restaurantsByFilter${queryString ? `?${queryString}` : ''}`;
@@ -110,6 +111,7 @@ export const getAllRestaurants = async (params = {}) => {
   if (params.page !== undefined) queryParams.append('page', params.page);
   if (params.size !== undefined) queryParams.append('size', params.size);
   if (params.sort) queryParams.append('sort', params.sort);
+  if (params.name) queryParams.append('name', params.name);
   if (params.lat !== undefined) queryParams.append('lat', params.lat);
   if (params.lng !== undefined) queryParams.append('lng', params.lng);
   if (params.radiusMeter !== undefined) {

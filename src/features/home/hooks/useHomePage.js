@@ -11,7 +11,6 @@ export const useHomePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDivide, setSelectedDivide] = useState('');
   const loadMoreRef = useRef(null);
-  const isSearchLoadingAllRef = useRef(false);
 
   const handleSearchChange = useCallback((e) => {
     setSearchQuery(e.target.value);
@@ -25,14 +24,15 @@ export const useHomePage = () => {
     setViewMode('map');
   }, []);
 
-  const hasActiveFilters = selectedCategory || selectedDivide;
+  const hasActiveFilters = selectedCategory || selectedDivide || searchQuery.trim();
 
   const filterParams = useMemo(
     () => ({
       category: selectedCategory || undefined,
       divide: selectedDivide || undefined,
+      name: searchQuery.trim() || undefined,
     }),
-    [selectedCategory, selectedDivide],
+    [selectedCategory, selectedDivide, searchQuery],
   );
 
   const {
@@ -41,7 +41,10 @@ export const useHomePage = () => {
     hasNextPage: hasNextPageAll,
     isFetchingNextPage: isFetchingNextPageAll,
     isLoading: isLoadingAll,
-  } = useAllRestaurants({ enabled: !hasActiveFilters });
+  } = useAllRestaurants({
+    name: searchQuery.trim() || undefined,
+    enabled: !hasActiveFilters,
+  });
 
   const {
     data: filterData,
@@ -79,28 +82,7 @@ export const useHomePage = () => {
   }, []);
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      isSearchLoadingAllRef.current = false;
-      return;
-    }
-
-    if (isSearchLoadingAllRef.current) return;
-
-    if (!hasNextPage || isFetchingNextPage) {
-      isSearchLoadingAllRef.current = false;
-      return;
-    }
-
-    isSearchLoadingAllRef.current = true;
-    fetchNextPage().finally(() => {
-      setTimeout(() => {
-        isSearchLoadingAllRef.current = false;
-      }, 100);
-    });
-  }, [searchQuery, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  useEffect(() => {
-    if (viewMode !== 'list' || searchQuery.trim()) return;
+    if (viewMode !== 'list') return;
 
     let observer = null;
     let timeoutId = null;
@@ -153,18 +135,8 @@ export const useHomePage = () => {
   const totalElements = data?.pages?.[0]?.totalElements || allRestaurants.length;
 
   const filteredStores = useMemo(() => {
-    return allRestaurants
-      .filter((restaurant) => restaurant && restaurant.restaurantId)
-      .filter((restaurant) => {
-        if (searchQuery.trim()) {
-          const query = searchQuery.toLowerCase();
-          const matchesName = restaurant.name?.toLowerCase().includes(query);
-          const matchesCategory = restaurant.category?.toLowerCase().includes(query);
-          if (!matchesName && !matchesCategory) return false;
-        }
-        return true;
-      });
-  }, [allRestaurants, searchQuery]);
+    return allRestaurants.filter((restaurant) => restaurant && restaurant.restaurantId);
+  }, [allRestaurants]);
 
   const stores = useMemo(() => {
     return filteredStores.map((restaurant) => {

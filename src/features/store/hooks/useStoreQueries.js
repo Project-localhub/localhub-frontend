@@ -31,6 +31,7 @@ export const useRestaurantsByFilter = (filters = {}, options = {}) => {
           size: 10,
           category: filters.category || undefined,
           divide: filters.divide || undefined,
+          name: filters.name || undefined,
         });
         return response;
       } catch {
@@ -58,14 +59,17 @@ export const useRestaurantsByFilter = (filters = {}, options = {}) => {
 };
 
 export const useAllRestaurants = (options = {}) => {
+  const { name, ...restOptions } = options;
+
   return useInfiniteQuery({
-    queryKey: [...storeKeys.lists(), 'infinite'],
+    queryKey: [...storeKeys.lists(), 'infinite', { name }],
     queryFn: async ({ pageParam = 0 }) => {
       try {
         const response = await getAllRestaurants({
           page: pageParam,
           size: 10,
           sort: 'createdAt,desc',
+          name: name || undefined,
         });
         return response;
       } catch {
@@ -87,7 +91,7 @@ export const useAllRestaurants = (options = {}) => {
     staleTime: 2 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false,
-    ...options,
+    ...restOptions,
   });
 };
 
