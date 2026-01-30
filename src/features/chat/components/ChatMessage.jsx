@@ -14,6 +14,7 @@ const ChatMessage = ({ message, isMyMessage }) => {
             ? new Date(message.timestamp || message.createdAt).toLocaleTimeString('ko-KR', {
                 hour: '2-digit',
                 minute: '2-digit',
+                timeZone: 'Asia/Seoul',
               })
             : message.time || ''}
         </span>

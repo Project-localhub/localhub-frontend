@@ -182,11 +182,13 @@ const ChatListPage = () => {
                         ? new Date(chat.lastMessageTime).toLocaleTimeString('ko-KR', {
                             hour: '2-digit',
                             minute: '2-digit',
+                            timeZone: 'Asia/Seoul',
                           })
                         : chat.lastMessageAt
                           ? new Date(chat.lastMessageAt).toLocaleTimeString('ko-KR', {
                               hour: '2-digit',
                               minute: '2-digit',
+                              timeZone: 'Asia/Seoul',
                             })
                           : ''}
                     </span>
