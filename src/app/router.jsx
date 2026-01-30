@@ -34,6 +34,7 @@ export const router = createBrowserRouter([
       { path: 'oauth/redirect', element: <OAuthRedirectPage /> },
       { path: 'store/:id', element: <StoreDetailPage /> },
       { path: 'change-password', element: <ChangePasswordPage /> },
+      { path: '/oauth/redirect', element: <OAuthRedirectPage /> },
 
       // 🔒 로그인 필수 페이지 (ProtectedRoute로 감싸기)
       {

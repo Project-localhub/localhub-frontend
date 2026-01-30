@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { getUserInfo, logout as logoutAPI, changeUserType } from '../shared/api/auth';
 import { queryClient } from '../app/queryClient';
 import { kakaoLogout } from '../shared/lib/kakao';
+import client from '../shared/api/client';
 
 export const AuthContext = createContext();
 
@@ -123,10 +124,15 @@ export const AuthProvider = ({ children }) => {
 
   /** 쿠키 기반 로그인 */
   const loginWithCookie = async () => {
-    const isSocialLogin = localStorage.getItem('isSocialLogin') === 'true';
-    await setUserFromApi(isSocialLogin);
+    const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
 
-    // 로그인 성공 후 React Query 캐시 무효화하여 데이터 재요청
+    const accessToken = res.data.accessToken;
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('isSocialLogin', 'true');
+
+    await setUserFromApi(true);
+
     queryClient.invalidateQueries();
   };
 
