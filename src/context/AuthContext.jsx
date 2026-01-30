@@ -4,7 +4,6 @@ import { getUserInfo, logout as logoutAPI, changeUserType } from '../shared/api/
 import { queryClient } from '../app/queryClient';
 import { kakaoLogout } from '../shared/lib/kakao';
 import client from '../shared/api/client';
-import { getCookie } from '../shared/lib/cookie';
 
 export const AuthContext = createContext();
 
@@ -145,33 +144,20 @@ export const AuthProvider = ({ children }) => {
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
 
-    // 🔍 디버깅: 쿠키 확인
-    console.log('🔍 [loginWithCookie] 쿠키 확인 시작');
-    const cookieAccess = getCookie('access');
-    const cookieRefresh = getCookie('refresh');
-    console.log('  - 쿠키 access:', cookieAccess ? '✅ 존재함' : '❌ 없음');
-    console.log('  - 쿠키 refresh:', cookieRefresh ? '✅ 존재함' : '❌ 없음');
-    console.log('  - 전체 쿠키:', document.cookie);
+    // HttpOnly 쿠키는 JavaScript에서 읽을 수 없으므로, /jwt/exchange API를 통해 토큰을 받아야 합니다.
+    console.log('🔍 [loginWithCookie] HttpOnly 쿠키에서 토큰을 받기 위해 /jwt/exchange 호출...');
+    let accessToken = null;
 
-    // 먼저 쿠키에서 access 토큰 확인
-    let accessToken = cookieAccess;
-
-    // 쿠키에 access 토큰이 없으면 /jwt/exchange 호출
-    if (!accessToken) {
-      console.log('⚠️ [loginWithCookie] 쿠키에 access 토큰이 없음. /jwt/exchange 호출 시도...');
-      try {
-        const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
-        accessToken = res.data.accessToken || res.data.access;
-        console.log(
-          '✅ [loginWithCookie] /jwt/exchange 성공:',
-          accessToken ? '토큰 받음' : '토큰 없음',
-        );
-      } catch (error) {
-        console.error('❌ [loginWithCookie] /jwt/exchange 실패:', error);
-        throw new Error('토큰을 가져올 수 없습니다.');
-      }
-    } else {
-      console.log('✅ [loginWithCookie] 쿠키에서 access 토큰 직접 읽기 성공');
+    try {
+      const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
+      accessToken = res.data.accessToken || res.data.access;
+      console.log(
+        '✅ [loginWithCookie] /jwt/exchange 성공:',
+        accessToken ? '토큰 받음' : '토큰 없음',
+      );
+    } catch (error) {
+      console.error('❌ [loginWithCookie] /jwt/exchange 실패:', error);
+      throw new Error('토큰을 가져올 수 없습니다.');
     }
 
     // accessToken이 있으면 localStorage에 저장 (API 호출 시 쿠키에서 읽지만, 일관성을 위해 저장)

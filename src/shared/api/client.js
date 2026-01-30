@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getCookie } from '@/shared/lib/cookie';
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -16,46 +15,13 @@ client.interceptors.request.use((config) => {
     let token = localStorage.getItem('accessToken');
     let tokenSource = 'localStorage';
 
-    // localStorage에 없으면 쿠키에서 확인 (소셜 로그인)
+    // localStorage에 토큰이 없으면 Authorization 헤더를 설정하지 않음
+    // HttpOnly 쿠키는 JavaScript에서 읽을 수 없으므로, /jwt/exchange API를 통해 토큰을 받아야 합니다.
     if (!token) {
-      // 🔍 디버깅: 쿠키 확인
-      console.log('🔍 [client interceptor] localStorage에 토큰 없음. 쿠키 확인 시작...');
-      console.log('  - 전체 쿠키:', document.cookie);
-
-      // 쿠키에서 토큰 읽기 (백엔드가 저장한 쿠키 이름: access)
-      const cookieAccess = getCookie('access');
-      const cookieAccessToken = getCookie('accessToken');
-      const cookieAccessToken2 = getCookie('access_token');
-      const cookieToken = getCookie('token');
-
+      console.log('⚠️ [client interceptor] localStorage에 토큰 없음');
       console.log(
-        '  - getCookie("access"):',
-        cookieAccess ? '✅ ' + cookieAccess.substring(0, 20) + '...' : '❌ 없음',
+        '  💡 HttpOnly 쿠키는 JavaScript에서 읽을 수 없습니다. loginWithCookie()에서 /jwt/exchange를 호출하여 토큰을 받아 localStorage에 저장해야 합니다.',
       );
-      console.log(
-        '  - getCookie("accessToken"):',
-        cookieAccessToken ? '✅ ' + cookieAccessToken.substring(0, 20) + '...' : '❌ 없음',
-      );
-      console.log(
-        '  - getCookie("access_token"):',
-        cookieAccessToken2 ? '✅ ' + cookieAccessToken2.substring(0, 20) + '...' : '❌ 없음',
-      );
-      console.log(
-        '  - getCookie("token"):',
-        cookieToken ? '✅ ' + cookieToken.substring(0, 20) + '...' : '❌ 없음',
-      );
-
-      token = cookieAccess || cookieAccessToken || cookieAccessToken2 || cookieToken;
-
-      if (token) {
-        tokenSource = 'cookie';
-        console.log(
-          '✅ [client interceptor] 쿠키에서 토큰 읽기 성공:',
-          token.substring(0, 20) + '...',
-        );
-      } else {
-        console.log('❌ [client interceptor] 쿠키에서도 토큰을 찾을 수 없음');
-      }
     } else {
       console.log(
         '✅ [client interceptor] localStorage에서 토큰 읽기:',
