@@ -21,6 +21,28 @@ export default defineConfig({
     port: 5173,
     open: 'chrome',
   },
+  preview: {
+    port: 5173,
+    open: 'chrome',
+  },
+  build: {
+    minify: 'esbuild',
+    ssr: false,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'query-vendor': ['@tanstack/react-query'],
+        },
+      },
+    },
+  },
+  ssr: {
+    noExternal: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
+  },
   test: {
     globals: true,
     environment: 'jsdom',

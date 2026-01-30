@@ -1,1 +1,7 @@
 @import 'tailwindcss';
+@import './styles/globals.css';
+
+/* 모든 button에 cursor: pointer 강제 적용 (Tailwind 이후에 적용) */
+button {
+  cursor: pointer !important;
+}

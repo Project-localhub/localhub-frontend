@@ -8,6 +8,7 @@ export const getRestaurantsByFilter = async (params = {}) => {
   if (params.size !== undefined) queryParams.append('size', params.size);
   if (params.category) queryParams.append('category', params.category);
   if (params.divide) queryParams.append('divide', params.divide);
+  if (params.name) queryParams.append('name', params.name);
 
   const queryString = queryParams.toString();
   const url = `/api/restaurant/get-all-restaurantsByFilter${queryString ? `?${queryString}` : ''}`;
@@ -39,8 +40,6 @@ export const createStore = async (storeData) => {
       sortOrder: index + 1, // 이미지 조회 순서 (1부터 시작)
     })),
   };
-
-  console.log('📤 [가게 등록] Request 데이터:', JSON.stringify(requestData, null, 2));
 
   const response = await client.post('/api/restaurant/save', requestData);
 
@@ -79,20 +78,11 @@ export const getRestaurantDetail = async (restaurantId) => {
   return response.data;
 };
 
-// 가게 정보 조회 (기존)
-export const getStore = async (storeId) => {
-  const response = await client.get(`/api/stores/${storeId}`);
-  return response.data;
-};
-
-// 가게 조회수 증가
-// 중복 방문 방지를 위해 백엔드에서 처리하거나, 프론트엔드에서 localStorage로 같은 날 중복 방지 가능
 export const incrementStoreView = async (storeId) => {
   try {
     const response = await client.post(`/api/stores/${storeId}/views`);
     return response.data;
   } catch {
-    // 조회수 증가 실패는 조용히 처리 (사용자 경험에 영향 없음)
     return null;
   }
 };
@@ -121,6 +111,7 @@ export const getAllRestaurants = async (params = {}) => {
   if (params.page !== undefined) queryParams.append('page', params.page);
   if (params.size !== undefined) queryParams.append('size', params.size);
   if (params.sort) queryParams.append('sort', params.sort);
+  if (params.name) queryParams.append('name', params.name);
   if (params.lat !== undefined) queryParams.append('lat', params.lat);
   if (params.lng !== undefined) queryParams.append('lng', params.lng);
   if (params.radiusMeter !== undefined) {
@@ -176,12 +167,6 @@ export const updateStore = async (storeId, storeData) => {
 // 메뉴 조회
 export const getMenu = async (restaurantId) => {
   const response = await client.get(`/api/restaurant/getMenu/${restaurantId}`);
-  return response.data;
-};
-
-// 메뉴 추가
-export const addMenu = async (menuItems) => {
-  const response = await client.post('/api/restaurant/addMenu', menuItems);
   return response.data;
 };
 

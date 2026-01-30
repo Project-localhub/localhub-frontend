@@ -95,7 +95,6 @@ const FindUserPage = () => {
           disabled={step > 1}
         />
 
-        {/* 1️⃣ 인증코드 전송 */}
         {step === 1 && (
           <button
             type="button"
@@ -107,7 +106,6 @@ const FindUserPage = () => {
           </button>
         )}
 
-        {/* 2️⃣ 인증코드 입력 */}
         {step === 2 && (
           <>
             <input
@@ -128,7 +126,6 @@ const FindUserPage = () => {
           </>
         )}
 
-        {/* 3️⃣ 아이디 찾기 */}
         {step === 3 && (
           <button
             type="submit"

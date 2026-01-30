@@ -9,18 +9,25 @@ const OAuthRedirectPage = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        // 쿠키에 access 토큰 있음 → 이 API 성공
         await loginWithCookie();
         navigate('/', { replace: true });
-      } catch {
+      } catch (error) {
+        console.error('OAuth 처리 실패:', error);
         navigate('/login', { replace: true });
       }
     };
 
     init();
-  }, []);
+  }, [navigate, loginWithCookie]);
 
-  return <div>로그인 처리중...</div>;
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="text-lg font-medium mb-2">로그인 처리 중...</div>
+        <div className="text-sm text-gray-500">잠시만 기다려주세요</div>
+      </div>
+    </div>
+  );
 };
 
 export default OAuthRedirectPage;

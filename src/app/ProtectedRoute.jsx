@@ -1,35 +1,36 @@
-import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { getUserInfo } from '../shared/api/auth';
+import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ children }) => {
-  const [isLogin, setIsLogin] = useState(null);
+const ProtectedRoute = ({ children, requiredUserType }) => {
+  const { isLogin, isInitializing, user } = useAuth();
 
-  useEffect(() => {
-    const checkLogin = async () => {
-      try {
-        await getUserInfo();
-        setIsLogin(true);
-      } catch {
-        setIsLogin(false);
-      }
-    };
-    checkLogin();
-  }, []);
+  if (typeof window === 'undefined' || isInitializing) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    );
+  }
 
-  // null 동안은 렌더링 안함
-  if (isLogin === null) return null;
+  if (!isLogin) {
+    return <Navigate to="/login" replace />;
+  }
 
-  // 로그인 안 되어있으면 → 로그인 페이지
-  if (isLogin === false) return <Navigate to="/login" replace />;
+  if (requiredUserType) {
+    const userTypeUpper = user?.userType?.toUpperCase();
+    const requiredTypeUpper = requiredUserType.toUpperCase();
+    if (userTypeUpper !== requiredTypeUpper) {
+      return <Navigate to="/" replace />;
+    }
+  }
 
-  // 로그인 되어있으면 콘텐츠 출력
   return children;
 };
 
 ProtectedRoute.propTypes = {
   children: PropTypes.node.isRequired,
+  requiredUserType: PropTypes.string,
 };
 
 export default ProtectedRoute;

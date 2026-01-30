@@ -10,7 +10,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(() => typeof window !== 'undefined');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
 
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
         isSocialLogin =
           userData.provider ||
           userData.isSocialLogin ||
-          localStorage.getItem('isSocialLogin') === 'true';
+          (typeof window !== 'undefined' && localStorage.getItem('isSocialLogin') === 'true');
       }
 
       setUser({
@@ -51,6 +51,10 @@ export const AuthProvider = ({ children }) => {
   /** 앱 시작 시 자동 로그인 복구 */
   useEffect(() => {
     const initializeAuth = async () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
       if (isLoggingOut) {
         setIsInitializing(false);
         return;
@@ -85,6 +89,10 @@ export const AuthProvider = ({ children }) => {
 
   /** 일반 로그인 */
   const login = async ({ accessToken, mustChangePassword }) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
 
@@ -109,6 +117,9 @@ export const AuthProvider = ({ children }) => {
   /** 소셜 로그인 (redirect 페이지에서 사용) */
   const loginWithToken = async (accessToken) => {
     if (!accessToken) throw new Error('accessToken이 필요합니다.');
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
@@ -118,14 +129,19 @@ export const AuthProvider = ({ children }) => {
 
     await setUserFromApi(true);
 
-    // 로그인 성공 후 React Query 캐시 무효화하여 데이터 재요청
     queryClient.invalidateQueries();
   };
 
   /** 쿠키 기반 로그인 */
   const loginWithCookie = async () => {
-    const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
+    if (typeof window === 'undefined') {
+      return;
+    }
 
+    setIsLoggingOut(false);
+    sessionStorage.removeItem('wasLoggedOut');
+
+    const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
     const accessToken = res.data.accessToken;
 
     localStorage.setItem('accessToken', accessToken);
@@ -138,6 +154,10 @@ export const AuthProvider = ({ children }) => {
 
   /** 로그아웃 */
   const logout = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     setIsLoggingOut(true);
     sessionStorage.setItem('wasLoggedOut', 'true');
 
