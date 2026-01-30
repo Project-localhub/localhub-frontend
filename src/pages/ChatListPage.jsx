@@ -92,7 +92,6 @@ const ChatListPage = () => {
           : null;
     }
 
-    localStorage.setItem('lastChatRoomId', String(chatId));
     navigate(`/chat/${chatId}`, {
       state: {
         storeName: displayName,

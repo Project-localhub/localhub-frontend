@@ -17,8 +17,12 @@ const ProtectedRoute = ({ children, requiredUserType }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredUserType && user?.userType !== requiredUserType) {
-    return <Navigate to="/" replace />;
+  if (requiredUserType) {
+    const userTypeUpper = user?.userType?.toUpperCase();
+    const requiredTypeUpper = requiredUserType.toUpperCase();
+    if (userTypeUpper !== requiredTypeUpper) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return children;

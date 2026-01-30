@@ -99,7 +99,7 @@ const Layout = () => {
           <Heart size={24} />
           <span className="text-xs">찜</span>
         </Link>
-        {user?.userType === 'OWNER' && (
+        {(user?.userType === 'OWNER' || user?.userType === 'owner') && (
           <Link
             to="/dashboard"
             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg ${

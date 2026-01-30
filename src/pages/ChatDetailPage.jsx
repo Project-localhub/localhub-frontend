@@ -50,12 +50,6 @@ const ChatDetailPage = () => {
     }
   }, [messagesError, refetchMessages]);
 
-  useEffect(() => {
-    if (selectedChatId) {
-      localStorage.setItem('lastChatRoomId', selectedChatId);
-    }
-  }, [selectedChatId]);
-
   const chatListKey = useMemo(() => {
     return `chat-${selectedChatId}`;
   }, [selectedChatId]);
@@ -81,11 +75,9 @@ const ChatDetailPage = () => {
 
   const handleMessageReceived = useCallback(
     (_receivedMessage) => {
-      if (selectedChatId) {
-        localStorage.setItem('lastChatRoomId', selectedChatId);
-      }
+      // 메시지 수신 처리
     },
-    [selectedChatId],
+    [],
   );
 
   const { isConnecting, connectionError, retryConnection } = useChatWebSocket(
@@ -100,7 +92,6 @@ const ChatDetailPage = () => {
 
     const messageContent = message.trim();
     setMessage('');
-    localStorage.setItem('lastChatRoomId', selectedChatId);
 
     try {
       socket.sendMessage(selectedChatId, messageContent, 'user');
