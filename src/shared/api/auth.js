@@ -83,3 +83,21 @@ export const changePassword = async (currentPassword, newPassword) => {
   const res = await client.put(`/api/user/changePassword`, currentPassword, newPassword);
   return res.data;
 };
+
+export const refreshAccessToken = async (refreshToken) => {
+  const axios = (await import('axios')).default;
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const normalizedBaseUrl = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
+
+  const res = await axios.post(
+    `${normalizedBaseUrl}/api/auth/refresh`,
+    { refreshToken },
+    {
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+  return res.data;
+};

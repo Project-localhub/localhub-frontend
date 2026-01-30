@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCookie } from '@/shared/lib/cookie';
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -11,9 +12,35 @@ const client = axios.create({
 
 client.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
+    // localStorage에서 토큰 확인 (일반 로그인)
+    let token = localStorage.getItem('accessToken');
+    let tokenSource = 'localStorage';
+
+    // localStorage에 없으면 쿠키에서 확인 (소셜 로그인)
+    if (!token) {
+      // 쿠키에서 토큰 읽기 (백엔드가 저장한 쿠키 이름: access)
+      token =
+        getCookie('access') ||
+        getCookie('accessToken') ||
+        getCookie('access_token') ||
+        getCookie('token');
+      if (token) {
+        tokenSource = 'cookie';
+        console.log('🔍 [client interceptor] 쿠키에서 토큰 읽기:', token.substring(0, 20) + '...');
+      }
+    } else {
+      console.log(
+        '🔍 [client interceptor] localStorage에서 토큰 읽기:',
+        token.substring(0, 20) + '...',
+      );
+    }
+
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // 쿠키에서 가져온 경우 Bearer가 이미 포함되어 있을 수 있으므로 확인
+      config.headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      console.log(`✅ [client interceptor] Authorization 헤더 설정 완료 (소스: ${tokenSource})`);
+    } else {
+      console.log('⚠️ [client interceptor] 토큰 없음 - Authorization 헤더 미설정');
     }
   }
 
@@ -49,6 +76,7 @@ client.interceptors.response.use(
         return Promise.resolve({ data: null, status: 401 });
       }
 
+      // 401 에러 발생 시 로그인 페이지로 리다이렉트
       const authError = new Error('인증이 필요합니다. 다시 로그인해주세요.');
       authError.response = error.response;
       return Promise.reject(authError);

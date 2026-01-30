@@ -4,6 +4,7 @@ import { getUserInfo, logout as logoutAPI, changeUserType } from '../shared/api/
 import { queryClient } from '../app/queryClient';
 import { kakaoLogout } from '../shared/lib/kakao';
 import client from '../shared/api/client';
+import { getCookie } from '../shared/lib/cookie';
 
 export const AuthContext = createContext();
 
@@ -115,7 +116,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   /** 소셜 로그인 (redirect 페이지에서 사용) */
-  const loginWithToken = async (accessToken) => {
+  const loginWithToken = async (accessToken, refreshToken) => {
     if (!accessToken) throw new Error('accessToken이 필요합니다.');
     if (typeof window === 'undefined') {
       return;
@@ -125,6 +126,9 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem('wasLoggedOut');
 
     localStorage.setItem('accessToken', accessToken);
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
     localStorage.setItem('isSocialLogin', 'true');
 
     await setUserFromApi(true);
@@ -141,10 +145,40 @@ export const AuthProvider = ({ children }) => {
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
 
-    const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
-    const accessToken = res.data.accessToken;
+    // 🔍 디버깅: 쿠키 확인
+    console.log('🔍 [loginWithCookie] 쿠키 확인 시작');
+    const cookieAccess = getCookie('access');
+    const cookieRefresh = getCookie('refresh');
+    console.log('  - 쿠키 access:', cookieAccess ? '✅ 존재함' : '❌ 없음');
+    console.log('  - 쿠키 refresh:', cookieRefresh ? '✅ 존재함' : '❌ 없음');
+    console.log('  - 전체 쿠키:', document.cookie);
 
-    localStorage.setItem('accessToken', accessToken);
+    // 먼저 쿠키에서 access 토큰 확인
+    let accessToken = cookieAccess;
+
+    // 쿠키에 access 토큰이 없으면 /jwt/exchange 호출
+    if (!accessToken) {
+      console.log('⚠️ [loginWithCookie] 쿠키에 access 토큰이 없음. /jwt/exchange 호출 시도...');
+      try {
+        const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
+        accessToken = res.data.accessToken || res.data.access;
+        console.log(
+          '✅ [loginWithCookie] /jwt/exchange 성공:',
+          accessToken ? '토큰 받음' : '토큰 없음',
+        );
+      } catch (error) {
+        console.error('❌ [loginWithCookie] /jwt/exchange 실패:', error);
+        throw new Error('토큰을 가져올 수 없습니다.');
+      }
+    } else {
+      console.log('✅ [loginWithCookie] 쿠키에서 access 토큰 직접 읽기 성공');
+    }
+
+    // accessToken이 있으면 localStorage에 저장 (API 호출 시 쿠키에서 읽지만, 일관성을 위해 저장)
+    if (accessToken) {
+      localStorage.setItem('accessToken', accessToken);
+      console.log('✅ [loginWithCookie] accessToken localStorage에 저장 완료');
+    }
     localStorage.setItem('isSocialLogin', 'true');
 
     await setUserFromApi(true);

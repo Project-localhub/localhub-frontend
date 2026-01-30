@@ -51,10 +51,21 @@ async function createServer() {
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
     } catch (e) {
+      console.error('SSR Error:', e);
       if (vite) {
         vite.ssrFixStacktrace(e);
       }
-      next(e);
+      // SSR 실패 시 클라이언트 사이드 렌더링으로 폴백
+      try {
+        const template = isProduction
+          ? await fs.readFile(path.resolve(base, 'dist/client/index.html'), 'utf-8')
+          : await fs.readFile(path.resolve(base, 'index.html'), 'utf-8');
+        const fallbackHtml = template.replace(`<!--ssr-outlet-->`, '<div id="root"></div>');
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(fallbackHtml);
+      } catch (fallbackError) {
+        console.error('Fallback error:', fallbackError);
+        res.status(500).send('Internal Server Error');
+      }
     }
   });
 
