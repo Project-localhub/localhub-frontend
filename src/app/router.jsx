@@ -116,7 +116,7 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requiredUserType="OWNER">
             <Suspense fallback={<LoadingFallback />}>
               <OwnerDashboardPage />
             </Suspense>
@@ -126,7 +126,7 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard/store/register',
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requiredUserType="OWNER">
             <Suspense fallback={<LoadingFallback />}>
               <StoreRegisterPage />
             </Suspense>
@@ -136,7 +136,7 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard/store/edit/:id',
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requiredUserType="OWNER">
             <Suspense fallback={<LoadingFallback />}>
               <StoreEditPage />
             </Suspense>
@@ -146,7 +146,7 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard/menu/:id',
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requiredUserType="OWNER">
             <Suspense fallback={<LoadingFallback />}>
               <MenuManagePage />
             </Suspense>

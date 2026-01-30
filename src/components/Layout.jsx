@@ -99,15 +99,17 @@ const Layout = () => {
           <Heart size={24} />
           <span className="text-xs">찜</span>
         </Link>
-        <Link
-          to="/dashboard"
-          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg ${
-            isActive('/dashboard') ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
-          }`}
-        >
-          <LayoutDashboard size={24} />
-          <span className="text-xs">대시보드</span>
-        </Link>
+        {user?.userType === 'OWNER' && (
+          <Link
+            to="/dashboard"
+            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg ${
+              isActive('/dashboard') ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
+            }`}
+          >
+            <LayoutDashboard size={24} />
+            <span className="text-xs">대시보드</span>
+          </Link>
+        )}
       </nav>
     </div>
   );
