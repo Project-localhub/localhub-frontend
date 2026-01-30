@@ -41,7 +41,9 @@ const LoginPage = () => {
   };
 
   const handleKakaoLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/kakao`;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    window.location.href = `${normalizedBaseUrl}/oauth2/authorization/kakao`;
   };
 
   const findIdButtonHandler = () => {

@@ -40,13 +40,13 @@ async function createServer() {
         render = (await import(path.resolve(base, 'dist/server/entry-server.js'))).render;
       }
 
-      const { html: appHtml, queryState } = await render(url, {});
+      const { html: appHtml, dehydratedState } = await render(url, {});
 
       const html = template
         .replace(`<!--ssr-outlet-->`, appHtml)
         .replace(
           `<!--ssr-state-->`,
-          `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(queryState)}</script>`,
+          `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(dehydratedState)}</script>`,
         );
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
