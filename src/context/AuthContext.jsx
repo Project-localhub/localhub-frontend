@@ -82,14 +82,21 @@ export const AuthProvider = ({ children }) => {
       } else {
         // localStorage에 토큰이 없으면 HttpOnly 쿠키에서 토큰을 받아올 수 있는지 시도
         // (소셜 로그인 후 /oauth/redirect를 거치지 않고 바로 홈으로 이동한 경우 등)
-        try {
-          console.log(
-            '🔍 [initializeAuth] localStorage에 토큰 없음. HttpOnly 쿠키에서 토큰 받기 시도...',
-          );
-          await loginWithCookie();
-        } catch {
-          // 쿠키에 토큰이 없거나 실패한 경우 (일반적인 경우)
-          console.log('ℹ️ [initializeAuth] HttpOnly 쿠키에서 토큰을 받을 수 없음 (로그인 필요)');
+        // 단, /oauth/redirect 페이지에서는 loginWithCookie가 이미 호출되므로 여기서는 시도하지 않음
+        const isOAuthRedirectPage = window.location.pathname === '/oauth/redirect';
+        if (!isOAuthRedirectPage) {
+          try {
+            console.log(
+              '🔍 [initializeAuth] localStorage에 토큰 없음. HttpOnly 쿠키에서 토큰 받기 시도...',
+            );
+            await loginWithCookie();
+          } catch (error) {
+            // 쿠키에 토큰이 없거나 실패한 경우 (일반적인 경우)
+            console.log(
+              'ℹ️ [initializeAuth] HttpOnly 쿠키에서 토큰을 받을 수 없음 (로그인 필요)',
+              error,
+            );
+          }
         }
       }
 
@@ -97,7 +104,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, [setUserFromApi, isLoggingOut, loginWithCookie]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setUserFromApi, isLoggingOut]);
 
   /** 일반 로그인 */
   const login = async ({ accessToken, mustChangePassword }) => {
