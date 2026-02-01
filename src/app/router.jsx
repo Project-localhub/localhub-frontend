@@ -3,12 +3,12 @@ import { lazy, Suspense } from 'react';
 import Layout from '../components/Layout';
 import ProtectedRoute from '@/app/ProtectedRoute';
 
-// 홈페이지는 즉시 로드 (가장 자주 사용)
+// 홈페이지는 즉시 로드
 import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 
-// 나머지 페이지들은 lazy loading
+// lazy loading
 const StoreDetailPage = lazy(() => import('@/pages/StoreDetailPage'));
 const ChatListPage = lazy(() => import('@/pages/ChatListPage'));
 const ChatDetailPage = lazy(() => import('@/pages/ChatDetailPage'));
@@ -23,7 +23,7 @@ const FindPasswordPage = lazy(() => import('@/pages/FindPasswordPage'));
 const ChangePasswordPage = lazy(() => import('@/pages/ChangePasswordPage'));
 const ReviewPage = lazy(() => import('@/pages/ReviewPage'));
 
-// 로딩 컴포넌트
+// 로딩 UI
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="text-gray-500">로딩 중...</div>
@@ -35,12 +35,12 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Layout />,
     children: [
-      // 메인 페이지
       { index: true, element: <HomePage /> },
 
       // 공용 페이지
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
+
       {
         path: 'findUser',
         element: (
@@ -82,7 +82,7 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // 🔒 로그인 필수 페이지 (ProtectedRoute로 감싸기)
+      // 🔒 로그인 필요
       {
         path: 'chat',
         element: (
@@ -166,7 +166,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // 404 → 홈으로 이동
+  // 404 → 홈
   {
     path: '*',
     element: <Navigate to="/" replace />,

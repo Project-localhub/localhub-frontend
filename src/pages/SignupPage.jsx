@@ -63,7 +63,7 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white w-full max-w-md mx-auto shadow-lg">
+    <div className="min-h-screen bg-white w-full max-w-md mx-auto shadow-lg flex flex-col">
       <div className="p-4 border-b border-gray-200 flex items-center gap-3">
         <button onClick={() => navigate(-1)}>
           <ArrowLeft size={24} />
@@ -71,7 +71,7 @@ const SignupPage = () => {
         <span className="text-gray-900">회원가입</span>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 p-6">
         <div className="w-full max-w-sm mx-auto">
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
