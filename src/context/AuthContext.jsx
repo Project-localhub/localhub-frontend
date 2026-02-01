@@ -139,15 +139,12 @@ export const AuthProvider = ({ children }) => {
 
   /** 쿠키 기반 로그인 */
   const loginWithCookie = useCallback(async () => {
-    if (typeof window === 'undefined') {
-      return;
-    }
+    if (typeof window === 'undefined') return;
 
     try {
       setIsLoggingOut(false);
       sessionStorage.removeItem('wasLoggedOut');
 
-      // 1️⃣ HttpOnly 쿠키 → accessToken 교환
       const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
       const accessToken = res.data.accessToken || res.data.access;
 
@@ -155,20 +152,51 @@ export const AuthProvider = ({ children }) => {
         throw new Error('accessToken이 없습니다.');
       }
 
-      // 2️⃣ localStorage 저장 (클라이언트 일관성용)
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('isSocialLogin', 'true');
 
-      // 3️⃣ 실제 로그인 상태 세팅
       await setUserFromApi(true);
-
-      // 4️⃣ 캐시 무효화
       queryClient.invalidateQueries();
     } catch (error) {
       console.error('[loginWithCookie] 실패:', error);
-      throw error; // OAuthRedirectPage에서 catch 가능
+      throw error;
     }
   }, [setUserFromApi]);
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      if (typeof window === 'undefined') return;
+
+      if (isLoggingOut) {
+        setIsInitializing(false);
+        return;
+      }
+
+      const token = localStorage.getItem('accessToken');
+
+      if (token) {
+        try {
+          await setUserFromApi(localStorage.getItem('isSocialLogin') === 'true');
+        } catch {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('isSocialLogin');
+        }
+      } else {
+        const isOAuthRedirectPage = window.location.pathname === '/oauth/redirect';
+        if (!isOAuthRedirectPage) {
+          try {
+            await loginWithCookie();
+          } catch {
+            // 로그인 안 된 상태 유지
+          }
+        }
+      }
+
+      setIsInitializing(false);
+    };
+
+    initializeAuth();
+  }, [setUserFromApi, loginWithCookie, isLoggingOut]);
 
   /** 로그아웃 */
   const logout = async () => {
