@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
       try {
         if (token) {
           await setUserFromApi(localStorage.getItem('isSocialLogin') === 'true');
-        } else if (window.location.pathname !== '/oauth/redirect') {
+        } else if (window.location.pathname !== '/oauth2/redirect') {
           await loginWithCookie();
         }
       } catch {
