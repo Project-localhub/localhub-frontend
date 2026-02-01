@@ -10,29 +10,24 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(() => typeof window !== 'undefined');
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
 
-  /** 사용자 정보 API 호출 후 user 업데이트 */
+  /** 사용자 정보 세팅 */
   const setUserFromApi = useCallback(
     async (forceSocialLogin = null) => {
       if (isLoggingOut) return;
 
       const res = await getUserInfo();
       const userData = res.data;
+      if (!userData) throw new Error('사용자 정보 없음');
 
-      if (!userData) throw new Error('사용자 정보를 가져올 수 없습니다.');
-
-      let isSocialLogin;
-      if (forceSocialLogin !== null) {
-        isSocialLogin = forceSocialLogin;
-      } else {
-        isSocialLogin =
-          userData.provider ||
-          userData.isSocialLogin ||
-          (typeof window !== 'undefined' && localStorage.getItem('isSocialLogin') === 'true');
-      }
+      const isSocialLogin =
+        forceSocialLogin ??
+        userData.provider ??
+        userData.isSocialLogin ??
+        localStorage.getItem('isSocialLogin') === 'true';
 
       setUser({
         id: userData.id,
@@ -48,7 +43,25 @@ export const AuthProvider = ({ children }) => {
     [isLoggingOut],
   );
 
-  /** 앱 시작 시 자동 로그인 복구 */
+  /** 쿠키 기반 로그인 (자동 로그인 핵심) */
+  const loginWithCookie = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+
+    const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
+    const accessToken = res.data.accessToken || res.data.access;
+
+    if (!accessToken) {
+      throw new Error('accessToken이 없습니다.');
+    }
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('isSocialLogin', 'true');
+
+    await setUserFromApi(true);
+    queryClient.invalidateQueries();
+  }, [setUserFromApi]);
+
+  /** 앱 시작 시 인증 복구 */
   useEffect(() => {
     const initializeAuth = async () => {
       if (typeof window === 'undefined') return;
@@ -67,23 +80,15 @@ export const AuthProvider = ({ children }) => {
 
       const token = localStorage.getItem('accessToken');
 
-      if (token) {
-        try {
+      try {
+        if (token) {
           await setUserFromApi(localStorage.getItem('isSocialLogin') === 'true');
-        } catch {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('isSocialLogin');
+        } else if (window.location.pathname !== '/oauth/redirect') {
+          await loginWithCookie();
         }
-      } else {
-        const isOAuthRedirectPage = window.location.pathname === '/oauth/redirect';
-
-        if (!isOAuthRedirectPage) {
-          try {
-            await loginWithCookie();
-          } catch {
-            // 그냥 로그인 안 된 상태로 둠
-          }
-        }
+      } catch {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('isSocialLogin');
       }
 
       setIsInitializing(false);
@@ -94,125 +99,38 @@ export const AuthProvider = ({ children }) => {
 
   /** 일반 로그인 */
   const login = async ({ accessToken, mustChangePassword }) => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    setIsLoggingOut(false);
-    sessionStorage.removeItem('wasLoggedOut');
-
     localStorage.setItem('accessToken', accessToken);
-    localStorage.removeItem('isSocialLogin'); // 일반 로그인
+    localStorage.removeItem('isSocialLogin');
 
     setMustChangePassword(mustChangePassword);
-    //임시비밀번호면 return
     if (mustChangePassword) {
       setIsLogin(true);
       return;
     }
 
     await setUserFromApi(false);
-
-    setIsLogin(true);
-
-    // 로그인 성공 후 React Query 캐시 무효화하여 데이터 재요청
     queryClient.invalidateQueries();
   };
 
-  /** 소셜 로그인 (redirect 페이지에서 사용) */
+  /** OAuth redirect 페이지 전용 */
   const loginWithToken = async (accessToken) => {
-    if (!accessToken) throw new Error('accessToken이 필요합니다.');
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    setIsLoggingOut(false);
-    sessionStorage.removeItem('wasLoggedOut');
+    if (!accessToken) throw new Error('accessToken 필요');
 
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('isSocialLogin', 'true');
 
     await setUserFromApi(true);
-
     queryClient.invalidateQueries();
   };
 
-  /** 쿠키 기반 로그인 */
-  const loginWithCookie = useCallback(async () => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      setIsLoggingOut(false);
-      sessionStorage.removeItem('wasLoggedOut');
-
-      const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
-      const accessToken = res.data.accessToken || res.data.access;
-
-      if (!accessToken) {
-        throw new Error('accessToken이 없습니다.');
-      }
-
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('isSocialLogin', 'true');
-
-      await setUserFromApi(true);
-      queryClient.invalidateQueries();
-    } catch (error) {
-      console.error('[loginWithCookie] 실패:', error);
-      throw error;
-    }
-  }, [setUserFromApi]);
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      if (typeof window === 'undefined') return;
-
-      if (isLoggingOut) {
-        setIsInitializing(false);
-        return;
-      }
-
-      const token = localStorage.getItem('accessToken');
-
-      if (token) {
-        try {
-          await setUserFromApi(localStorage.getItem('isSocialLogin') === 'true');
-        } catch {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('isSocialLogin');
-        }
-      } else {
-        const isOAuthRedirectPage = window.location.pathname === '/oauth/redirect';
-        if (!isOAuthRedirectPage) {
-          try {
-            await loginWithCookie();
-          } catch {
-            // 로그인 안 된 상태 유지
-          }
-        }
-      }
-
-      setIsInitializing(false);
-    };
-
-    initializeAuth();
-  }, [setUserFromApi, loginWithCookie, isLoggingOut]);
-
   /** 로그아웃 */
   const logout = async () => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
     setIsLoggingOut(true);
     sessionStorage.setItem('wasLoggedOut', 'true');
 
     try {
-      // 카카오 로그인 사용자에게만 카카오 로그아웃 호출
-      const isSocialLogin = user?.isSocialLogin || localStorage.getItem('isSocialLogin') === 'true';
-      if (isSocialLogin) {
-        await kakaoLogout().catch(() => {});
-      }
+      const isSocial = user?.isSocialLogin;
+      if (isSocial) await kakaoLogout().catch(() => {});
       await logoutAPI().catch(() => {});
     } finally {
       setUser(null);
@@ -226,9 +144,7 @@ export const AuthProvider = ({ children }) => {
   /** userType 변경 */
   const updateUserType = async (newUserType) => {
     await changeUserType(newUserType);
-
-    const currentIsSocialLogin = user?.isSocialLogin ?? false;
-    await setUserFromApi(currentIsSocialLogin);
+    await setUserFromApi(user?.isSocialLogin ?? false);
   };
 
   return (
