@@ -70,7 +70,7 @@ const LoginPage = () => {
             </div>
             <div className="text-2xl text-blue-600 mb-2">LocalHub</div>
             <p className="text-gray-600 text-sm text-center">
-              지역 기반 실시간 커뮤니티 & 소상공인 홍보 서비스
+              지역 기반 실시간 커뮤니티 & 소상공인 홍보 서비스1
             </p>
           </div>
 

@@ -51,9 +51,7 @@ export const AuthProvider = ({ children }) => {
   /** 앱 시작 시 자동 로그인 복구 */
   useEffect(() => {
     const initializeAuth = async () => {
-      if (typeof window === 'undefined') {
-        return;
-      }
+      if (typeof window === 'undefined') return;
 
       if (isLoggingOut) {
         setIsInitializing(false);
@@ -68,16 +66,23 @@ export const AuthProvider = ({ children }) => {
       }
 
       const token = localStorage.getItem('accessToken');
-      const isSocialLogin = localStorage.getItem('isSocialLogin') === 'true';
 
       if (token) {
         try {
-          if (!mustChangePassword) {
-            await setUserFromApi(isSocialLogin);
-          }
+          await setUserFromApi(localStorage.getItem('isSocialLogin') === 'true');
         } catch {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('isSocialLogin');
+        }
+      } else {
+        const isOAuthRedirectPage = window.location.pathname === '/oauth/redirect';
+
+        if (!isOAuthRedirectPage) {
+          try {
+            await loginWithCookie();
+          } catch {
+            // 그냥 로그인 안 된 상태로 둠
+          }
         }
       }
 
@@ -85,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, [setUserFromApi, isLoggingOut]);
+  }, [setUserFromApi, loginWithCookie, isLoggingOut]);
 
   /** 일반 로그인 */
   const login = async ({ accessToken, mustChangePassword }) => {
