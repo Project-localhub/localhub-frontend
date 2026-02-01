@@ -138,7 +138,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   /** 쿠키 기반 로그인 */
-  const loginWithCookie = async () => {
+  const loginWithCookie = useCallback(async () => {
     if (typeof window === 'undefined') {
       return;
     }
@@ -147,7 +147,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoggingOut(false);
       sessionStorage.removeItem('wasLoggedOut');
 
-      // HttpOnly 쿠키 → accessToken 교환
+      // 1️⃣ HttpOnly 쿠키 → accessToken 교환
       const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
       const accessToken = res.data.accessToken || res.data.access;
 
@@ -155,17 +155,20 @@ export const AuthProvider = ({ children }) => {
         throw new Error('accessToken이 없습니다.');
       }
 
-      // localStorage에 저장 (일관성용)
+      // 2️⃣ localStorage 저장 (클라이언트 일관성용)
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('isSocialLogin', 'true');
 
-      // 이후 데이터 재요청
+      // 3️⃣ 실제 로그인 상태 세팅
+      await setUserFromApi(true);
+
+      // 4️⃣ 캐시 무효화
       queryClient.invalidateQueries();
     } catch (error) {
       console.error('[loginWithCookie] 실패:', error);
-      throw error;
+      throw error; // OAuthRedirectPage에서 catch 가능
     }
-  };
+  }, [setUserFromApi]);
 
   /** 로그아웃 */
   const logout = async () => {
