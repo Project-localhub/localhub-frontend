@@ -1,23 +1,30 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 const OAuthRedirectPage = () => {
   const navigate = useNavigate();
-  const { loginWithCookie } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { loginWithToken } = useAuth();
+
+  const accessToken = searchParams.get('accessToken');
 
   useEffect(() => {
-    loginWithCookie()
+    if (!accessToken) {
+      alert('로그인에 실패했습니다.');
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    loginWithToken(accessToken)
       .then(() => {
-        setTimeout(() => {
-          navigate('/', { replace: true });
-        }, 100);
+        navigate('/', { replace: true });
       })
       .catch((error) => {
-        alert(`소셜 로그인 처리 중 오류가 발생했습니다.\n${error.message || '알 수 없는 오류'}`);
-        navigate('/login');
+        alert(`소셜 로그인 처리 중 오류가 발생했습니다.\n${error.message}`);
+        navigate('/login', { replace: true });
       });
-  }, [navigate, loginWithCookie]);
+  }, [accessToken, loginWithToken, navigate]);
 
   return (
     <div className="flex items-center justify-center h-screen">
