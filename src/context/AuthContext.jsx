@@ -138,18 +138,33 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    setIsLoggingOut(false);
-    sessionStorage.removeItem('wasLoggedOut');
+    try {
+      setIsLoggingOut(false);
+      sessionStorage.removeItem('wasLoggedOut');
 
-    const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
-    const accessToken = res.data.accessToken;
+      const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
 
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('isSocialLogin', 'true');
+      const accessToken = res.data.accessToken;
 
-    await setUserFromApi(true);
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('isSocialLogin', 'true');
 
-    queryClient.invalidateQueries();
+      await setUserFromApi(true);
+
+      queryClient.invalidateQueries();
+    } catch (error) {
+      console.error('loginWithCookie error:', error);
+
+      if (error.response) {
+        console.error('status:', error.response.status);
+        console.error('data:', error.response.data);
+        console.error('headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('no response, request:', error.request);
+      } else {
+        console.error('axios setting error:', error.message);
+      }
+    }
   };
 
   /** 로그아웃 */
