@@ -14,23 +14,25 @@ export const AuthProvider = ({ children }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
 
-  /** 사용자 정보 API 호출 */
+  /** 사용자 정보 API 호출 후 user 업데이트 */
   const setUserFromApi = useCallback(
     async (forceSocialLogin = null) => {
       if (isLoggingOut) return;
 
       const res = await getUserInfo();
       const userData = res.data;
+
       if (!userData) throw new Error('사용자 정보를 가져올 수 없습니다.');
 
-      const isSocialLogin =
-        forceSocialLogin !== null
-          ? forceSocialLogin
-          : Boolean(
-              userData.provider ||
-              userData.isSocialLogin ||
-              localStorage.getItem('isSocialLogin') === 'true',
-            );
+      let isSocialLogin;
+      if (forceSocialLogin !== null) {
+        isSocialLogin = forceSocialLogin;
+      } else {
+        isSocialLogin =
+          userData.provider ||
+          userData.isSocialLogin ||
+          (typeof window !== 'undefined' && localStorage.getItem('isSocialLogin') === 'true');
+      }
 
       setUser({
         id: userData.id,
@@ -46,10 +48,12 @@ export const AuthProvider = ({ children }) => {
     [isLoggingOut],
   );
 
-  /** 앱 시작 시 로그인 복구 */
+  /** 앱 시작 시 자동 로그인 복구 */
   useEffect(() => {
     const initializeAuth = async () => {
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined') {
+        return;
+      }
 
       if (isLoggingOut) {
         setIsInitializing(false);
@@ -81,33 +85,41 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, [setUserFromApi, isLoggingOut, mustChangePassword]);
+  }, [setUserFromApi, isLoggingOut]);
 
   /** 일반 로그인 */
   const login = async ({ accessToken, mustChangePassword }) => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
 
     localStorage.setItem('accessToken', accessToken);
-    localStorage.removeItem('isSocialLogin');
+    localStorage.removeItem('isSocialLogin'); // 일반 로그인
 
     setMustChangePassword(mustChangePassword);
-
+    //임시비밀번호면 return
     if (mustChangePassword) {
       setIsLogin(true);
       return;
     }
 
     await setUserFromApi(false);
+
+    setIsLogin(true);
+
+    // 로그인 성공 후 React Query 캐시 무효화하여 데이터 재요청
     queryClient.invalidateQueries();
   };
 
-  /** 소셜 로그인 */
+  /** 소셜 로그인 (redirect 페이지에서 사용) */
   const loginWithToken = async (accessToken) => {
     if (!accessToken) throw new Error('accessToken이 필요합니다.');
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     setIsLoggingOut(false);
     sessionStorage.removeItem('wasLoggedOut');
@@ -116,42 +128,51 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('isSocialLogin', 'true');
 
     await setUserFromApi(true);
+
     queryClient.invalidateQueries();
   };
 
   /** 쿠키 기반 로그인 */
-  const loginWithCookie = useCallback(async () => {
-    if (typeof window === 'undefined') return;
-
-    setIsLoggingOut(false);
-    sessionStorage.removeItem('wasLoggedOut');
-
-    let accessToken;
-
-    try {
-      const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
-      accessToken = res.data.accessToken || res.data.access;
-    } catch {
-      throw new Error('쿠키에서 토큰을 가져올 수 없습니다.');
+  const loginWithCookie = async () => {
+    if (typeof window === 'undefined') {
+      return;
     }
 
-    if (!accessToken) throw new Error('accessToken 없음');
+    try {
+      setIsLoggingOut(false);
+      sessionStorage.removeItem('wasLoggedOut');
 
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('isSocialLogin', 'true');
+      // HttpOnly 쿠키 → accessToken 교환
+      const res = await client.post('/jwt/exchange', {}, { withCredentials: true });
+      const accessToken = res.data.accessToken || res.data.access;
 
-    await setUserFromApi(true);
-    queryClient.invalidateQueries();
-  }, [setUserFromApi]);
+      if (!accessToken) {
+        throw new Error('accessToken이 없습니다.');
+      }
+
+      // localStorage에 저장 (일관성용)
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('isSocialLogin', 'true');
+
+      // 이후 데이터 재요청
+      queryClient.invalidateQueries();
+    } catch (error) {
+      console.error('[loginWithCookie] 실패:', error);
+      throw error;
+    }
+  };
 
   /** 로그아웃 */
   const logout = async () => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     setIsLoggingOut(true);
     sessionStorage.setItem('wasLoggedOut', 'true');
 
     try {
+      // 카카오 로그인 사용자에게만 카카오 로그아웃 호출
       const isSocialLogin = user?.isSocialLogin || localStorage.getItem('isSocialLogin') === 'true';
       if (isSocialLogin) {
         await kakaoLogout().catch(() => {});
@@ -169,7 +190,9 @@ export const AuthProvider = ({ children }) => {
   /** userType 변경 */
   const updateUserType = async (newUserType) => {
     await changeUserType(newUserType);
-    await setUserFromApi(user?.isSocialLogin ?? false);
+
+    const currentIsSocialLogin = user?.isSocialLogin ?? false;
+    await setUserFromApi(currentIsSocialLogin);
   };
 
   return (
