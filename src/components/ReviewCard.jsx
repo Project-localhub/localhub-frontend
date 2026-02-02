@@ -9,7 +9,7 @@ const ReviewCard = ({ review }) => {
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div>
-            <div className="text-gray-900">{review.username}</div>
+            <div className="text-gray-900">{review.name}</div>
             <div className="text-gray-500 text-sm">{date}</div>
           </div>
         </div>
